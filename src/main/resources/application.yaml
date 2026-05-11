@@ -1,3 +1,9 @@
+server:
+  address: 0.0.0.0
+
 spring:
   application:
     name: conx-server
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE}
