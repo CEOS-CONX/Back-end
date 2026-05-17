@@ -1,4 +1,4 @@
-package com.conx.server.Global.Security;
+package com.conx.server.global.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,25 +13,34 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     @Bean
-    public SecurityFilterChain filterChain (HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/index.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/health/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/",
-                                "/css/**", "/images/**", "/favicon.ico/**"
+                                "/css/**",
+                                "/images/**",
+                                "/favicon.ico"
                         ).permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
 
-                .sessionManagement((session)-> session
+                .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
                 .csrf(AbstractHttpConfigurer::disable)
-                //테스트 끝나고 켜놓기
 
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
@@ -43,5 +52,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 }
