@@ -37,3 +37,4 @@ out/
 .vscode/
 
 *.pem
+/src/main/resources/application-test.yaml

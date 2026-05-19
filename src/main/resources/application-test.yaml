@@ -14,3 +14,12 @@ spring:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
+
+
+google:
+  user: dhmoon2006@gmail.com
+  password: dnuosvbvitwecsgb
+
+jwt:
+  secret:
+    key: YWRkaXRpb25hbHN1cHBseWRlcG90c3JlcXVpcmVkISE
