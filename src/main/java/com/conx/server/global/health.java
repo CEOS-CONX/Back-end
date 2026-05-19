@@ -1,4 +1,4 @@
-package com.conx.server.Global;
+package com.conx.server.global;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
