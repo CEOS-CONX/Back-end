@@ -38,3 +38,5 @@ out/
 
 *.pem
 /src/main/resources/application-test.yaml
+*.env
+.env

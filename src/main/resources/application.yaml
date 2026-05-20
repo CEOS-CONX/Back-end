@@ -6,7 +6,7 @@ spring:
     name: conx-server
 
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:test}
+    active: ${SPRING_PROFILES_ACTIVE}
 
   data:
     redis:
