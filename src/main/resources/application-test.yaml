@@ -20,3 +20,7 @@ cloud:
     region: ap-northeast-2
     s3:
       bucket: test-bucket
+
+jwt:
+  secret:
+    key: dGhlSGl2ZUNsdXN0ZXJJc1VuZGVyQXR0YWNrISE=
