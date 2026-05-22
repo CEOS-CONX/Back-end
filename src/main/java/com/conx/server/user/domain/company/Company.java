@@ -28,6 +28,10 @@ public class Company {
     @JoinColumn(name = "user_id")
     private User user;
 
+    private String companyName;
+
+    private String companyIntroduction;
+
     private String brandName;
 
     //customIndustry는 Industry가 ETC(기타)인 경우 설정됨
@@ -41,6 +45,12 @@ public class Company {
     private String job;
 
     private String businessRegistrationNumber;
+
+    private String profileImage;
+
+    private String additionalFile;
+
+    private String homepageLink;
 
     public static Company create(User user, String brandName, Industry industry,
                                  String customIndustry, String managerName, String job){
