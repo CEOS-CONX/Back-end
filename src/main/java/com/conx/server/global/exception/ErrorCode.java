@@ -5,26 +5,52 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+     /*
+    400: badRequest
+    401: Unauthorized
+    403: forbidden
+    404: NotFound
+    500: InternalServerError
+     */
 
-    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
+    //Global
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "G001", "서버에 장애가 발생했습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "G001", "해당 이메일을 가진 사용자를 찾을 수 없습니다"),
 
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
-    FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    //Error in SendingEmails
+    INVALID_EMAIL_TYPE(HttpStatus.BAD_REQUEST, "M001", "잘못된 형식의 이메일 주소입니다."),
+    AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "M002", "이메일 전송을 위한 계정 로그인에 실패했습니다."),
+    SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "M003", "메시지 전송에 실패했습니다."),
 
-    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 리소스입니다."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
-    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 프로젝트입니다."),
+    //Error in Login
+    PASSWORD_UNMATCHED(HttpStatus.BAD_REQUEST, "A001", "비밀번호가 일치하지 않습니다"),
 
-    DUPLICATED_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
+    //Error in Token Parsing
+    TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "T001", "토큰이 만료되었습니다."),
+    INVALID_TOKEN_FORM(HttpStatus.BAD_REQUEST, "T002", "잘못된 형식의 토큰입니다."),
+    INVALID_SIGNATURE(HttpStatus.BAD_REQUEST, "T003", "서명이 잘못되었습니다."),
+    INTERNAL_TOKEN_ERROR(HttpStatus.BAD_REQUEST, "T004", "토큰에 오류가 있습니다."),
 
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
+    //Error for email verification
+    EMAIL_NOT_FOUND(HttpStatus.BAD_REQUEST, "V001", "이메일 인증요청을 보내지 않았거나, 인증번호가 만료되었습니다."),
+    CODE_UNMATCHED(HttpStatus.BAD_REQUEST, "V002", "인증번호가 일치하지 않습니다"),
+    USER_UNVERIFIED(HttpStatus.UNAUTHORIZED, "V003", "이메일 인증이 진행되지 않았습니다"),
 
-    private final HttpStatus httpStatus;
-    private final String message;
+    //Error for Signup
+    USER_ALREADY_EXITS(HttpStatus.BAD_REQUEST, "S001", "이미 가입한 사용자입니다"),
+    UNFILLED_BLANK(HttpStatus.BAD_REQUEST, "S002", "빈칸을 모두 채워주세요");
 
-    ErrorCode(HttpStatus httpStatus, String message) {
-        this.httpStatus = httpStatus;
-        this.message = message;
+
+
+    private final HttpStatus status;
+
+    private final String errorCode;
+
+    private final String errorMessage;
+
+    ErrorCode(HttpStatus status, String code, String message){
+        this.status = status;
+        this.errorCode = code;
+        this.errorMessage = message;
     }
 }

@@ -1,5 +1,8 @@
-package com.conx.server.global.security;
+package com.conx.server.global.config;
 
+import com.conx.server.global.security.filter.JWTAuthenticationFilter;
+import com.conx.server.global.token.TokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,13 +12,20 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+    public JWTAuthenticationFilter jwtAuthenticationFilter(TokenProvider tokenProvider){
+        return new JWTAuthenticationFilter(tokenProvider);
+    }
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain (HttpSecurity http,
+                                            TokenProvider tokenProvider) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -29,9 +39,10 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 "/",
-                                "/css/**",
-                                "/images/**",
-                                "/favicon.ico"
+                                "/css/**", "/images/**", "/favicon.ico/**",
+                                "/api/v1/auth/**",
+                                "/api/v1/login/**",
+                                "/api/v1/email/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -46,8 +57,9 @@ public class SecurityConfig {
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 )
 
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
+                .addFilterBefore(
+                        jwtAuthenticationFilter(tokenProvider),
+                        UsernamePasswordAuthenticationFilter.class
                 );
 
         return http.build();

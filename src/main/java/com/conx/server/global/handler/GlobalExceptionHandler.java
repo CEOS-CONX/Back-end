@@ -16,13 +16,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException exception) {
-        ErrorCode errorCode = exception.getErrorCode();
+        ErrorCode errorCode = exception.getCode();
 
         return ResponseEntity
-                .status(errorCode.getHttpStatus())
-                .body(ApiResponse.fail(errorCode.getMessage()));
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getErrorMessage()));
     }
 
+    /*
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(
             MethodArgumentNotValidException exception
@@ -32,19 +33,22 @@ public class GlobalExceptionHandler {
                 .stream()
                 .findFirst()
                 .map(FieldError::getDefaultMessage)
-                .orElse(ErrorCode.INVALID_INPUT_VALUE.getMessage());
+                .orElse(ErrorCode.INVALID_.getMessage());
 
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT_VALUE.getHttpStatus())
                 .body(ApiResponse.fail(message));
     }
+    졸음이슈로 나중에 수정하기
+
+     */
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception exception) {
         log.error("Unexpected exception occurred", exception);
 
         return ResponseEntity
-                .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
-                .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
+                .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
+                .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getErrorMessage()));
     }
 }
