@@ -14,3 +14,9 @@ spring:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    s3:
+      bucket: test-bucket
