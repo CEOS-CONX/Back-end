@@ -16,5 +16,4 @@ public class EmailDTO {
     public static EmailDTO create(String from, String receiver, String text, String subject){
         return new EmailDTO(from, receiver, text, subject);
     }
-
 }

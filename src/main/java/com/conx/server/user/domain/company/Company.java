@@ -1,6 +1,8 @@
-package com.conx.server.user.domain;
+package com.conx.server.user.domain.company;
 
+import com.conx.server.user.domain.User;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,24 +11,10 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Company {
-    private Company(User user, String brandName, Industry industry, String customIndustry,
-                    String managerName, String job){
-        this.user = user;
-        this.brandName = brandName;
-        this.industry = industry;
-        this.customIndustry = customIndustry;
-        this.managerName = managerName;
-        this.job = job;
+public class Company extends User {
+    private Company(String email, String password){
+        super(email, password);
     }
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    private User user;
 
     private String companyName;
 
@@ -48,12 +36,42 @@ public class Company {
 
     private String profileImage;
 
-    private String additionalFile;
+    private String additionalFileLink;
 
     private String homepageLink;
 
-    public static Company create(User user, String brandName, Industry industry,
-                                 String customIndustry, String managerName, String job){
-        return new Company(user, brandName, industry, customIndustry, managerName, job);
+    public static Company create(String email, String password){
+        return new Company(email, password);
+    }
+
+    public void activateCompany(String brandName, Industry industry,
+                         String customIndustry, String managerName, String job){
+        this.brandName = brandName;
+        this.industry = industry;
+        this.customIndustry = customIndustry;
+        this.managerName = managerName;
+        this.job = job;
+        super.activate(UserRole.COMPANY);
+    }
+
+    public void modifyProfile(String companyName, String brandName,
+                              Industry industry, String customIndustry, String companyIntroduction,
+                              String homepageLink, String additionalFileLink, String profileImageLink){
+        this.companyName = companyName;
+        this.brandName = brandName;
+        this.industry = industry;
+        this.customIndustry = customIndustry;
+        this.companyIntroduction = companyIntroduction;
+        this.homepageLink = homepageLink;
+        this.additionalFileLink = additionalFileLink;
+        this.profileImage = profileImageLink;
+    }
+
+    public void modifyAccount(String companyName, String businessRegistrationNumber,
+                              String managerName, String job) {
+        this.companyName = companyName;
+        this.businessRegistrationNumber = businessRegistrationNumber;
+        this.managerName = managerName;
+        this.job = job;
     }
 }

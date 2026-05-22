@@ -1,15 +1,15 @@
 package com.conx.server.global.security.filter;
 
+import com.conx.server.global.exception.CustomAuthenticationException;
+import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.token.TokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -25,13 +25,20 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest req,
                                     HttpServletResponse res,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String accessToken = tokenProvider.getAccessToken(req);
+        try {
 
-        if (accessToken == null){
-            filterChain.doFilter(req, res);
+            String accessToken = tokenProvider.getTokenFromHeader(req);
+
+            if (!StringUtils.hasText(accessToken)) {
+                filterChain.doFilter(req, res);
+                return;
+            }
+
+            Authentication authentication = tokenProvider.getAuthentication(accessToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        } catch (CustomException ce){
+            throw new CustomAuthenticationException(ce);
         }
-
-        Authentication authentication = tokenProvider.getAuthentication(accessToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

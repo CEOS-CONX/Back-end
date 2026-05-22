@@ -1,7 +1,7 @@
 package com.conx.server.global.security.userDetails;
 
 import com.conx.server.user.domain.User;
-import com.conx.server.user.repository.UserRepository;
+import com.conx.server.user.service.UserFinder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,19 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UserFinder userFinder;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public CustomUserDetailsService(UserFinder userFinder) {
+        this.userFinder = userFinder;
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email).orElseThrow(
-                //TODO: CustomException
-                () -> new RuntimeException("사용자가 없습니다!")
-        );
+        User user = userFinder.findByEmail(email);
 
         return CustomUserDetails.of(user);
     }

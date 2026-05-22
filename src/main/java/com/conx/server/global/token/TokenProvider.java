@@ -1,9 +1,14 @@
 package com.conx.server.global.token;
 
+import com.conx.server.global.exception.CustomException;
+import com.conx.server.global.exception.ErrorCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.Cookie;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,29 +47,13 @@ public class TokenProvider implements InitializingBean {
         getTokenLoginId(token);
     }
 
-    public String getAccessToken(HttpServletRequest req) {
+    public String getTokenFromHeader(HttpServletRequest req) {
         String authorization = req.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             return null;
         }
 
         return authorization.substring(7);
-    }
-
-    public String getRefreshToken(HttpServletRequest req) {
-        Cookie[] cookies = req.getCookies();
-
-        if (cookies == null){
-            return null;
-        }
-
-        for (Cookie c : cookies) {
-            if ("refreshToken".equals(c.getName())) {
-                return c.getValue();
-            }
-        }
-
-        return null;
     }
 
     public String createToken(String email, Authentication authentication, JWTType type){
@@ -85,12 +74,30 @@ public class TokenProvider implements InitializingBean {
     }
 
     public String getTokenLoginId(String token) {
-        return Jwts.parser()
-                .verifyWith((SecretKey) key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        try {
+            return Jwts.parser()
+                    .verifyWith((SecretKey) key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (ExpiredJwtException eje){
+            //토큰만료
+            //TODO: 로그
+            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+        } catch (MalformedJwtException mje){
+            //잘못된 형식
+            //TODO: 로그
+            throw new CustomException(ErrorCode.INVALID_TOKEN_FORM);
+        } catch (SignatureException se){
+            //위조된 시그니처
+            //TODO: 로그
+            throw new CustomException(ErrorCode.INVALID_SIGNATURE);
+        } catch (JwtException je){
+            //기타
+            //TODO: 로그
+            throw new CustomException(ErrorCode.INTERNAL_TOKEN_ERROR);
+        }
     }
 
     public Authentication getAuthentication(String token) {

@@ -1,6 +1,9 @@
 package com.conx.server.global.mailSender;
 
+import com.conx.server.global.exception.CustomException;
+import com.conx.server.global.exception.ErrorCode;
 import jakarta.mail.*;
+import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +19,7 @@ public class MailSender {
     @Value("${google.password}")
     String password;
 
-    public boolean sendMail(EmailDTO content) {
+    public void sendMail(EmailDTO content) {
         String subject = content.getSubject();
         String text = content.getText();
         String receiver = content.getReceiver();
@@ -44,10 +47,22 @@ public class MailSender {
             message.setText(text);
 
             Transport.send(message);
-            return true;
-        } catch (MessagingException me) {
-            //TODO: Handle Error
-            throw new RuntimeException(me);
+        } catch (AddressException ae) {
+            //TODO: 로그처리
+            ae.printStackTrace();
+            throw new CustomException(ErrorCode.INVALID_EMAIL_TYPE);
+        } catch (AuthenticationFailedException aut){
+            //TODO: 로그처리
+            aut.printStackTrace();
+            throw new CustomException(ErrorCode.AUTHENTICATION_FAILED);
+        } catch (SendFailedException se){
+            //TODO: 로그처리
+            se.printStackTrace();
+            throw new CustomException(ErrorCode.SEND_FAILED);
+        } catch (MessagingException me){
+            //TODO: 로그처리
+            me.printStackTrace();
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }

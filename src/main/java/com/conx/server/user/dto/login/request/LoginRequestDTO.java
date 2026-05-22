@@ -1,4 +1,4 @@
-package com.conx.server.user.dto.loginRequest;
+package com.conx.server.user.dto.login.request;
 
 public record LoginRequestDTO(
     String email,

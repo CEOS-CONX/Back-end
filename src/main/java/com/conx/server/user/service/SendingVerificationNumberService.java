@@ -1,11 +1,12 @@
 package com.conx.server.user.service;
 
 import com.conx.server.global.apiResponse.ApiResponse;
+import com.conx.server.global.exception.CustomException;
+import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.global.mailSender.EmailDTO;
 import com.conx.server.global.mailSender.MailSender;
 import com.conx.server.user.dto.emailKey.CheckingVerificationKeyRequestDTO;
 import com.conx.server.user.domain.types.UserStatus;
-import com.conx.server.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,7 +23,7 @@ public class SendingVerificationNumberService {
 
     private final MailSender mailSender;
     private final RedisTemplate<String, String> redisTemplate;
-    private final UserRepository userRepository;
+    private final UserFinder userFinder;
 
     @Value("${google.user}")
     private String sender;
@@ -50,9 +51,8 @@ public class SendingVerificationNumberService {
      */
     @Transactional(readOnly = true)
     public ApiResponse<?> sendCorrectKey(String email){
-        if (!userRepository.existsByEmailAndStatusIn(email, List.of(UserStatus.PENDING))){
-            //TODO: CustomException
-            throw new RuntimeException("유저가 존재하지 않습니다.");
+        if (!userFinder.existPendingUserByEmail(email)){
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
         Random random = new Random();
@@ -81,12 +81,11 @@ public class SendingVerificationNumberService {
         String code = redisTemplate.opsForValue().get("email:"+req.email());
 
         if (code == null) {
-            throw new RuntimeException("인증번호가 만료되었습니다.");
+            throw new CustomException(ErrorCode.EMAIL_NOT_FOUND);
         }
 
         if (!String.valueOf(req.code()).equals(code)){
-            //TODO: CustomException
-            throw new RuntimeException("잘못된 인증번호입니다.");
+            throw new CustomException(ErrorCode.CODE_UNMATCHED);
         }
 
         redisTemplate.opsForValue().set(
@@ -107,9 +106,9 @@ public class SendingVerificationNumberService {
     public void checkVerification(String email){
 
         String verified = redisTemplate.opsForValue().get("verified:" + email);
+        System.out.println(">>> " + verified);
         if (verified == null){
-            //TODO: CustomException
-            throw new RuntimeException("인증되지 않은 사용자입니다.");
+            throw new CustomException(ErrorCode.USER_UNVERIFIED);
         }
         redisTemplate.delete("verified:"+email);
     }

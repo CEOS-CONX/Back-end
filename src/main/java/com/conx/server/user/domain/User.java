@@ -8,44 +8,32 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
 @Getter
-@Table(name = "users")
+@MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity {
-    private User(String email, String password,
-                 boolean allowCollectingPersonalInformation, boolean allowSendingPromoteMessage){
+public abstract class User extends BaseEntity {
+    protected User(String email, String password){
         this.email = email;
         this.password = password;
+        this.role = UserRole.TEMPORAL;
         this.status = UserStatus.PENDING;
-        this.allowCollectingPersonalInformation = allowCollectingPersonalInformation;
-        this.allowSendingPromoteMessage = allowSendingPromoteMessage;
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    protected String email;
+    private String email;
 
-    protected String password;
+    private String password;
 
     @Enumerated(EnumType.STRING)
-    protected UserStatus status;
-
-    protected boolean allowCollectingPersonalInformation;
-
-    protected boolean allowSendingPromoteMessage;
+    private UserStatus status;
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    public static User create (String email, String password,
-                               boolean allowCollectingPersonalInformation, boolean allowSendingPromoteMessage){
-        return new User(email, password, allowCollectingPersonalInformation, allowSendingPromoteMessage);
-    }
-
-    public void updateUser(UserRole role){
+    protected void activate(UserRole role){
         this.status = UserStatus.ACTIVE;
         this.role = role;
     }

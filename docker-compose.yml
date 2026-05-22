@@ -4,7 +4,7 @@ services:
   app:
     image: contactconx/conx-server:${IMAGE_TAG}
     ports:
-      - "80:8080"
+      - "8080:8080"
     restart: unless-stopped
     env_file:
       - .env

@@ -1,4 +1,17 @@
 package com.conx.server.user.dto.login.response;
 
-public class LoginServiceResponseDTO {
+import com.conx.server.user.dto.UserRole;
+
+public record LoginServiceResponseDTO (
+    String accessToken,
+    boolean hasFullInfo,
+
+    long userId,
+    String email,
+    UserRole userType
+) {
+    public static LoginServiceResponseDTO create(String accessToken, boolean hasFullInfo,
+                                          long userId, String email, UserRole userType){
+        return new LoginServiceResponseDTO(accessToken, hasFullInfo, userId, email, userType);
+    }
 }

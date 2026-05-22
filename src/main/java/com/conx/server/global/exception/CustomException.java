@@ -1,4 +1,13 @@
 package com.conx.server.global.exception;
 
-public class CustomException extends RuntimeException{
+import lombok.Getter;
+
+@Getter
+public class CustomException extends RuntimeException {
+    private final ErrorCode code;
+
+    public CustomException(ErrorCode code){
+        super(code.getErrorMessage());
+        this.code = code;
+    }
 }
