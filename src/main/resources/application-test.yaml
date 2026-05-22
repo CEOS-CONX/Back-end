@@ -23,7 +23,7 @@ cloud:
 
 jwt:
   secret:
-    key: dGhlSGl2ZUNsdXN0ZXJJc1VuZGVyQXR0YWNrISE=
+    key: bXlTdXBlclNlY3JldEtleUZvckpXVFRlc3RpbmdBbmRTcHJpbmdCb290M1NlY3VyaXR5
 
 google:
   user: test@gmail.com
