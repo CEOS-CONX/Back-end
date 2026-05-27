@@ -9,7 +9,9 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,10 +45,6 @@ public class TokenProvider implements InitializingBean {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public void validateToken(String token){
-        getTokenLoginId(token);
-    }
-
     public String getTokenFromHeader(HttpServletRequest req) {
         String authorization = req.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
@@ -54,6 +52,20 @@ public class TokenProvider implements InitializingBean {
         }
 
         return authorization.substring(7);
+    }
+
+    public String getTokenFromCookie(HttpServletRequest req) {
+        Cookie[] cookies = req.getCookies();
+
+        if (cookies == null) return null;
+
+        for (Cookie c : cookies) {
+            if ("refreshToken".equals(c.getName())) {
+                return c.getValue();
+            }
+        }
+
+        return null;
     }
 
     public String createToken(String email, Authentication authentication, JWTType type){
@@ -73,7 +85,7 @@ public class TokenProvider implements InitializingBean {
                 .compact();
     }
 
-    public String getTokenLoginId(String token) {
+    public String getEmailFromToken(String token) {
         try {
             return Jwts.parser()
                     .verifyWith((SecretKey) key)
@@ -100,8 +112,33 @@ public class TokenProvider implements InitializingBean {
         }
     }
 
+    private void setTokenInHeader(String token, HttpServletResponse res){
+        res.addHeader(
+                "Authorization", "Bearer " + token
+        );
+    }
+
+    private void setTokenInCookie(String token, HttpServletResponse res){
+        Cookie cookie = new Cookie("refreshToken", token);
+        cookie.setMaxAge(JWTType.REFRESH.getValidTime());
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setAttribute("SameSite", "Strict");
+        //cookie.setSecure(true);
+        //TODO: https 배포 시 주석 제거
+
+        res.addCookie(cookie);
+    }
+
+    public void setToken(String accessToken,
+                         String refreshToken,
+                         HttpServletResponse res){
+        setTokenInHeader(accessToken, res);
+        setTokenInCookie(refreshToken, res);
+    }
+
     public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(getTokenLoginId(token));
+        UserDetails userDetails = userDetailsService.loadUserByUsername(getEmailFromToken(token));
 
         return new UsernamePasswordAuthenticationToken(
                 userDetails, token, userDetails.getAuthorities());

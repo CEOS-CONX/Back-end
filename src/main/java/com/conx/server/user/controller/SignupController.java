@@ -1,13 +1,15 @@
 package com.conx.server.user.controller;
 
-import com.conx.server.global.apiResponse.ApiResponse;
+import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.token.TokenProvider;
 import com.conx.server.user.dto.emailKey.*;
 import com.conx.server.user.dto.signupRequest.SignupRequestDTO;
 import com.conx.server.user.dto.signupRequest.UpdateCompanyUserDTO;
 import com.conx.server.user.dto.signupRequest.UpdateCrewUserDTO;
-import com.conx.server.user.service.CompanySignupService;
-import com.conx.server.user.service.CrewSignupService;
-import com.conx.server.user.service.SendingVerificationNumberService;
+import com.conx.server.user.service.signup.CompanySignupService;
+import com.conx.server.user.service.signup.CrewSignupService;
+import com.conx.server.user.service.login_logout.LoginService;
+import com.conx.server.user.service.common.SendingVerificationNumberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,35 @@ public class SignupController {
     private final SendingVerificationNumberService sendingVerificationNumberService;
     private final CompanySignupService companySignupService;
     private final CrewSignupService crewSignupService;
+    private final LoginService loginService;
+    private final TokenProvider tokenProvider;
+
+    /**
+     * 인증번호 발송을 요청합니다.
+     * @param req 이메일 주소가 적힌 요청body 입니다.
+     * @return api 명세서 참고
+     */
+    @PostMapping("/email/send")
+    public ResponseEntity<ApiResponse<?>> requestEmailVerification(
+            @RequestBody SendingVerificationKeyRequestDTO req
+    ){
+        sendingVerificationNumberService.sendCorrectKey(req.email());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    /**
+     * 인증번호 발송 후, 사용자가 입력한 인증번호를 검증합니다.
+     * @param req 이메일 주소 및 유저가 입력한 인증번호
+     * @return api 명세서 참고
+     */
+    @PostMapping("/email/verify")
+    public ResponseEntity<ApiResponse<?>> checkEmailVerification(
+            @RequestBody CheckingVerificationKeyRequestDTO req
+    ){
+        sendingVerificationNumberService.checkCorrectKey(req);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
 
     /**
      * 이메일·비밀번호를 입력받고 이메일 인증과 약관 동의를 통해 가입 절차를 진행합니다.
@@ -31,7 +62,8 @@ public class SignupController {
     public ResponseEntity<ApiResponse<?>> setCompany(
             @RequestBody SignupRequestDTO req
     ){
-        return ResponseEntity.ok(companySignupService.userSetting(req));
+        companySignupService.userSetting(req);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
     /**
@@ -43,7 +75,8 @@ public class SignupController {
     public ResponseEntity<ApiResponse<?>> updateCompany(
             @Valid @RequestBody UpdateCompanyUserDTO req
     ){
-        return ResponseEntity.ok(companySignupService.update(req));
+        companySignupService.update(req);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
 
@@ -57,7 +90,8 @@ public class SignupController {
     public ResponseEntity<ApiResponse<?>> setCrew(
             @RequestBody SignupRequestDTO req
     ){
-        return ResponseEntity.ok(crewSignupService.userSetting(req));
+        crewSignupService.userSetting(req);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
     /**
@@ -70,33 +104,7 @@ public class SignupController {
     public ResponseEntity<ApiResponse<?>> updateCrew(
             @RequestBody UpdateCrewUserDTO req
     ){
-        return ResponseEntity.ok(crewSignupService.update(req));
+        crewSignupService.update(req);
+        return ResponseEntity.ok(ApiResponse.success());
     }
-
-
-
-    /**
-     * 인증번호 발송을 요청합니다.
-     * @param req 이메일 주소가 적힌 요청body 입니다.
-     * @return api 명세서 참고
-     */
-    @PostMapping("/email/send")
-    public ResponseEntity<ApiResponse<?>> requestEmailVerification(
-            @RequestBody SendingVerificationKeyRequestDTO req
-    ){
-        return ResponseEntity.ok(sendingVerificationNumberService.sendCorrectKey(req.email()));
-    }
-
-    /**
-     * 인증번호 발송 후, 사용자가 입력한 인증번호를 검증합니다.
-     * @param req 이메일 주소 및 유저가 입력한 인증번호
-     * @return api 명세서 참고
-     */
-    @PostMapping("/email/verify")
-    public ResponseEntity<ApiResponse<?>> checkEmailVerification(
-            @RequestBody CheckingVerificationKeyRequestDTO req
-    ){
-        return ResponseEntity.ok(sendingVerificationNumberService.checkCorrectKey(req));
-    }
-
 }

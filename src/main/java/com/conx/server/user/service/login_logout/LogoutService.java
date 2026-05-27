@@ -1,6 +1,5 @@
-package com.conx.server.user.service;
+package com.conx.server.user.service.login_logout;
 
-import com.conx.server.global.apiResponse.ApiResponse;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

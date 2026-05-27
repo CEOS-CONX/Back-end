@@ -4,14 +4,15 @@ import com.conx.server.user.dto.UserRole;
 
 public record LoginServiceResponseDTO (
     String accessToken,
+    String refreshToken,
     boolean hasFullInfo,
 
     long userId,
     String email,
     UserRole userType
 ) {
-    public static LoginServiceResponseDTO create(String accessToken, boolean hasFullInfo,
-                                          long userId, String email, UserRole userType){
-        return new LoginServiceResponseDTO(accessToken, hasFullInfo, userId, email, userType);
+    public static LoginServiceResponseDTO create(String accessToken, String refreshToken,
+                                                 boolean hasFullInfo, long userId, String email, UserRole userType){
+        return new LoginServiceResponseDTO(accessToken, refreshToken, hasFullInfo, userId, email, userType);
     }
 }

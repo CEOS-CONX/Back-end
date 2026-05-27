@@ -1,7 +1,7 @@
 package com.conx.server.global.security.userDetails;
 
 import com.conx.server.user.domain.User;
-import com.conx.server.user.service.UserFinder;
+import com.conx.server.user.service.common.UserFinder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

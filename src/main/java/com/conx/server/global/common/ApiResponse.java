@@ -1,6 +1,8 @@
 package com.conx.server.global.common;
 
+import com.conx.server.global.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.springframework.http.HttpStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ApiResponse<T>(
@@ -17,11 +19,20 @@ public record ApiResponse<T>(
         return new ApiResponse<>("success", "요청이 성공했습니다.", payload);
     }
 
-    public static ApiResponse<Void> success(String message) {
+    public static ApiResponse<?> success(){
+        return new ApiResponse<>("success", "요청이 성공했습니다.", null);
+    }
+
+    public static ApiResponse<?> success(String message) {
         return new ApiResponse<>("success", message, null);
     }
 
-    public static ApiResponse<Void> fail(String message) {
-        return new ApiResponse<>("fail", message, null);
+
+    public static ApiResponse<?> fail(String status, String message) {
+        return new ApiResponse<>(status, message, null);
+    }
+
+    public static ApiResponse<?> fail(ErrorCode errorCode){
+        return new ApiResponse<>(errorCode.getErrorCode(), errorCode.getErrorMessage(), null);
     }
 }
