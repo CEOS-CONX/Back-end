@@ -1,5 +1,6 @@
 package com.conx.server.user.domain.types;
 
+import com.conx.server.landingPage.dto.IndustryForLandingPage;
 import lombok.Getter;
 
 @Getter

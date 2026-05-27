@@ -1,12 +1,10 @@
-package com.conx.server.user.service;
+package com.conx.server.user.service.common;
 
-import com.conx.server.global.apiResponse.ApiResponse;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.global.mailSender.EmailDTO;
 import com.conx.server.global.mailSender.MailSender;
 import com.conx.server.user.dto.emailKey.CheckingVerificationKeyRequestDTO;
-import com.conx.server.user.domain.types.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Random;
 
 @Service
@@ -46,13 +43,14 @@ public class SendingVerificationNumberService {
     /**
      * 6자리 인증코드를 만든 후 이메일로 전송하는 역할을 합니다.
      * 인증번호는 5분 간 유효합니다.
+     * 이미 가입한 사용자가 이메일인증을 요청하는 경우 에러가 발생합니다.
      *
      * @param email 인증번호를 받을 사람의 이메일주소
      */
     @Transactional(readOnly = true)
-    public ApiResponse<?> sendCorrectKey(String email){
-        if (!userFinder.existPendingUserByEmail(email)){
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+    public void sendCorrectKey(String email){
+        if(userFinder.existUserByEmail(email)) {
+            throw new CustomException(ErrorCode.USER_ALREADY_EXITS);
         }
 
         Random random = new Random();
@@ -66,8 +64,6 @@ public class SendingVerificationNumberService {
                 code,
                 Duration.ofMinutes(5)
         );
-
-        return ApiResponse.ofEmpty();
     }
 
     /**
@@ -77,7 +73,7 @@ public class SendingVerificationNumberService {
      *
      * @param req 이메일 + 인증정보
      */
-    public ApiResponse<?> checkCorrectKey(CheckingVerificationKeyRequestDTO req){
+    public void checkCorrectKey(CheckingVerificationKeyRequestDTO req){
         String code = redisTemplate.opsForValue().get("email:"+req.email());
 
         if (code == null) {
@@ -95,7 +91,6 @@ public class SendingVerificationNumberService {
         );
 
         redisTemplate.delete("email:" + req.email());
-        return ApiResponse.ofEmpty();
     }
 
     /**
@@ -106,7 +101,6 @@ public class SendingVerificationNumberService {
     public void checkVerification(String email){
 
         String verified = redisTemplate.opsForValue().get("verified:" + email);
-        System.out.println(">>> " + verified);
         if (verified == null){
             throw new CustomException(ErrorCode.USER_UNVERIFIED);
         }
