@@ -49,7 +49,11 @@ public enum ErrorCode {
     INVALID_USER_TYPE(HttpStatus.BAD_REQUEST, "S004", "잘못된 사용자타입입니다"),
 
     //Error for Category
-    INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "C001", "잘못된 카테고리값입니다.");
+    INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "C001", "잘못된 카테고리값입니다."),
+
+    //Error for Notification
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림이 없습니다."),
+    MISMATCH_NOTIFICATION_RECEIVER(HttpStatus.BAD_REQUEST, "N002", "삭제 요청 클라이언트가 알림 수신자가 아닙니다.");
 
 
 
