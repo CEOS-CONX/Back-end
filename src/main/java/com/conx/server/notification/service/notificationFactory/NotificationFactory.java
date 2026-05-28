@@ -1,4 +1,4 @@
-package com.conx.server.notification.service;
+package com.conx.server.notification.service.notificationFactory;
 
 import com.conx.server.bookmark.domain.ProjectBookmark;
 import com.conx.server.notification.domain.Notification;
@@ -11,15 +11,15 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Component
-public class NotificationFactory {
+class NotificationFactory {
 
-    public Notification mail(User user, String mailSubject){
+    static Notification mail(User user, String mailSubject){
         return Notification.create(
                 NotificationType.MAIL, user.getId(), NotificationType.MAIL.format(mailSubject)
         );
     }
 
-    public Notification closeToEnd(Project project){
+    static Notification closeToEnd(Project project){
         long lastDay = ChronoUnit.DAYS.between(
                 LocalDate.now(),
                 project.getRecruitDeadLine()
@@ -32,14 +32,14 @@ public class NotificationFactory {
         );
     }
 
-    public Notification resultUploaded(Project project){
+    static Notification resultUploaded(Project project){
         return Notification.create(
                 NotificationType.RESULT_UPLOADED,
                 project.getCompany().getId(),
                 NotificationType.RESULT_UPLOADED.format(project.getName()));
     }
 
-    public Notification selected(Project project){
+    static Notification selected(Project project){
         return Notification.create(
                 NotificationType.PROJECT_SELECTED,
                 project.getSelectedCrew().getId(),
@@ -47,7 +47,7 @@ public class NotificationFactory {
         );
     }
 
-    public Notification bookmarkedProjectCloseToEnd(ProjectBookmark projectBookmark) {
+    static Notification bookmarkedProjectCloseToEnd(ProjectBookmark projectBookmark) {
         long lastDay = ChronoUnit.DAYS.between(
                 LocalDate.now(),
                 projectBookmark.getProject().getRecruitDeadLine()
@@ -60,7 +60,7 @@ public class NotificationFactory {
         );
     }
 
-    public Notification adjustmentDone(Project project) {
+    static Notification adjustmentDone(Project project) {
         return Notification.create(
                 NotificationType.ADJUSTMENT_DONE,
                 project.getSelectedCrew().getId(),

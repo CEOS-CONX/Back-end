@@ -24,18 +24,18 @@ public class AnonymousLandingPageService {
 
     @Transactional(readOnly = true)
     public AnonymousLandingPageResponseDTO landing(IndustryForLandingPage category){
+        List<ProjectWrapperForLandingPageDTO> projects;
+        List<CrewWrapperForLandingPageDTO> crews;
+
         if(category.equals(IndustryForLandingPage.ALL)){
+            projects = projectRepository.findAllActiveProjectWithViews();
+            crews = crewRepository.findAllActiveCrewsWithEvaluation();
 
-            List<ProjectWrapperForLandingPageDTO> projects = projectRepository.findAllActiveProjectWithViews();
-            List<CrewWrapperForLandingPageDTO> crews = crewRepository.findAllActiveCrewsWithEvaluation();
-
-            return new AnonymousLandingPageResponseDTO(projects, crews);
         } else {
+            projects = projectRepository.findActiveProjectByCategoryWithViews(category.toIndustry());
+            crews = crewRepository.findActiveCrewsByCategoryWithEvaluation(category.toIndustry());
 
-            List<ProjectWrapperForLandingPageDTO> projects = projectRepository.findActiveProjectByCategoryWithViews(category.toIndustry());
-            List<CrewWrapperForLandingPageDTO> crews = crewRepository.findActiveCrewsByCategoryWithEvaluation(category.toIndustry());
-
-            return new AnonymousLandingPageResponseDTO(projects, crews);
         }
+        return new AnonymousLandingPageResponseDTO(projects, crews);
     }
 }

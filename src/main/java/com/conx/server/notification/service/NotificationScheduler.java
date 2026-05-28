@@ -1,27 +1,26 @@
 package com.conx.server.notification.service;
 
-import com.conx.server.notification.domain.Notification;
 import com.conx.server.notification.repository.NotificationRepository;
+import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.repository.ProjectRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class NotificationScheduler {
 
-    private final NotificationFactory notificationFactory;
     private final ProjectRepository projectRepository;
-    private final NotificationRepository notificationRepository;
+    private final NotificationFacadeService notificationFacadeService;
 
-    public NotificationScheduler(NotificationFactory notificationFactory, ProjectRepository projectRepository, NotificationRepository notificationRepository) {
-        this.notificationFactory = notificationFactory;
+    public NotificationScheduler(ProjectRepository projectRepository,
+                                 NotificationRepository notificationRepository,
+                                 NotificationFacadeService notificationFacadeService) {
         this.projectRepository = projectRepository;
-        this.notificationRepository = notificationRepository;
+        this.notificationFacadeService = notificationFacadeService;
     }
 
     //마감임박 (1일 / 3일 / 7일 전) 프로젝트 알림
@@ -35,14 +34,7 @@ public class NotificationScheduler {
                 )
         );
 
-
-        List<Notification> notifications = new ArrayList<>();
-
-        for (Project p : projects){
-            notifications.add(notificationFactory.closeToEnd(p));
-        }
-
-        notificationRepository.saveAll(notifications);
+        notificationFacadeService.saveNotificationAboutCloseToEndProject(projects);
     }
 
     //북마크한 프로젝트 신청마감 3일 전
