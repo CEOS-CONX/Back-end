@@ -47,18 +47,26 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/index.html",
                                 "/v3/api-docs/**",
-                                "/api/v1/landing/**",
-                                "/h2-console/**"
-                        ).permitAll()
-                        .requestMatchers(HttpMethod.GET,
-                                "/health/**"
-                        ).permitAll()
-                        .requestMatchers(
+                                "/h2-console/**",
                                 "/",
                                 "/css/**", "/images/**", "/favicon.ico/**",
                                 "/api/v1/auth/**",
                                 "/api/v1/login/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/health/**"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                "/api/v1/landing"
+                        ).anonymous()
+                        .requestMatchers(
+                                "/api/v1/landing/company"
+                        ).hasRole("COMPANY")
+                        .requestMatchers(
+                                "/api/v1/landing/crew"
+                        ).hasRole("CREW")
+
                         .anyRequest().authenticated()
                 )
 
