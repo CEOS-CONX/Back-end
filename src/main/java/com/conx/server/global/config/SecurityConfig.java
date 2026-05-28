@@ -47,7 +47,8 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/index.html",
                                 "/v3/api-docs/**",
-                                "/api/v1/landing/**"
+                                "/api/v1/landing/**",
+                                "/h2-console/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/health/**"

@@ -2,10 +2,14 @@ package com.conx.server.user.service.signup;
 
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
+import com.conx.server.user.domain.consent.PersonalInformationConsent;
+import com.conx.server.user.domain.consent.PromotionalMessageConsent;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.dto.signupRequest.SignupRequestDTO;
 import com.conx.server.user.dto.signupRequest.UpdateCompanyUserDTO;
 import com.conx.server.user.repository.CompanyRepository;
+import com.conx.server.user.repository.PersonalInformationConsentRepository;
+import com.conx.server.user.repository.PromotionalMessageConsentRepository;
 import com.conx.server.user.service.common.SendingVerificationNumberService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +24,8 @@ public class CompanySignupService {
     private final CompanyRepository companyRepository;
     private final PasswordEncoder encoder;
     private final SendingVerificationNumberService sendingVerificationNumberService;
+    private final PersonalInformationConsentRepository personalInformationConsentRepository;
+    private final PromotionalMessageConsentRepository promotionalMessageConsentRepository;
 
     /**
      * 회원가입 1단계
@@ -32,6 +38,7 @@ public class CompanySignupService {
     @Transactional
     public void userSetting(SignupRequestDTO req){
         req.passwordDoubleChecking();
+        sendingVerificationNumberService.checkVerification(req.email());
 
         String password = encoder.encode(req.password());
 
@@ -39,8 +46,12 @@ public class CompanySignupService {
                 req.email(), password
         );
 
-        sendingVerificationNumberService.checkVerification(req.email());
+        PersonalInformationConsent i = PersonalInformationConsent.create(company, req.options().personalInformation());
+        PromotionalMessageConsent m = PromotionalMessageConsent.create(company, req.options().sendingPromoteMessage());
+
         companyRepository.save(company);
+        personalInformationConsentRepository.save(i);
+        promotionalMessageConsentRepository.save(m);
     }
 
     /**
