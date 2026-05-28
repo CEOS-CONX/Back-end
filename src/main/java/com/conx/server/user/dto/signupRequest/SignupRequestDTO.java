@@ -17,7 +17,7 @@ public record SignupRequestDTO(
     ){}
 
     public void passwordDoubleChecking(){
-        if(password.equals(passwordCheck)){
+        if(!password.equals(passwordCheck)){
             throw new CustomException(ErrorCode.PASSWORD_DOUBLE_CHECK_FAILED);
         };
     }

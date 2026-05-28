@@ -46,6 +46,7 @@ public enum ErrorCode {
     USER_ALREADY_EXITS(HttpStatus.BAD_REQUEST, "S001", "이미 가입한 사용자입니다"),
     UNFILLED_BLANK(HttpStatus.BAD_REQUEST, "S002", "빈칸을 모두 채워주세요"),
     PASSWORD_DOUBLE_CHECK_FAILED(HttpStatus.BAD_REQUEST, "S003", "비밀번호를 확인해주세요"),
+    INVALID_USER_TYPE(HttpStatus.BAD_REQUEST, "S004", "잘못된 사용자타입입니다"),
 
     //Error for Category
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "C001", "잘못된 카테고리값입니다.");

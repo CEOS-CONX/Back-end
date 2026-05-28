@@ -2,10 +2,14 @@ package com.conx.server.user.service.signup;
 
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
+import com.conx.server.user.domain.consent.PersonalInformationConsent;
+import com.conx.server.user.domain.consent.PromotionalMessageConsent;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.signupRequest.SignupRequestDTO;
 import com.conx.server.user.dto.signupRequest.UpdateCrewUserDTO;
 import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.repository.PersonalInformationConsentRepository;
+import com.conx.server.user.repository.PromotionalMessageConsentRepository;
 import com.conx.server.user.service.common.SendingVerificationNumberService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,8 @@ public class CrewSignupService {
     private final PasswordEncoder encoder;
     private final SendingVerificationNumberService sendingVerificationNumberService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final PersonalInformationConsentRepository personalInformationConsentRepository;
+    private final PromotionalMessageConsentRepository promotionalMessageConsentRepository;
 
     /**
      * 회원가입 1단계
@@ -33,10 +39,8 @@ public class CrewSignupService {
      */
     @Transactional
     public void userSetting(SignupRequestDTO req){
-
-        if(crewRepository.existsByEmail(req.email())) {
-            throw new CustomException(ErrorCode.USER_ALREADY_EXITS);
-        }
+        req.passwordDoubleChecking();
+        sendingVerificationNumberService.checkVerification(req.email());
 
         String password = encoder.encode(req.password());
 
@@ -44,10 +48,13 @@ public class CrewSignupService {
                 req.email(), password
         );
 
+        PersonalInformationConsent i = PersonalInformationConsent.create(crew, req.options().personalInformation());
+        PromotionalMessageConsent m = PromotionalMessageConsent.create(crew, req.options().sendingPromoteMessage());
 
 
-        sendingVerificationNumberService.checkVerification(req.email());
         crewRepository.save(crew);
+        personalInformationConsentRepository.save(i);
+        promotionalMessageConsentRepository.save(m);
     }
 
     /**

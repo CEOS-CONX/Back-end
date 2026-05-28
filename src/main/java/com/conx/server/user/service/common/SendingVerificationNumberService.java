@@ -54,16 +54,16 @@ public class SendingVerificationNumberService {
         }
 
         Random random = new Random();
-
         String code = String.valueOf(100000 + random.nextInt(900000));
-        EmailDTO emailDTO = setEmailDTO(email, code);
-        mailSender.sendMail(emailDTO);
 
         redisTemplate.opsForValue().set(
                 "email:"+email,
                 code,
                 Duration.ofMinutes(5)
         );
+
+        EmailDTO emailDTO = setEmailDTO(email, code);
+        mailSender.sendMail(emailDTO);
     }
 
     /**
