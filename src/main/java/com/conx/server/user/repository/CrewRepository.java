@@ -1,7 +1,6 @@
 package com.conx.server.user.repository;
 
-import com.conx.server.landingPage.dto.CrewWrapperDTOForDashboard;
-import com.conx.server.landingPage.dto.IndustryForLandingPage;
+import com.conx.server.landingPage.dto.CrewWrapperForLandingPageDTO;
 import com.conx.server.user.domain.User;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
@@ -23,7 +22,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
     boolean existsByEmailAndStatus(String email, UserStatus status);
 
     @Query("""
-        select new com.conx.server.landingPage.dto.CrewWrapperDTOForDashboard(
+        select new com.conx.server.landingPage.dto.CrewWrapperForLandingPageDTO(
             c.id,
             c.profileImage,
             c.crewName,
@@ -39,12 +38,12 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         and c.interestingIndustry = :category
         order by e.mean
     """)
-    List<CrewWrapperDTOForDashboard> findActiveCrewsByCategoryWithEvaluation(
+    List<CrewWrapperForLandingPageDTO> findActiveCrewsByCategoryWithEvaluation(
             @Param("category") Industry category
     );
 
     @Query("""
-        select new com.conx.server.landingPage.dto.CrewWrapperDTOForDashboard(
+        select new com.conx.server.landingPage.dto.CrewWrapperForLandingPageDTO(
             c.id,
             c.profileImage,
             c.crewName,
@@ -59,5 +58,5 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
         order by e.mean
     """)
-    List<CrewWrapperDTOForDashboard> findAllActiveCrewsWithEvaluation();
+    List<CrewWrapperForLandingPageDTO> findAllActiveCrewsWithEvaluation();
 }

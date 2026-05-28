@@ -5,7 +5,7 @@ import com.conx.server.user.domain.types.Industry;
 
 import java.time.LocalDate;
 
-public record ProjectWrapperForDashBoardDTO(
+public record ProjectWrapperForLandingPageDTO(
     long projectId,
     String projectImageLink,
 
