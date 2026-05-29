@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Entity
 @Getter
-public class crewBookmark extends BaseEntity {
+public class CrewBookmark extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

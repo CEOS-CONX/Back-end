@@ -6,7 +6,9 @@ import com.conx.server.user.domain.types.Industry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface ProjectRepository extends JpaRepository<Project, String> {
@@ -33,6 +35,14 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
         order by p.views
     """)
-    List<ProjectWrapperForLandingPageDTO> findAllActiveProjectWithViews(
+    List<ProjectWrapperForLandingPageDTO> findAllActiveProjectWithViews();
+
+    @Query("""
+        select p from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and p.projectDeadline in :deadlines
+    """)
+    List<Project> findAllAboutDeadline(
+            @Param("deadlines") List<LocalDate> deadlines
     );
 }
