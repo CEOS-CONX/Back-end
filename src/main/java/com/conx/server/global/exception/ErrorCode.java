@@ -59,7 +59,25 @@ public enum ErrorCode {
     COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "CP001", "기업 정보를 찾을 수 없습니다."),
 
     //Error for Crew
-    CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR001", "크루 정보를 찾을 수 없습니다.");
+    CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR001", "크루 정보를 찾을 수 없습니다."),
+
+    //Error for Project
+    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "프로젝트 정보를 찾을 수 없습니다."),
+    INVALID_PROJECT_STATUS(HttpStatus.BAD_REQUEST, "P002", "현재 프로젝트 상태에서는 처리할 수 없습니다."),
+
+    //Error for Project Application
+    APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "AP001", "지원서를 찾을 수 없습니다."),
+    INVALID_APPLICATION_STATUS(HttpStatus.BAD_REQUEST, "AP002", "현재 지원서 상태에서는 처리할 수 없습니다."),
+
+    //Error for Partner Crew
+    PARTNER_CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR002", "선정된 파트너 크루를 찾을 수 없습니다."),
+
+    //Error for Project Submission
+    SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "제출된 결과물을 찾을 수 없습니다."),
+    INVALID_SUBMISSION_STATUS(HttpStatus.BAD_REQUEST, "S002", "현재 결과물 상태에서는 처리할 수 없습니다."),
+
+    //Error for Settlement
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ST001", "정산 정보를 찾을 수 없습니다.");
 
 
 
