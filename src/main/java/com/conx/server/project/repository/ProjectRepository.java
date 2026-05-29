@@ -81,4 +81,81 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+
+    @Query("""
+    select p
+    from Project p
+    join fetch p.company c
+    where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+    and (:keyword is null or p.name like concat('%', :keyword, '%')
+        or c.companyName like concat('%', :keyword, '%')
+        or p.brandName like concat('%', :keyword, '%'))
+    and (:category is null or c.industry = :category)
+    and (:projectType is null or p.projectType = :projectType)
+    and (:startDate is null or p.projectStartDate >= :startDate)
+    and (:endDate is null or p.projectDeadline <= :endDate)
+    order by p.id desc
+""")
+    List<Project> findBrowseProjectsOrderByRecent(
+            @Param("keyword") String keyword,
+            @Param("category") Industry category,
+            @Param("projectType") ProjectType projectType,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    select p
+    from Project p
+    join fetch p.company c
+    where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+    and (:keyword is null or p.name like concat('%', :keyword, '%')
+        or c.companyName like concat('%', :keyword, '%')
+        or p.brandName like concat('%', :keyword, '%'))
+    and (:category is null or c.industry = :category)
+    and (:projectType is null or p.projectType = :projectType)
+    and (:startDate is null or p.projectStartDate >= :startDate)
+    and (:endDate is null or p.projectDeadline <= :endDate)
+    order by p.views desc, p.id desc
+""")
+    List<Project> findBrowseProjectsOrderByPopular(
+            @Param("keyword") String keyword,
+            @Param("category") Industry category,
+            @Param("projectType") ProjectType projectType,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    select p
+    from Project p
+    join fetch p.company c
+    where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+    and (:keyword is null or p.name like concat('%', :keyword, '%')
+        or c.companyName like concat('%', :keyword, '%')
+        or p.brandName like concat('%', :keyword, '%'))
+    and (:category is null or c.industry = :category)
+    and (:projectType is null or p.projectType = :projectType)
+    and (:startDate is null or p.projectStartDate >= :startDate)
+    and (:endDate is null or p.projectDeadline <= :endDate)
+    order by p.views desc, p.id desc
+""")
+    List<Project> findBrowseProjectsOrderByRecommended(
+            @Param("keyword") String keyword,
+            @Param("category") Industry category,
+            @Param("projectType") ProjectType projectType,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+    select p
+    from Project p
+    join fetch p.company
+    where p.id = :projectId
+    and p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+""")
+    Optional<Project> findRecruitingProjectById(
+            @Param("projectId") Long projectId
+    );
 }

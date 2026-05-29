@@ -405,4 +405,8 @@ public class Project extends BaseEntity {
     public void approveResult() {
         this.status = ProjectStatus.ADJUSTING;
     }
+
+    public void increaseViews() {
+        this.views++;
+    }
 }
