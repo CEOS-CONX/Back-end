@@ -19,6 +19,8 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
 
     User findByEmailAndStatus(String email, UserStatus status);
 
+    Optional<Crew> findByIdAndStatus(Long id, UserStatus status);
+
     boolean existsByEmailAndStatus(String email, UserStatus status);
 
     @Query("""

@@ -53,7 +53,13 @@ public enum ErrorCode {
 
     //Error for Notification
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림이 없습니다."),
-    MISMATCH_NOTIFICATION_RECEIVER(HttpStatus.BAD_REQUEST, "N002", "삭제 요청 클라이언트가 알림 수신자가 아닙니다.");
+    MISMATCH_NOTIFICATION_RECEIVER(HttpStatus.BAD_REQUEST, "N002", "삭제 요청 클라이언트가 알림 수신자가 아닙니다."),
+
+    //Error for Company
+    COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "CP001", "기업 정보를 찾을 수 없습니다."),
+
+    //Error for Crew
+    CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR001", "크루 정보를 찾을 수 없습니다.");
 
 
 
