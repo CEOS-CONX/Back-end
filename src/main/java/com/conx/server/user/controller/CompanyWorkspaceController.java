@@ -17,9 +17,7 @@ import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymen
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +90,18 @@ public class CompanyWorkspaceController {
                 companyWorkspaceService.createProject(userDetails.getId(), request);
 
         return ApiResponse.success("새 프로젝트 등록에 성공했습니다.", response);
+    }
+
+    @PatchMapping("/projects/{projectId}")
+    public ApiResponse<CompanyProjectIdResponse> updateProject(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long projectId,
+            @RequestBody CompanyProjectRequest request
+    ) {
+        CompanyProjectIdResponse response =
+                companyWorkspaceService.updateProject(userDetails.getId(), projectId, request);
+
+        return ApiResponse.success("프로젝트 수정에 성공했습니다.", response);
     }
 
     @PostMapping("/project-drafts")

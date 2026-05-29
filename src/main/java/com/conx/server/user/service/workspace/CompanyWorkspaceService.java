@@ -176,6 +176,45 @@ public class CompanyWorkspaceService {
     }
 
     @Transactional
+    public CompanyProjectIdResponse updateProject(Long companyId, Long projectId, CompanyProjectRequest request) {
+        Company company = findActiveCompany(companyId);
+        Project project = findCompanyProject(company.getId(), projectId);
+
+        if (project.getStatus() == ProjectStatus.DRAFT) {
+            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
+        }
+
+        project.modifyProject(
+                getOrDefault(request.projectImage(), project.getProjectImage()),
+                getOrDefault(request.brandName(), project.getBrandName()),
+                getOrDefault(request.managerName(), project.getManagerName()),
+                getOrDefault(request.managerEmail(), project.getManagerEmail()),
+                getOrDefault(request.managerPhone(), project.getManagerPhone()),
+                getOrDefault(request.name(), project.getName()),
+                getOrDefault(request.objectives(), project.getObjectives()),
+                getOrDefault(request.projectType(), project.getProjectType()),
+                getOrDefault(request.requirement(), project.getRequirement()),
+                getOrDefault(request.projectExplanation(), project.getProjectExplanation()),
+                getOrDefault(request.resultForm(), project.getResultForm()),
+                getOrDefault(request.essentialSubmitPart(), project.getEssentialSubmitPart()),
+                getOrDefault(request.recruitDeadLine(), project.getRecruitDeadLine()),
+                getOrDefault(request.projectStartDate(), project.getProjectStartDate()),
+                getOrDefault(request.projectDeadline(), project.getProjectDeadline()),
+                getOrDefault(request.submitDeadline(), project.getSubmitDeadline()),
+                getOrDefault(request.crewType(), project.getCrewType()),
+                getOrDefault(request.competency(), project.getCompetency()),
+                getOrDefault(request.preferenceCondition(), project.getPreferenceCondition()),
+                getOrDefault(request.subsidy(), project.getSubsidy()),
+                getOrDefault(request.incentive(), project.isIncentive()),
+                getOrDefault(request.incentiveCondition(), project.getIncentiveCondition()),
+                getOrDefault(request.additionalFileLinks(), project.getAdditionalFileLinks()),
+                getOrDefault(request.referenceLink(), project.getReferenceLink())
+        );
+
+        return CompanyProjectIdResponse.from(project);
+    }
+
+    @Transactional
     public CompanyProjectIdResponse updateProjectDraft(Long companyId, Long draftId, CompanyProjectRequest request) {
         Company company = findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);

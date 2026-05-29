@@ -341,6 +341,58 @@ public class Project extends BaseEntity {
         this.referenceLink = referenceLink;
     }
 
+    public void modifyProject(
+            String projectImage,
+            String brandName,
+            String managerName,
+            String managerEmail,
+            String managerPhone,
+            String name,
+            String objectives,
+            ProjectType projectType,
+            String requirement,
+            String projectExplanation,
+            String resultForm,
+            String essentialSubmitPart,
+            LocalDate recruitDeadLine,
+            LocalDate projectStartDate,
+            LocalDate projectDeadline,
+            LocalDate submitDeadline,
+            CrewType crewType,
+            String competency,
+            String preferenceCondition,
+            long subsidy,
+            boolean incentive,
+            String incentiveCondition,
+            List<String> additionalFileLinks,
+            String referenceLink
+    ) {
+        this.projectImage = projectImage;
+        this.brandName = brandName;
+        this.managerName = managerName;
+        this.managerEmail = managerEmail;
+        this.managerPhone = managerPhone;
+        this.name = name;
+        this.objectives = objectives;
+        this.projectType = projectType;
+        this.requirement = requirement;
+        this.projectExplanation = projectExplanation;
+        this.resultForm = resultForm;
+        this.essentialSubmitPart = essentialSubmitPart;
+        this.recruitDeadLine = recruitDeadLine;
+        this.projectStartDate = projectStartDate;
+        this.projectDeadline = projectDeadline;
+        this.submitDeadline = submitDeadline;
+        this.crewType = crewType;
+        this.competency = competency;
+        this.preferenceCondition = preferenceCondition;
+        this.subsidy = subsidy;
+        this.incentive = incentive;
+        this.incentiveCondition = incentiveCondition;
+        this.additionalFileLinks = additionalFileLinks;
+        this.referenceLink = referenceLink;
+    }
+
     public void selectCrew(Crew crew) {
         this.selectedCrew = crew;
         this.status = ProjectStatus.PROGRESS;
