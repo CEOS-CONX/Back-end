@@ -4,6 +4,9 @@ package com.conx.server.project.domain.enums;
 //자유롭게 수정해주세요
 public enum ProjectStatus {
 
+    DRAFT,
+    //임시저장
+
     RECRUITING,
     //크루 모집 중
 
