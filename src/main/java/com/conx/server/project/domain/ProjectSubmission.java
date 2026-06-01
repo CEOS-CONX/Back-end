@@ -3,18 +3,8 @@ package com.conx.server.project.domain;
 import com.conx.server.global.BaseEntity;
 import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 import com.conx.server.user.domain.crew.Crew;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,13 +20,9 @@ public class ProjectSubmission extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "crew_id")
-    private Crew crew;
 
     private String content;
 
@@ -55,15 +41,12 @@ public class ProjectSubmission extends BaseEntity {
 
     private ProjectSubmission(
             Project project,
-            Crew crew,
             String content,
             List<String> fileLinks
     ) {
         this.project = project;
-        this.crew = crew;
         this.content = content;
         this.fileLinks = fileLinks;
-        this.status = ProjectSubmissionStatus.SUBMITTED;
     }
 
     public static ProjectSubmission create(
@@ -71,7 +54,37 @@ public class ProjectSubmission extends BaseEntity {
             String content,
             List<String> fileLinks
     ) {
-        return new ProjectSubmission(project, project.getSelectedCrew(), content, fileLinks);
+        ProjectSubmission submission = new ProjectSubmission(project, content, fileLinks);
+        submission.activateSubmission();
+        return submission;
+    }
+
+    public static ProjectSubmission createDraft(
+            Project project,
+            String content,
+            List<String> fileLinks
+    ) {
+        ProjectSubmission submission = new ProjectSubmission(project, content, fileLinks);
+        submission.draftSubmission();
+        return submission;
+    }
+
+    public void update(SubmitProjectResultRequestDTO req){
+        this.content = req.content();
+        this.fileLinks = req.fileLinks();
+    }
+
+    public Crew getCrew(){
+        return project.getSelectedCrew();
+    }
+
+    public void activateSubmission() {
+        this.status = ProjectSubmissionStatus.SUBMITTED;
+        this.revisionReason = null;
+    }
+
+    public void draftSubmission() {
+        this.status = ProjectSubmissionStatus.DRAFT;
     }
 
     public void requestRevision(String revisionReason) {
@@ -85,5 +98,10 @@ public class ProjectSubmission extends BaseEntity {
 
     public boolean isSubmitted() {
         return this.status == ProjectSubmissionStatus.SUBMITTED;
+    }
+
+    public boolean isEditable() {
+        return status == ProjectSubmissionStatus.DRAFT ||
+                status == ProjectSubmissionStatus.REVISION_REQUESTED;
     }
 }

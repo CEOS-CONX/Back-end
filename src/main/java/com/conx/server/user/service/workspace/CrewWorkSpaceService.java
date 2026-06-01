@@ -14,10 +14,11 @@ import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDTO;
 import com.conx.server.user.dto.crew.response.CrewProjectWorkSpaceDTO;
 import com.conx.server.user.dto.crew.response.ProjectSubmitConditionDTO;
-import com.conx.server.user.repository.CrewRepository;
 import com.conx.server.user.service.common.UserFinder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 public class CrewWorkSpaceService {
@@ -34,7 +35,9 @@ public class CrewWorkSpaceService {
 
     /**
      * 프로젝트 상세 워크플레이스 가져오기
+     * 이미 저장한 값이 있다면 그 정보를 가져옵니다.
      */
+    @Transactional(readOnly = true)
     public CrewProjectWorkSpaceDTO getCrewWorkSpace(CustomUserDetails customUserDetails, long projectId){
         Crew crew = userFinder.findActiveCrew(customUserDetails.getUserEmail());
 
@@ -47,7 +50,7 @@ public class CrewWorkSpaceService {
         }
 
         ProjectWrapperForCrewWorkSpaceDTO projectWrapper = ProjectWrapperForCrewWorkSpaceDTO.create(project);
-        ProjectSubmission submission = projectSubmissionRepository.findCrewProjectSubmissionDTOByProject(project)
+        ProjectSubmission submission = projectSubmissionRepository.findByProject(project)
                 .orElse(
                         null
                 );
@@ -73,10 +76,46 @@ public class CrewWorkSpaceService {
             throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
         }
 
-        ProjectSubmission projectSubmission = ProjectSubmission.create(
-                project, req.content(), req.fileLinks()
+        Optional<ProjectSubmission> submissionOptional = projectSubmissionRepository.findByProject(
+                project
         );
 
-        projectSubmissionRepository.save(projectSubmission);
+        if (submissionOptional.isPresent()){
+            ProjectSubmission submission = submissionOptional.get();
+            submission.update(req);
+            submission.activateSubmission();
+        } else {
+            ProjectSubmission submission = ProjectSubmission.create(project, req.content(), req.fileLinks());
+            projectSubmissionRepository.save(submission);
+        }
+
+        project.submitProjectResult();
+    }
+
+    /**
+     * 결과물 임시 저장하기
+     */
+    @Transactional
+    public void draftProjectResult(CustomUserDetails customUserDetails, long projectId,
+                                   SubmitProjectResultRequestDTO req){
+        Crew crew = userFinder.findActiveCrew(customUserDetails.getUserEmail());
+        Project project = projectRepository.findBySelectedCrewAndId(crew, projectId).orElseThrow(
+                () -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+        );
+
+        if (project.getStatus() != ProjectStatus.WAITING_RESULT){
+            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
+        }
+
+        Optional<ProjectSubmission> submissionOptional = projectSubmissionRepository.findByProject(
+                project
+        );
+
+        if (submissionOptional.isPresent()){
+            submissionOptional.get().update(req);
+        } else {
+            ProjectSubmission submission = ProjectSubmission.createDraft(project, req.content(), req.fileLinks());
+            projectSubmissionRepository.save(submission);
+        }
     }
 }

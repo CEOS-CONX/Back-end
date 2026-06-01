@@ -398,6 +398,10 @@ public class Project extends BaseEntity {
         this.status = ProjectStatus.PROGRESS;
     }
 
+    public void submitProjectResult() {
+        this.status = ProjectStatus.INSPECTION;
+    }
+
     public void requestRevision() {
         this.status = ProjectStatus.WAITING_RESULT;
     }
