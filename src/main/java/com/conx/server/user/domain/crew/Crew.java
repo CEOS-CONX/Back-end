@@ -57,10 +57,14 @@ public class Crew extends User {
 
     private String kakaotalkLink;
 
-    private int cumulative;
+    private int totalSubsidy;
 
     public static Crew create(String email, String password){
         return new Crew(email, password);
+    }
+
+    public void completeAdjustment(int subsidy){
+        totalSubsidy += subsidy;
     }
 
     public void activateCrew(String crewName, CrewType crewType,

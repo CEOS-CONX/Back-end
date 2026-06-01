@@ -26,7 +26,7 @@ public record CompanyBookmarkedCrewResponse(
                 crew.getCustomCrewType(),
                 crew.getInterestingIndustry(),
                 crew.getMemberAmount(),
-                crew.getCumulative()
+                crew.getTotalSubsidy()
         );
     }
 }

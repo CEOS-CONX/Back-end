@@ -5,6 +5,7 @@ import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.User;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
+import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.repository.CompanyRepository;
 import com.conx.server.user.repository.CrewRepository;
 import lombok.AccessLevel;
@@ -48,4 +49,19 @@ public class UserFinder {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
     }
+
+    @Transactional
+    public Crew findActiveCrew(String email){
+        return crewRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
+        );
+    }
+
+    @Transactional
+    public Company findActiveCompany(String email){
+        return companyRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND)
+        );
+    }
+
 }

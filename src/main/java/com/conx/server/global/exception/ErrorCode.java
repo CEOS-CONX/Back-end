@@ -80,7 +80,6 @@ public enum ErrorCode {
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ST001", "정산 정보를 찾을 수 없습니다.");
 
 
-
     private final HttpStatus status;
 
     private final String errorCode;

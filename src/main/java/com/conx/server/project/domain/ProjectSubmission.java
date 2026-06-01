@@ -68,11 +68,10 @@ public class ProjectSubmission extends BaseEntity {
 
     public static ProjectSubmission create(
             Project project,
-            Crew crew,
             String content,
             List<String> fileLinks
     ) {
-        return new ProjectSubmission(project, crew, content, fileLinks);
+        return new ProjectSubmission(project, project.getSelectedCrew(), content, fileLinks);
     }
 
     public void requestRevision(String revisionReason) {
