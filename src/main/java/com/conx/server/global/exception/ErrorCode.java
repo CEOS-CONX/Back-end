@@ -68,6 +68,11 @@ public enum ErrorCode {
     //Error for Project Application
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "AP001", "지원서를 찾을 수 없습니다."),
     INVALID_APPLICATION_STATUS(HttpStatus.BAD_REQUEST, "AP002", "현재 지원서 상태에서는 처리할 수 없습니다."),
+    APPLICATION_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "AP003", "이미 지원한 프로젝트입니다."),
+
+    //Error for Project Bookmark
+    PROJECT_BOOKMARK_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "PB001", "이미 북마크한 프로젝트입니다."),
+    PROJECT_BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "PB002", "프로젝트 북마크를 찾을 수 없습니다."),
 
     //Error for Partner Crew
     PARTNER_CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR002", "선정된 파트너 크루를 찾을 수 없습니다."),

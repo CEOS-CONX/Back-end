@@ -21,6 +21,10 @@ public interface ProjectApplicationRepository extends JpaRepository<ProjectAppli
 
     int countByCrew(Crew crew);
 
+    boolean existsByProjectIdAndCrewId(Long projectId, Long crewId);
+
+    Optional<ProjectApplication> findByProjectIdAndCrewId(Long projectId, Long crewId);
+
     @Query("""
         select new com.conx.server.project.dto.response.ProjectApplicationWrapperDTO(
             p.id, pa.id,
