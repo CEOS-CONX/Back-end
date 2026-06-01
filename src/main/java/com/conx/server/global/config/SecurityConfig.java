@@ -22,24 +22,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public JWTAuthenticationFilter jwtAuthenticationFilter(TokenProvider tokenProvider){
+    public JWTAuthenticationFilter jwtAuthenticationFilter(TokenProvider tokenProvider) {
         return new JWTAuthenticationFilter(tokenProvider);
     }
 
     @Bean
-    public JWTAuthenticationEntryPoint jwtAuthenticationEntryPoint(){
+    public JWTAuthenticationEntryPoint jwtAuthenticationEntryPoint() {
         return new JWTAuthenticationEntryPoint();
     }
 
     @Bean
-    public CustomAccessDeniedHandler customAccessDeniedHandler(){
+    public CustomAccessDeniedHandler customAccessDeniedHandler() {
         return new CustomAccessDeniedHandler();
     }
 
     @Bean
-    public SecurityFilterChain filterChain (HttpSecurity http,
-                                            JWTAuthenticationFilter jwtAuthenticationFilter,
-                                            CustomAccessDeniedHandler customAccessDeniedHandler, JWTAuthenticationEntryPoint jwtAuthenticationEntryPoint) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            JWTAuthenticationFilter jwtAuthenticationFilter,
+            CustomAccessDeniedHandler customAccessDeniedHandler,
+            JWTAuthenticationEntryPoint jwtAuthenticationEntryPoint
+    ) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -49,25 +52,64 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/h2-console/**",
                                 "/",
-                                "/css/**", "/images/**", "/favicon.ico/**",
+                                "/css/**",
+                                "/images/**",
+                                "/favicon.ico/**",
                                 "/api/v1/auth/**",
                                 "/api/v1/login/**"
                         ).permitAll()
+
                         .requestMatchers(HttpMethod.GET,
                                 "/health/**"
                         ).permitAll()
 
-                        .requestMatchers(
+                        // 비로그인 랜딩
+                        .requestMatchers(HttpMethod.GET,
                                 "/api/v1/landing"
-                        ).anonymous()
+                        ).permitAll()
+
+                        // 프로젝트/크루 목록만 비로그인 허용
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/projects",
+                                "/api/v1/crews"
+                        ).permitAll()
+
+                        // 기업 전용 API
                         .requestMatchers(
                                 "/api/v1/landing/company",
-                                "/api/v1/company/**"
+                                "/api/v1/companies/**"
                         ).hasRole("COMPANY")
+
+                        // 크루 전용 API
                         .requestMatchers(
                                 "/api/v1/landing/crew",
-                                "/api/v1/crew/**"
+                                "/api/v1/crews/me",
+                                "/api/v1/crews/dashboard",
+                                "/api/v1/crews/applications",
+                                "/api/v1/crews/applications/**",
+                                "/api/v1/crews/projects/**"
                         ).hasRole("CREW")
+
+                        // 크루 프로젝트 지원/북마크 API
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/projects/*/applications",
+                                "/api/v1/projects/*/bookmarks"
+                        ).hasRole("CREW")
+
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/v1/projects/*/applications/me",
+                                "/api/v1/projects/*/bookmarks"
+                        ).hasRole("CREW")
+
+                        // 프로젝트 상세는 로그인만 하면 접근 가능
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/projects/*"
+                        ).authenticated()
+
+                        // 크루 상세도 로그인만 하면 접근 가능
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/crews/*"
+                        ).authenticated()
 
                         .anyRequest().authenticated()
                 )

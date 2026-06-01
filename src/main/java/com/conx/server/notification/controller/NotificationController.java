@@ -31,7 +31,7 @@ public class NotificationController {
 
 
     //알림 읽음 처리
-    @PatchMapping("{notificationId}/read")
+    @PatchMapping("/{notificationId}/read")
     public ResponseEntity<ApiResponse<?>> readNotification(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable long notificationId
