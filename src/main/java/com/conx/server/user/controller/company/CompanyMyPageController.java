@@ -1,4 +1,4 @@
-package com.conx.server.user.controller.compnay;
+package com.conx.server.user.controller.company;
 
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.security.userDetails.CustomUserDetails;

@@ -99,4 +99,38 @@ public class Crew extends User {
         this.managerPhoneNumber = managerPhoneNumber;
         this.kakaotalkLink = kakaotalkLink;
     }
+
+    public void modifyMyPageProfile(
+            String profileImage,
+            String crewName,
+            CrewType crewType,
+            String customCrewType,
+            String managerName,
+            String job,
+            String crewSchool,
+            Integer memberAmount,
+            String crewIntroduction,
+            String additionalIntroduction,
+            List<String> advantages,
+            Industry interestingIndustry,
+            String snsLink,
+            String etcLink,
+            String kakaotalkLink
+    ) {
+        this.profileImage = profileImage;
+        this.crewName = crewName;
+        this.crewType = crewType;
+        this.customCrewType = customCrewType;
+        this.managerName = managerName;
+        this.job = job;
+        this.crewSchool = crewSchool;
+        this.memberAmount = memberAmount;
+        this.crewIntroduction = crewIntroduction;
+        this.additionalIntroduction = additionalIntroduction;
+        this.advantages = advantages;
+        this.interestingIndustry = interestingIndustry;
+        this.snsLink = snsLink;
+        this.etcLink = etcLink;
+        this.kakaotalkLink = kakaotalkLink;
+    }
 }

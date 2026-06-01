@@ -17,7 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/crew")
+@RequestMapping("/api/v1/crews")
 public class CrewWorkSpaceController {
 
     private final CrewDashboardService crewDashboardService;
@@ -47,12 +47,11 @@ public class CrewWorkSpaceController {
     @GetMapping("/applications")
     public ResponseEntity<ApiResponse<CrewApplicationStatusResponseDTO>> getCrewApplication(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestParam String projectStatus
-    ){
-
-        ApplicationBrowseFilter status = ApplicationBrowseFilter.valueOf(projectStatus);
+            @RequestParam String status
+    ) {
+        ApplicationBrowseFilter browseFilter = ApplicationBrowseFilter.valueOf(status);
         CrewApplicationStatusResponseDTO result = crewApplicationStatusService.getCrewApplicationStatus(
-                status,
+                browseFilter,
                 customUserDetails
         );
 
