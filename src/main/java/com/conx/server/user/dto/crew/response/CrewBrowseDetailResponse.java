@@ -42,7 +42,7 @@ public record CrewBrowseDetailResponse(
                 crew.getEtcLink(),
                 crew.getKakaotalkLink(),
                 point,
-                crew.getCumulative()
+                crew.getTotalSubsidy()
         );
     }
 }

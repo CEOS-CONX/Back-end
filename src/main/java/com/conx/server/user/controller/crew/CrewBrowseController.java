@@ -1,4 +1,4 @@
-package com.conx.server.user.controller;
+package com.conx.server.user.controller.crew;
 
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.user.domain.types.CrewType;

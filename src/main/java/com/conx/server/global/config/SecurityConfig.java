@@ -61,10 +61,12 @@ public class SecurityConfig {
                                 "/api/v1/landing"
                         ).anonymous()
                         .requestMatchers(
-                                "/api/v1/landing/company"
+                                "/api/v1/landing/company",
+                                "/api/v1/company/**"
                         ).hasRole("COMPANY")
                         .requestMatchers(
-                                "/api/v1/landing/crew"
+                                "/api/v1/landing/crew",
+                                "/api/v1/crew/**"
                         ).hasRole("CREW")
 
                         .anyRequest().authenticated()

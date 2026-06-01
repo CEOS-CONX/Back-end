@@ -3,8 +3,11 @@ package com.conx.server.project.repository;
 import com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
+import com.conx.server.project.dto.response.TodoProjectInfoDTO;
+import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.user.dto.crew.response.CrewProjectInfoDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,15 +18,9 @@ import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
-    List<Project> findAllByCompanyId(Long companyId);
-
-    List<Project> findAllByCompanyIdAndStatusNot(Long companyId, ProjectStatus status);
-
     Optional<Project> findByIdAndCompanyId(Long projectId, Long companyId);
 
     Optional<Project> findByIdAndCompanyIdAndStatus(Long projectId, Long companyId, ProjectStatus status);
-
-    long countByCompanyId(Long companyId);
 
     long countByCompanyIdAndStatusNot(Long companyId, ProjectStatus status);
 
@@ -158,4 +155,42 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findRecruitingProjectById(
             @Param("projectId") Long projectId
     );
+
+    @Query("""
+    select count(p)
+    from Project p
+    where p.status <> com.conx.server.project.domain.enums.ProjectStatus.DONE
+    and p.selectedCrew = :crew
+    """)
+    int countActiveProjectBySelectedCrew(
+            @Param("crew") Crew crew
+    );
+
+    @Query("""
+    select count(p)
+    from Project p
+    where p.status = com.conx.server.project.domain.enums.ProjectStatus.DONE
+    and p.selectedCrew = :crew
+    """)
+    int countFinishedProjectBySelectedCrew(
+            @Param("crew") Crew crew
+    );
+
+    @Query("""
+    select p
+    from Project p
+    where p.selectedCrew = :crew
+    and (
+        p.status = com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
+        or p.status = com.conx.server.project.domain.enums.ProjectStatus.ADJUSTING
+    )
+    order by p.projectDeadline
+    """)
+    List<Project> findByTodoProjectCrew(
+            @Param("crew") Crew crew
+    );
+
+    Optional<Project> findBySelectedCrewAndStatus(Crew selectedCrew, ProjectStatus status);
+
+    Optional<Project> findBySelectedCrewAndId(Crew selectedCrew, long id);
 }

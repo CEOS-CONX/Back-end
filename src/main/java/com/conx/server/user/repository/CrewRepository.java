@@ -19,7 +19,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
 
     Optional<Crew> findByEmail(String email);
 
-    User findByEmailAndStatus(String email, UserStatus status);
+    Optional<Crew> findByEmailAndStatus(String email, UserStatus status);
 
     Optional<Crew> findByIdAndStatus(Long id, UserStatus status);
 
@@ -34,7 +34,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
             c.interestingIndustry,
             c.crewType,
             e.mean,
-            c.cumulative
+            c.totalSubsidy
         )
         from Evaluation e
         join e.crew c
@@ -55,7 +55,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
             c.interestingIndustry,
             c.crewType,
             e.mean,
-            c.cumulative
+            c.totalSubsidy
         )
         from Evaluation e
         join e.crew c
@@ -73,7 +73,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         c.interestingIndustry,
         c.crewType,
         coalesce(e.mean, 0),
-        c.cumulative
+        c.totalSubsidy
     )
     from Crew c
     left join Evaluation e on e.crew = c
@@ -100,7 +100,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         c.interestingIndustry,
         c.crewType,
         coalesce(e.mean, 0),
-        c.cumulative
+        c.totalSubsidy
     )
     from Crew c
     left join Evaluation e on e.crew = c
@@ -110,7 +110,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         or c.crewSchool like concat('%', :keyword, '%'))
     and (:category is null or c.interestingIndustry = :category)
     and (:crewType is null or c.crewType = :crewType)
-    order by c.cumulative desc, c.id desc
+    order by c.totalSubsidy desc, c.id desc
 """)
     List<CrewBrowseResponse> findBrowseCrewsOrderByPopular(
             @Param("keyword") String keyword,
@@ -127,7 +127,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         c.interestingIndustry,
         c.crewType,
         coalesce(e.mean, 0),
-        c.cumulative
+        c.totalSubsidy
     )
     from Crew c
     left join Evaluation e on e.crew = c
@@ -154,7 +154,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         c.interestingIndustry,
         c.crewType,
         coalesce(e.mean, 0),
-        c.cumulative
+        c.totalSubsidy
     )
     from Crew c
     left join Evaluation e on e.crew = c
@@ -164,7 +164,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
         or c.crewSchool like concat('%', :keyword, '%'))
     and (:category is null or c.interestingIndustry = :category)
     and (:crewType is null or c.crewType = :crewType)
-    order by coalesce(e.mean, 0) desc, c.cumulative desc, c.id desc
+    order by coalesce(e.mean, 0) desc, c.totalSubsidy desc, c.id desc
 """)
     List<CrewBrowseResponse> findBrowseCrewsOrderByRecommended(
             @Param("keyword") String keyword,
@@ -178,4 +178,7 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
     where e.crew.id = :crewId
 """)
     Optional<Double> findEvaluationMeanByCrewId(@Param("crewId") Long crewId);
+
+    String email(String email);
+
 }
