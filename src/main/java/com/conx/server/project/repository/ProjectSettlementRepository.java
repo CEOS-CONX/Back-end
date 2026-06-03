@@ -19,4 +19,6 @@ public interface ProjectSettlementRepository extends JpaRepository<ProjectSettle
     );
 
     Optional<ProjectSettlement> findByIdAndCompanyId(Long settlementId, Long companyId);
+
+    Optional<ProjectSettlement> findByProjectIdAndCrewId(Long projectId, Long crewId);
 }

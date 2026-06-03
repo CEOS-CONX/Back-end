@@ -8,6 +8,8 @@ import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.dto.crew.response.CrewProjectInfoDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -193,4 +195,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findBySelectedCrewAndStatus(Crew selectedCrew, ProjectStatus status);
 
     Optional<Project> findBySelectedCrewAndId(Crew selectedCrew, long id);
+
+    Page<Project> findAllBySelectedCrewOrderByIdDesc(Crew selectedCrew, Pageable pageable);
+
+    Page<Project> findAllBySelectedCrewAndStatusOrderByIdDesc(
+            Crew selectedCrew,
+            ProjectStatus status,
+            Pageable pageable
+    );
 }
