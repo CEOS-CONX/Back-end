@@ -10,6 +10,8 @@ import com.conx.server.user.dto.crew.response.CrewBrowseResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -64,112 +66,168 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
     """)
     List<CrewWrapperForLandingPageDTO> findAllActiveCrewsWithEvaluation();
 
-    @Query("""
-    select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
-        c.id,
-        c.profileImage,
-        c.crewName,
-        c.crewIntroduction,
-        c.interestingIndustry,
-        c.crewType,
-        coalesce(e.mean, 0),
-        c.totalSubsidy
+    @Query(
+            value = """
+        select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
+            c.id,
+            c.profileImage,
+            c.crewName,
+            c.crewIntroduction,
+            c.interestingIndustry,
+            c.crewType,
+            coalesce(e.mean, 0),
+            c.totalSubsidy
+        )
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        order by c.id desc
+        """,
+            countQuery = """
+        select count(c)
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        """
     )
-    from Crew c
-    left join Evaluation e on e.crew = c
-    where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
-    and (:keyword is null or c.crewName like concat('%', :keyword, '%')
-        or c.crewIntroduction like concat('%', :keyword, '%')
-        or c.crewSchool like concat('%', :keyword, '%'))
-    and (:category is null or c.interestingIndustry = :category)
-    and (:crewType is null or c.crewType = :crewType)
-    order by c.id desc
-""")
-    List<CrewBrowseResponse> findBrowseCrewsOrderByRecent(
+    Page<CrewBrowseResponse> findBrowseCrewsOrderByRecent(
             @Param("keyword") String keyword,
             @Param("category") Industry category,
-            @Param("crewType") CrewType crewType
+            @Param("crewType") CrewType crewType,
+            Pageable pageable
     );
 
-    @Query("""
-    select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
-        c.id,
-        c.profileImage,
-        c.crewName,
-        c.crewIntroduction,
-        c.interestingIndustry,
-        c.crewType,
-        coalesce(e.mean, 0),
-        c.totalSubsidy
+    @Query(
+            value = """
+        select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
+            c.id,
+            c.profileImage,
+            c.crewName,
+            c.crewIntroduction,
+            c.interestingIndustry,
+            c.crewType,
+            coalesce(e.mean, 0),
+            c.totalSubsidy
+        )
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        order by c.totalSubsidy desc, c.id desc
+        """,
+            countQuery = """
+        select count(c)
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        """
     )
-    from Crew c
-    left join Evaluation e on e.crew = c
-    where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
-    and (:keyword is null or c.crewName like concat('%', :keyword, '%')
-        or c.crewIntroduction like concat('%', :keyword, '%')
-        or c.crewSchool like concat('%', :keyword, '%'))
-    and (:category is null or c.interestingIndustry = :category)
-    and (:crewType is null or c.crewType = :crewType)
-    order by c.totalSubsidy desc, c.id desc
-""")
-    List<CrewBrowseResponse> findBrowseCrewsOrderByPopular(
+    Page<CrewBrowseResponse> findBrowseCrewsOrderByPopular(
             @Param("keyword") String keyword,
             @Param("category") Industry category,
-            @Param("crewType") CrewType crewType
+            @Param("crewType") CrewType crewType,
+            Pageable pageable
     );
 
-    @Query("""
-    select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
-        c.id,
-        c.profileImage,
-        c.crewName,
-        c.crewIntroduction,
-        c.interestingIndustry,
-        c.crewType,
-        coalesce(e.mean, 0),
-        c.totalSubsidy
+    @Query(
+            value = """
+        select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
+            c.id,
+            c.profileImage,
+            c.crewName,
+            c.crewIntroduction,
+            c.interestingIndustry,
+            c.crewType,
+            coalesce(e.mean, 0),
+            c.totalSubsidy
+        )
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        order by coalesce(e.mean, 0) desc, c.id desc
+        """,
+            countQuery = """
+        select count(c)
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        """
     )
-    from Crew c
-    left join Evaluation e on e.crew = c
-    where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
-    and (:keyword is null or c.crewName like concat('%', :keyword, '%')
-        or c.crewIntroduction like concat('%', :keyword, '%')
-        or c.crewSchool like concat('%', :keyword, '%'))
-    and (:category is null or c.interestingIndustry = :category)
-    and (:crewType is null or c.crewType = :crewType)
-    order by coalesce(e.mean, 0) desc, c.id desc
-""")
-    List<CrewBrowseResponse> findBrowseCrewsOrderByRating(
+    Page<CrewBrowseResponse> findBrowseCrewsOrderByRating(
             @Param("keyword") String keyword,
             @Param("category") Industry category,
-            @Param("crewType") CrewType crewType
+            @Param("crewType") CrewType crewType,
+            Pageable pageable
     );
 
-    @Query("""
-    select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
-        c.id,
-        c.profileImage,
-        c.crewName,
-        c.crewIntroduction,
-        c.interestingIndustry,
-        c.crewType,
-        coalesce(e.mean, 0),
-        c.totalSubsidy
+    @Query(
+            value = """
+        select new com.conx.server.user.dto.crew.response.CrewBrowseResponse(
+            c.id,
+            c.profileImage,
+            c.crewName,
+            c.crewIntroduction,
+            c.interestingIndustry,
+            c.crewType,
+            coalesce(e.mean, 0),
+            c.totalSubsidy
+        )
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        order by coalesce(e.mean, 0) desc, c.totalSubsidy desc, c.id desc
+        """,
+            countQuery = """
+        select count(c)
+        from Crew c
+        left join Evaluation e on e.crew = c
+        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+        and (:keyword is null or c.crewName like concat('%', :keyword, '%')
+            or c.crewIntroduction like concat('%', :keyword, '%')
+            or c.crewSchool like concat('%', :keyword, '%'))
+        and (:category is null or c.interestingIndustry = :category)
+        and (:crewType is null or c.crewType = :crewType)
+        """
     )
-    from Crew c
-    left join Evaluation e on e.crew = c
-    where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
-    and (:keyword is null or c.crewName like concat('%', :keyword, '%')
-        or c.crewIntroduction like concat('%', :keyword, '%')
-        or c.crewSchool like concat('%', :keyword, '%'))
-    and (:category is null or c.interestingIndustry = :category)
-    and (:crewType is null or c.crewType = :crewType)
-    order by coalesce(e.mean, 0) desc, c.totalSubsidy desc, c.id desc
-""")
-    List<CrewBrowseResponse> findBrowseCrewsOrderByRecommended(
+    Page<CrewBrowseResponse> findBrowseCrewsOrderByRecommended(
             @Param("keyword") String keyword,
             @Param("category") Industry category,
-            @Param("crewType") CrewType crewType
+            @Param("crewType") CrewType crewType,
+            Pageable pageable
     );
 
     @Query("""

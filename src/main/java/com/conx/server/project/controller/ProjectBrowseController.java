@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,21 +26,25 @@ public class ProjectBrowseController {
     private final ProjectBrowseService projectBrowseService;
 
     @GetMapping
-    public ApiResponse<List<ProjectBrowseResponse>> getProjects(
+    public ApiResponse<Page<ProjectBrowseResponse>> getProjects(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Industry category,
             @RequestParam(required = false) ProjectType projectType,
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
-            @RequestParam(required = false) ProjectBrowseSort sort
+            @RequestParam(required = false) ProjectBrowseSort sort,
+            @RequestParam int page,
+            @RequestParam int size
     ) {
-        List<ProjectBrowseResponse> response = projectBrowseService.getProjects(
+        Page<ProjectBrowseResponse> response = projectBrowseService.getProjects(
                 keyword,
                 category,
                 projectType,
                 startDate,
                 endDate,
-                sort
+                sort,
+                page,
+                size
         );
 
         return ApiResponse.success("프로젝트 목록 조회에 성공했습니다.", response);

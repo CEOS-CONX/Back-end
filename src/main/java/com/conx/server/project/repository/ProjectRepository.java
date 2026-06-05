@@ -81,70 +81,118 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("endDate") LocalDate endDate
     );
 
-    @Query("""
-    select p
-    from Project p
-    join fetch p.company c
-    where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-    and (:keyword is null or p.name like concat('%', :keyword, '%')
-        or c.companyName like concat('%', :keyword, '%')
-        or p.brandName like concat('%', :keyword, '%'))
-    and (:category is null or c.industry = :category)
-    and (:projectType is null or p.projectType = :projectType)
-    and (:startDate is null or p.projectStartDate >= :startDate)
-    and (:endDate is null or p.projectDeadline <= :endDate)
-    order by p.id desc
-""")
-    List<Project> findBrowseProjectsOrderByRecent(
+    @Query(
+            value = """
+        select p
+        from Project p
+        join fetch p.company c
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and (:keyword is null or p.name like concat('%', :keyword, '%')
+            or c.companyName like concat('%', :keyword, '%')
+            or p.brandName like concat('%', :keyword, '%'))
+        and (:category is null or c.industry = :category)
+        and (:projectType is null or p.projectType = :projectType)
+        and (:startDate is null or p.projectStartDate >= :startDate)
+        and (:endDate is null or p.projectDeadline <= :endDate)
+        order by p.id desc
+        """,
+            countQuery = """
+        select count(p)
+        from Project p
+        join p.company c
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and (:keyword is null or p.name like concat('%', :keyword, '%')
+            or c.companyName like concat('%', :keyword, '%')
+            or p.brandName like concat('%', :keyword, '%'))
+        and (:category is null or c.industry = :category)
+        and (:projectType is null or p.projectType = :projectType)
+        and (:startDate is null or p.projectStartDate >= :startDate)
+        and (:endDate is null or p.projectDeadline <= :endDate)
+        """
+    )
+    Page<Project> findBrowseProjectsOrderByRecent(
             @Param("keyword") String keyword,
             @Param("category") Industry category,
             @Param("projectType") ProjectType projectType,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 
-    @Query("""
-    select p
-    from Project p
-    join fetch p.company c
-    where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-    and (:keyword is null or p.name like concat('%', :keyword, '%')
-        or c.companyName like concat('%', :keyword, '%')
-        or p.brandName like concat('%', :keyword, '%'))
-    and (:category is null or c.industry = :category)
-    and (:projectType is null or p.projectType = :projectType)
-    and (:startDate is null or p.projectStartDate >= :startDate)
-    and (:endDate is null or p.projectDeadline <= :endDate)
-    order by p.views desc, p.id desc
-""")
-    List<Project> findBrowseProjectsOrderByPopular(
+    @Query(
+            value = """
+        select p
+        from Project p
+        join fetch p.company c
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and (:keyword is null or p.name like concat('%', :keyword, '%')
+            or c.companyName like concat('%', :keyword, '%')
+            or p.brandName like concat('%', :keyword, '%'))
+        and (:category is null or c.industry = :category)
+        and (:projectType is null or p.projectType = :projectType)
+        and (:startDate is null or p.projectStartDate >= :startDate)
+        and (:endDate is null or p.projectDeadline <= :endDate)
+        order by p.views desc, p.id desc
+        """,
+            countQuery = """
+        select count(p)
+        from Project p
+        join p.company c
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and (:keyword is null or p.name like concat('%', :keyword, '%')
+            or c.companyName like concat('%', :keyword, '%')
+            or p.brandName like concat('%', :keyword, '%'))
+        and (:category is null or c.industry = :category)
+        and (:projectType is null or p.projectType = :projectType)
+        and (:startDate is null or p.projectStartDate >= :startDate)
+        and (:endDate is null or p.projectDeadline <= :endDate)
+        """
+    )
+    Page<Project> findBrowseProjectsOrderByPopular(
             @Param("keyword") String keyword,
             @Param("category") Industry category,
             @Param("projectType") ProjectType projectType,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 
-    @Query("""
-    select p
-    from Project p
-    join fetch p.company c
-    where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-    and (:keyword is null or p.name like concat('%', :keyword, '%')
-        or c.companyName like concat('%', :keyword, '%')
-        or p.brandName like concat('%', :keyword, '%'))
-    and (:category is null or c.industry = :category)
-    and (:projectType is null or p.projectType = :projectType)
-    and (:startDate is null or p.projectStartDate >= :startDate)
-    and (:endDate is null or p.projectDeadline <= :endDate)
-    order by p.views desc, p.id desc
-""")
-    List<Project> findBrowseProjectsOrderByRecommended(
+    @Query(
+            value = """
+        select p
+        from Project p
+        join fetch p.company c
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and (:keyword is null or p.name like concat('%', :keyword, '%')
+            or c.companyName like concat('%', :keyword, '%')
+            or p.brandName like concat('%', :keyword, '%'))
+        and (:category is null or c.industry = :category)
+        and (:projectType is null or p.projectType = :projectType)
+        and (:startDate is null or p.projectStartDate >= :startDate)
+        and (:endDate is null or p.projectDeadline <= :endDate)
+        order by p.views desc, p.id desc
+        """,
+            countQuery = """
+        select count(p)
+        from Project p
+        join p.company c
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and (:keyword is null or p.name like concat('%', :keyword, '%')
+            or c.companyName like concat('%', :keyword, '%')
+            or p.brandName like concat('%', :keyword, '%'))
+        and (:category is null or c.industry = :category)
+        and (:projectType is null or p.projectType = :projectType)
+        and (:startDate is null or p.projectStartDate >= :startDate)
+        and (:endDate is null or p.projectDeadline <= :endDate)
+        """
+    )
+    Page<Project> findBrowseProjectsOrderByRecommended(
             @Param("keyword") String keyword,
             @Param("category") Industry category,
             @Param("projectType") ProjectType projectType,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 
     @Query("""
