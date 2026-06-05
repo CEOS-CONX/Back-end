@@ -2,6 +2,7 @@ package com.conx.server.global.security.filter;
 
 import com.conx.server.global.exception.CustomAuthenticationException;
 import com.conx.server.global.exception.CustomException;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.global.token.TokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -36,7 +37,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
             Authentication authentication = tokenProvider.getAuthentication(accessToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
             filterChain.doFilter(req, res);
 
         } catch (CustomException ce){

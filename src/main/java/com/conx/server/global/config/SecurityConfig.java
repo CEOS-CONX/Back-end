@@ -66,7 +66,7 @@ public class SecurityConfig {
                         // 비로그인 랜딩
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/landing"
-                        ).permitAll()
+                        ).anonymous()
 
                         // 프로젝트/크루 목록만 비로그인 허용
                         .requestMatchers(HttpMethod.GET,

@@ -4,7 +4,7 @@ import com.conx.server.bookmark.domain.ProjectBookmark;
 import com.conx.server.notification.domain.Notification;
 import com.conx.server.notification.repository.NotificationRepository;
 import com.conx.server.project.domain.Project;
-import com.conx.server.user.domain.User;
+import com.conx.server.project.domain.ProjectApplication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,17 +18,31 @@ public class NotificationFacadeService {
         this.notificationRepository = notificationRepository;
     }
 
-    //메일 전송 후
-    public void saveNotificationAboutMail(User user, String mailSubject){
-        Notification notification = NotificationFactory.mail(user, mailSubject);
-        notificationRepository.save(notification);
+    //프로젝트 진행 기간 전(1일 / 3일 / 7일 전) 프로젝트 알림
+    public void saveNotificationAboutCloseToProjectDeadline(List<Project> projects){
+        List<Notification> notifications = projects.stream().map(NotificationFactory::closeToProjectDeadline).toList();
+        notificationRepository.saveAll(notifications);
     }
 
     //모집마감 1/3/7일 전
-    public void saveNotificationAboutCloseToEndProject(List<Project> projects){
-        List<Notification> notifications = projects.stream().map(NotificationFactory::closeToEnd).toList();
+    public void saveNotificationAboutCloseToEndOfRecruitingProject(List<Project> projects){
+        List<Notification> notifications = projects.stream().map(NotificationFactory::closeToEndOfRecruiting).toList();
         notificationRepository.saveAll(notifications);
     }
+
+    //최종결과물이 업로드되지 않은 채 기한만료
+    public void saveNotificationAboutLateForSubmitDeadlineProjects(List<Project> projects){
+        List<Notification> notifications = projects.stream().map(NotificationFactory::resultNotSubmittedAfterSubmitDeadline).toList();
+        notificationRepository.saveAll(notifications);
+    }
+
+    //최종결과물이 업로드되지 않은 프로젝트 마감 1/3/7일 전
+    public void saveNotificationAboutCloseToEndAndResultNotUploadedProject(List<Project> projects){
+        List<Notification> notifications = projects.stream().map(NotificationFactory::closeToEndAboutResultNotUploadedProject).toList();
+        notificationRepository.saveAll(notifications);
+    }
+
+
 
     //크루가 최종결과물을 업로드함
     public void saveNotificationAboutResultUploaded(Project project){
@@ -42,10 +56,16 @@ public class NotificationFacadeService {
         notificationRepository.save(notification);
     }
 
-    //북마크한 프로젝트가 곧 모집마감됨(크루용)
-    public void saveNotificationAboutBookmarkedProject(ProjectBookmark projectBookmark){
-        Notification notification = NotificationFactory.bookmarkedProjectCloseToEnd(projectBookmark);
+    //프로젝트에 선정되지 않음(크루용)
+    public void saveNotificationAboutRejectedProject(ProjectApplication projectApplication){
+        Notification notification = NotificationFactory.rejected(projectApplication);
         notificationRepository.save(notification);
+    }
+
+    //북마크한 프로젝트 모집마감 1/3/7일 전(크루용)
+    public void saveNotificationAboutBookmarkedProject(List<ProjectBookmark> bookmarkedProjects){
+        List<Notification> notifications = bookmarkedProjects.stream().map(NotificationFactory::bookmarkedProjectCloseToEnd).toList();
+        notificationRepository.saveAll(notifications);
     }
 
     //정산이 완료됨(크류용)

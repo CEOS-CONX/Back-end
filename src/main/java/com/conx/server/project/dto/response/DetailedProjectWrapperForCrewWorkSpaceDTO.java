@@ -5,14 +5,14 @@ import com.conx.server.project.domain.enums.ProjectStatus;
 
 import java.time.LocalDate;
 
-public record ProjectWrapperForCrewWorkSpaceDTO(
+public record DetailedProjectWrapperForCrewWorkSpaceDTO(
         long projectId,
         String brandName,
         LocalDate submitDeadline,
         ProjectStatus projectStatus
 ) {
-    public static ProjectWrapperForCrewWorkSpaceDTO create (Project project){
-        return new ProjectWrapperForCrewWorkSpaceDTO(
+    public static DetailedProjectWrapperForCrewWorkSpaceDTO create (Project project){
+        return new DetailedProjectWrapperForCrewWorkSpaceDTO(
                 project.getId(), project.getBrandName(), project.getSubmitDeadline(), project.getStatus()
         );
     }

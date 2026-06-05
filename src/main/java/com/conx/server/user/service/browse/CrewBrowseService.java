@@ -1,15 +1,15 @@
 package com.conx.server.user.service.browse;
 
-import com.conx.server.global.exception.CustomException;
-import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.crew.Crew;
+import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
-import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.dto.crew.CrewBrowseSort;
 import com.conx.server.user.dto.crew.response.CrewBrowseDetailResponse;
 import com.conx.server.user.dto.crew.response.CrewBrowseResponse;
 import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.repository.EvaluationRepository;
+import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CrewBrowseService {
 
+    private final UserFinder userFinder;
+    private final EvaluationRepository evaluationRepository;
     private final CrewRepository crewRepository;
 
     @Transactional(readOnly = true)
@@ -42,11 +44,8 @@ public class CrewBrowseService {
 
     @Transactional(readOnly = true)
     public CrewBrowseDetailResponse getCrewDetail(Long crewId) {
-        Crew crew = crewRepository.findByIdAndStatus(crewId, UserStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.CREW_NOT_FOUND));
-
-        double point = crewRepository.findEvaluationMeanByCrewId(crew.getId())
-                .orElse(0.0);
+        Crew crew = userFinder.findActiveCrew(crewId);
+        Double point = evaluationRepository.getMeanByCrew(crew).orElse(0.0);
 
         return CrewBrowseDetailResponse.from(crew, point);
     }
@@ -94,13 +93,5 @@ public class CrewBrowseService {
         }
 
         return keyword.trim();
-    }
-
-    private <T> T getOrDefault(T newValue, T defaultValue) {
-        if (newValue == null) {
-            return defaultValue;
-        }
-
-        return newValue;
     }
 }

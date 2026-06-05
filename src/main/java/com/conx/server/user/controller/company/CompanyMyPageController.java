@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.company;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.company.request.CompanyAccountUpdateRequest;
 import com.conx.server.user.dto.company.request.CompanyProfileUpdateRequest;
@@ -26,13 +27,14 @@ import java.util.List;
 public class CompanyMyPageController {
 
     private final CompanyMyPageService companyMyPageService;
+    private final ApiResponseFactory apiResponseFactory;
 
     @GetMapping("/profile")
     public ApiResponse<CompanyProfileResponse> getProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         CompanyProfileResponse response = companyMyPageService.getProfile(userDetails.getId());
-        return ApiResponse.success("기업 프로필 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("기업 프로필 조회에 성공했습니다.", response, userDetails);
     }
 
     @PatchMapping("/profile")
@@ -41,7 +43,7 @@ public class CompanyMyPageController {
             @RequestBody CompanyProfileUpdateRequest request
     ) {
         CompanyProfileResponse response = companyMyPageService.updateProfile(userDetails.getId(), request);
-        return ApiResponse.success("기업 프로필 수정에 성공했습니다.", response);
+        return apiResponseFactory.success("기업 프로필 수정에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/account")
@@ -49,7 +51,7 @@ public class CompanyMyPageController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         CompanyAccountResponse response = companyMyPageService.getAccount(userDetails.getId());
-        return ApiResponse.success("기업 계정 정보 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("기업 계정 정보 조회에 성공했습니다.", response, userDetails);
     }
 
     @PatchMapping("/account")
@@ -58,7 +60,7 @@ public class CompanyMyPageController {
             @RequestBody CompanyAccountUpdateRequest request
     ) {
         CompanyAccountResponse response = companyMyPageService.updateAccount(userDetails.getId(), request);
-        return ApiResponse.success("기업 계정 정보 수정에 성공했습니다.", response);
+        return apiResponseFactory.success("기업 계정 정보 수정에 성공했습니다.", response, userDetails);
     }
 
     @PatchMapping("/bookmarked-crews/{crewId}")
@@ -69,7 +71,7 @@ public class CompanyMyPageController {
         CompanyCrewBookmarkToggleResponse response =
                 companyMyPageService.toggleCrewBookmark(userDetails.getId(), crewId);
 
-        return ApiResponse.success("크루 북마크 상태가 변경되었습니다.", response);
+        return apiResponseFactory.success("크루 북마크 상태가 변경되었습니다.", response, userDetails);
     }
 
     @GetMapping("/bookmarked-crews")
@@ -79,6 +81,6 @@ public class CompanyMyPageController {
         List<CompanyBookmarkedCrewResponse> response =
                 companyMyPageService.getBookmarkedCrews(userDetails.getId());
 
-        return ApiResponse.success("북마크한 크루 목록 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("북마크한 크루 목록 조회에 성공했습니다.", response, userDetails);
     }
 }

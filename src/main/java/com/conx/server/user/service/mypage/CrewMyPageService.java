@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 
 @Service
 @RequiredArgsConstructor
@@ -64,13 +65,5 @@ public class CrewMyPageService {
     private Crew findActiveCrew(Long crewId) {
         return crewRepository.findByIdAndStatus(crewId, UserStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorCode.CREW_NOT_FOUND));
-    }
-
-    private <T> T getOrDefault(T newValue, T currentValue) {
-        if (newValue == null) {
-            return currentValue;
-        }
-
-        return newValue;
     }
 }

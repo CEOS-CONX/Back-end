@@ -18,11 +18,7 @@ public class CompanyLandingPageService {
     }
 
     @Transactional(readOnly = true)
-    public List<CrewWrapperForLandingPageDTO> landing(IndustryForLandingPage category){
-        if (category.equals(IndustryForLandingPage.ALL)){
-            return crewRepository.findAllActiveCrewsWithEvaluation();
-        } else {
-            return crewRepository.findActiveCrewsByCategoryWithEvaluation(category.toIndustry());
-        }
+    public List<CrewWrapperForLandingPageDTO> landing(){
+        return crewRepository.findAllActiveCrewsWithEvaluation();
     }
 }

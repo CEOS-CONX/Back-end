@@ -37,30 +37,9 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
             c.totalSubsidy
         )
         from Evaluation e
-        join e.crew c
+        left join e.crew c
         where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
-        and c.interestingIndustry = :category
-        order by e.mean
-    """)
-    List<CrewWrapperForLandingPageDTO> findActiveCrewsByCategoryWithEvaluation(
-            @Param("category") Industry category
-    );
-
-    @Query("""
-        select new com.conx.server.landingPage.dto.CrewWrapperForLandingPageDTO(
-            c.id,
-            c.profileImage,
-            c.crewName,
-            c.crewIntroduction,
-            c.interestingIndustry,
-            c.crewType,
-            e.mean,
-            c.totalSubsidy
-        )
-        from Evaluation e
-        join e.crew c
-        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
-        order by e.mean
+        order by e.mean, c.totalProjectCount, c.crewName
     """)
     List<CrewWrapperForLandingPageDTO> findAllActiveCrewsWithEvaluation();
 
@@ -178,7 +157,4 @@ public interface CrewRepository extends JpaRepository<Crew, Long> {
     where e.crew.id = :crewId
 """)
     Optional<Double> findEvaluationMeanByCrewId(@Param("crewId") Long crewId);
-
-    String email(String email);
-
 }

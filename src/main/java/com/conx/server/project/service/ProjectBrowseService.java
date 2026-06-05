@@ -1,5 +1,6 @@
 package com.conx.server.project.service;
 
+import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.project.domain.Project;
@@ -100,13 +101,5 @@ public class ProjectBrowseService {
         }
 
         return keyword.trim();
-    }
-
-    private <T> T getOrDefault(T newValue, T defaultValue) {
-        if (newValue == null) {
-            return defaultValue;
-        }
-
-        return newValue;
     }
 }

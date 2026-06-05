@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.common;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.token.TokenProvider;
 import com.conx.server.user.dto.emailKey.*;
 import com.conx.server.user.dto.signupRequest.SignupRequestDTO;
@@ -25,6 +26,7 @@ public class SignupController {
     private final CrewSignupService crewSignupService;
     private final LoginService loginService;
     private final TokenProvider tokenProvider;
+    private final ApiResponseFactory apiResponseFactory;
 
     /**
      * 인증번호 발송을 요청합니다.
@@ -32,11 +34,11 @@ public class SignupController {
      * @return api 명세서 참고
      */
     @PostMapping("/email/send")
-    public ResponseEntity<ApiResponse<?>> requestEmailVerification(
+    public ApiResponse<?> requestEmailVerification(
             @RequestBody SendingVerificationKeyRequestDTO req
     ){
         sendingVerificationNumberService.sendCorrectKey(req.email());
-        return ResponseEntity.ok(ApiResponse.success());
+        return apiResponseFactory.success("인증번호 발송에 성공했습니다.", null);
     }
 
     /**
@@ -45,11 +47,11 @@ public class SignupController {
      * @return api 명세서 참고
      */
     @PostMapping("/email/verify")
-    public ResponseEntity<ApiResponse<?>> checkEmailVerification(
+    public ApiResponse<?> checkEmailVerification(
             @RequestBody CheckingVerificationKeyRequestDTO req
     ){
         sendingVerificationNumberService.checkCorrectKey(req);
-        return ResponseEntity.ok(ApiResponse.success());
+        return apiResponseFactory.success("인증번호 인증에 성공했습니다.", null);
     }
 
 
@@ -59,11 +61,11 @@ public class SignupController {
      * @return API명세서 반환예시 참고
      */
     @PostMapping(value = "/userinfo/company")
-    public ResponseEntity<ApiResponse<?>> setCompany(
+    public ApiResponse<?> setCompany(
             @RequestBody SignupRequestDTO req
     ){
         companySignupService.userSetting(req);
-        return ResponseEntity.ok(ApiResponse.success());
+        return apiResponseFactory.success("초기 사용자 정보 입력에 성공했습니다.(기업)", null);
     }
 
     /**
@@ -72,13 +74,12 @@ public class SignupController {
      * @return api 명세서 참고
      */
     @PostMapping("/usersetting/company")
-    public ResponseEntity<ApiResponse<?>> updateCompany(
+    public ApiResponse<?> updateCompany(
             @Valid @RequestBody UpdateCompanyUserDTO req
     ){
         companySignupService.update(req);
-        return ResponseEntity.ok(ApiResponse.success());
+        return apiResponseFactory.success("사용자 정보 추가 입력에 성공했습니다.(기업)", null);
     }
-
 
 
     /**
@@ -87,11 +88,11 @@ public class SignupController {
      * @return API명세서 반환예시 참고
      */
     @PostMapping(value = "/userinfo/crew")
-    public ResponseEntity<ApiResponse<?>> setCrew(
+    public ApiResponse<?> setCrew(
             @RequestBody SignupRequestDTO req
     ){
         crewSignupService.userSetting(req);
-        return ResponseEntity.ok(ApiResponse.success());
+        return apiResponseFactory.success("초기 사용자 정보 입력에 성공했습니다.(크루)", null);
     }
 
     /**
@@ -101,10 +102,10 @@ public class SignupController {
      * @return api 명세서 참고
      */
     @PostMapping("/usersetting/crew")
-    public ResponseEntity<ApiResponse<?>> updateCrew(
+    public ApiResponse<?> updateCrew(
             @RequestBody UpdateCrewUserDTO req
     ){
         crewSignupService.update(req);
-        return ResponseEntity.ok(ApiResponse.success());
+        return apiResponseFactory.success("사용자 정보 추가 입력에 성공했습니다.(크루)", null);
     }
 }

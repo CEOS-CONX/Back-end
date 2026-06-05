@@ -1,11 +1,14 @@
 package com.conx.server.global.token;
 
+import com.conx.server.global.exception.CustomAuthenticationException;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
+import com.conx.server.user.domain.User;
+import com.conx.server.user.dto.UserRole;
+import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.service.common.UserFinder;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
@@ -18,25 +21,25 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class TokenProvider implements InitializingBean {
+    private final UserFinder userFinder;
     private Key key;
-
-    private final UserDetailsService userDetailsService;
 
     @Value("${jwt.secret.key}")
     private String jwtSecretKey;
 
-    public TokenProvider(UserDetailsService userDetailsService){
-        this.userDetailsService = userDetailsService;
+    public TokenProvider(UserFinder userFinder){
+        this.userFinder = userFinder;
     }
 
     @Override
@@ -68,7 +71,7 @@ public class TokenProvider implements InitializingBean {
         return null;
     }
 
-    public String createToken(String email, Authentication authentication, JWTType type){
+    public String createToken(long userId, Authentication authentication, JWTType type){
         String authorities =
                 authentication.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
@@ -77,7 +80,7 @@ public class TokenProvider implements InitializingBean {
         int expiration = type.getValidTime() * 1000;
 
         return Jwts.builder()
-                .subject(email)
+                .subject(String.valueOf(userId))
                 .expiration(new Date(new Date().getTime() + expiration))
                 .claim("auth", authorities)
                 .issuedAt(new Date())
@@ -85,14 +88,19 @@ public class TokenProvider implements InitializingBean {
                 .compact();
     }
 
-    public String getEmailFromToken(String token) {
-        try {
+    public long getIdFromToken(String token) {
+        Claims claims = getClaim(token);
+        return Long.parseLong(claims.getSubject());
+    }
+
+
+    private Claims getClaim(String token){
+        try{
             return Jwts.parser()
                     .verifyWith((SecretKey) key)
                     .build()
                     .parseSignedClaims(token)
-                    .getPayload()
-                    .getSubject();
+                    .getPayload();
         } catch (ExpiredJwtException eje){
             //토큰만료
             //TODO: 로그
@@ -110,6 +118,13 @@ public class TokenProvider implements InitializingBean {
             //TODO: 로그
             throw new CustomException(ErrorCode.INTERNAL_TOKEN_ERROR);
         }
+    }
+
+    public List<String> getRoleFromToken(String token) {
+        Claims claims = getClaim(token);
+        String auth = claims.get("auth", String.class);
+
+        return Arrays.asList(auth.split(","));
     }
 
     private void setTokenInHeader(String token, HttpServletResponse res){
@@ -138,8 +153,27 @@ public class TokenProvider implements InitializingBean {
     }
 
     public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(getEmailFromToken(token));
+        long userId = getIdFromToken(token);
+        List<String> roles = getRoleFromToken(token);
+        User user;
 
+        boolean isCrew = roles.contains(UserRole.CREW.getRole());
+        boolean isCompany = roles.contains(UserRole.COMPANY.getRole());
+
+        if (isCrew == isCompany) {
+            throw new CustomAuthenticationException(ErrorCode.INVALID_USER_TYPE);
+        }
+
+
+        if (roles.contains(UserRole.CREW.getRole())){
+            user = userFinder.findActiveCrew(userId);
+        } else if(roles.contains(UserRole.COMPANY.getRole())) {
+            user = userFinder.findActiveCompany(userId);
+        } else {
+            throw new CustomAuthenticationException(ErrorCode.INVALID_USER_TYPE);
+        }
+
+        UserDetails userDetails = CustomUserDetails.of(user);
         return new UsernamePasswordAuthenticationToken(
                 userDetails, token, userDetails.getAuthorities());
     }

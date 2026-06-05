@@ -3,11 +3,9 @@ package com.conx.server.project.repository;
 import com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
-import com.conx.server.project.dto.response.TodoProjectInfoDTO;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.project.domain.enums.ProjectType;
-import com.conx.server.user.dto.crew.response.CrewProjectInfoDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,20 +31,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         )
         from Project p
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and p.company.industry = :category
-        order by p.views
-    """)
-    List<ProjectWrapperForLandingPageDTO> findActiveProjectByCategoryWithViews(
-            @Param("category") Industry category
-    );
-
-    @Query("""
-        select new com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO(
-            p.id, p.projectImage, p.name, p.company.companyName, p.company.industry, p.projectType,
-            p.projectStartDate, p.projectDeadline
-        )
-        from Project p
-        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
         order by p.views
     """)
     List<ProjectWrapperForLandingPageDTO> findAllActiveProjectWithViews();
@@ -56,7 +40,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
         and p.projectDeadline in :deadlines
     """)
-    List<Project> findAllAboutDeadline(
+    List<Project> findAllAboutRecruitingDeadline(
             @Param("deadlines") List<LocalDate> deadlines
     );
 
@@ -193,4 +177,47 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findBySelectedCrewAndStatus(Crew selectedCrew, ProjectStatus status);
 
     Optional<Project> findBySelectedCrewAndId(Crew selectedCrew, long id);
+
+    @Query("""
+        select p
+        from Project p
+        where p.recruitDeadLine = :now
+    """)
+    List<Project> findExpireProject(
+            @Param("now") LocalDate now
+    );
+
+    @Query("""
+        select p
+        from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
+        and p.submitDeadline in :deadline
+    """)
+    List<Project> findAllAboutSubmitDeadlineProject(
+            @Param("deadline") List<LocalDate> deadline
+    );
+
+    @Query("""
+        select p
+        from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.PROGRESS
+        and p.projectDeadline in :deadline
+    """)
+    List<Project> findAllAboutProjectDeadlineProject(
+            @Param("deadline") List<LocalDate> deadline
+    );
+
+    List<Project> findAllByProjectDeadlineAndStatus(LocalDate projectDeadline, ProjectStatus status);
+
+    @Query("""
+        select p
+        from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
+        and p.submitDeadline > :now
+    """)
+    List<Project> findAllAboutLateProject(
+            @Param("now") LocalDate now
+    );
+
+    List<Project> findAllBySelectedCrew(Crew selectedCrew);
 }

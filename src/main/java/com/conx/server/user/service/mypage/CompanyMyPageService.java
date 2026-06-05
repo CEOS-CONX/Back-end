@@ -2,6 +2,7 @@ package com.conx.server.user.service.mypage;
 
 import com.conx.server.bookmark.domain.CrewBookmark;
 import com.conx.server.bookmark.repository.CrewBookmarkRepository;
+import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.company.Company;
@@ -13,8 +14,8 @@ import com.conx.server.user.dto.company.response.CompanyAccountResponse;
 import com.conx.server.user.dto.company.response.CompanyBookmarkedCrewResponse;
 import com.conx.server.user.dto.company.response.CompanyCrewBookmarkToggleResponse;
 import com.conx.server.user.dto.company.response.CompanyProfileResponse;
-import com.conx.server.user.repository.CompanyRepository;
 import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,19 +26,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CompanyMyPageService {
 
-    private final CompanyRepository companyRepository;
     private final CrewRepository crewRepository;
     private final CrewBookmarkRepository crewBookmarkRepository;
+    private final UserFinder userFinder;
 
     @Transactional(readOnly = true)
     public CompanyProfileResponse getProfile(Long companyId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         return CompanyProfileResponse.from(company);
     }
 
     @Transactional
     public CompanyProfileResponse updateProfile(Long companyId, CompanyProfileUpdateRequest request) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
+
 
         company.modifyProfile(
                 getOrDefault(request.companyName(), company.getCompanyName()),
@@ -55,13 +57,13 @@ public class CompanyMyPageService {
 
     @Transactional(readOnly = true)
     public CompanyAccountResponse getAccount(Long companyId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         return CompanyAccountResponse.from(company);
     }
 
     @Transactional
     public CompanyAccountResponse updateAccount(Long companyId, CompanyAccountUpdateRequest request) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
 
         company.modifyAccount(
                 getOrDefault(request.companyName(), company.getCompanyName()),
@@ -75,7 +77,7 @@ public class CompanyMyPageService {
 
     @Transactional
     public CompanyCrewBookmarkToggleResponse toggleCrewBookmark(Long companyId, Long crewId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Crew crew = findActiveCrew(crewId);
 
         return crewBookmarkRepository.findByCompanyIdAndCrewId(company.getId(), crew.getId())
@@ -92,7 +94,7 @@ public class CompanyMyPageService {
 
     @Transactional(readOnly = true)
     public List<CompanyBookmarkedCrewResponse> getBookmarkedCrews(Long companyId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
 
         return crewBookmarkRepository.findAllByCompanyId(company.getId())
                 .stream()
@@ -101,20 +103,8 @@ public class CompanyMyPageService {
                 .toList();
     }
 
-    private Company findActiveCompany(Long companyId) {
-        return companyRepository.findByIdAndStatus(companyId, UserStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
-    }
-
     private Crew findActiveCrew(Long crewId) {
         return crewRepository.findByIdAndStatus(crewId, UserStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorCode.CREW_NOT_FOUND));
-    }
-
-    private <T> T getOrDefault(T newValue, T currentValue) {
-        if (newValue == null) {
-            return currentValue;
-        }
-        return newValue;
     }
 }

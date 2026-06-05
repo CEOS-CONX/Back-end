@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.common;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.token.TokenProvider;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
 import com.conx.server.user.dto.login.response.LoginResponseDTO;
@@ -21,6 +22,7 @@ public class LoginController {
 
     private final LoginService loginService;
     private final TokenProvider tokenProvider;
+    private final ApiResponseFactory apiResponseFactory;
 
     /**
      * 로그인 API입니다.
@@ -28,14 +30,14 @@ public class LoginController {
      * @param res HttpServletResponse
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<LoginResponseDTO>> login(
+    public ApiResponse<LoginResponseDTO> login(
             @RequestBody LoginRequestDTO req,
             HttpServletResponse res
     ){
         LoginServiceResponseDTO responseDTO = loginService.login(req);
         tokenProvider.setToken(responseDTO.accessToken(), responseDTO.refreshToken(), res);
 
-        return ResponseEntity.ok(ApiResponse.success(LoginResponseDTO.create(responseDTO)));
+        return apiResponseFactory.success("로그인에 성공했습니다.", LoginResponseDTO.create(responseDTO), null);
     }
 
     /**
@@ -44,13 +46,13 @@ public class LoginController {
      * @param res HttpServletResponse
      */
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<?>> reIssueAccessToken(HttpServletRequest req,
+    public ApiResponse<?> reIssueAccessToken(HttpServletRequest req,
                                                              HttpServletResponse res){
         TokenReissueResponseDTO responseDTO = loginService.reIssueToken(tokenProvider.getTokenFromCookie(req));
         tokenProvider.setToken(responseDTO.accessToken(),
                 responseDTO.refreshToken(),
                 res);
 
-        return ResponseEntity.ok(ApiResponse.success());
+        return apiResponseFactory.success(null);
     }
 }

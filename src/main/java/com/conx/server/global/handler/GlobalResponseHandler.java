@@ -1,6 +1,7 @@
 package com.conx.server.global.handler;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -14,6 +15,12 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 @RestControllerAdvice(basePackages = "com.conx.server")
 public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
+
+    private final ApiResponseFactory apiResponseFactory;
+
+    public GlobalResponseHandler(ApiResponseFactory apiResponseFactory) {
+        this.apiResponseFactory = apiResponseFactory;
+    }
 
     @Override
     public boolean supports(
@@ -42,7 +49,7 @@ public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
             return body;
         }
 
-        return ApiResponse.success(body);
+        return apiResponseFactory.success(body, null);
     }
 
     private boolean isExcludedPath(String path) {

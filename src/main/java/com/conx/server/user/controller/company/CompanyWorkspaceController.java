@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.company;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectType;
@@ -43,6 +44,7 @@ import java.util.List;
 public class CompanyWorkspaceController {
 
     private final CompanyWorkspaceService companyWorkspaceService;
+    private final ApiResponseFactory apiResponseFactory;
 
     @GetMapping("/workspace/dashboard")
     public ApiResponse<CompanyWorkspaceDashboardResponse> getDashboard(
@@ -51,7 +53,7 @@ public class CompanyWorkspaceController {
         CompanyWorkspaceDashboardResponse response =
                 companyWorkspaceService.getDashboard(userDetails.getId());
 
-        return ApiResponse.success("기업 워크스페이스 대시보드 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("기업 워크스페이스 대시보드 조회에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/projects")
@@ -67,13 +69,12 @@ public class CompanyWorkspaceController {
                 companyWorkspaceService.getProjects(
                         userDetails.getId(),
                         keyword,
-                        category,
                         projectType,
                         startDate,
                         endDate
                 );
 
-        return ApiResponse.success("기업 프로젝트 목록 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("기업 프로젝트 목록 조회에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/projects/{projectId}")
@@ -84,7 +85,7 @@ public class CompanyWorkspaceController {
         CompanyWorkspaceProjectDetailResponse response =
                 companyWorkspaceService.getProjectDetail(userDetails.getId(), projectId);
 
-        return ApiResponse.success("기업 프로젝트 상세 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("기업 프로젝트 상세 조회에 성공했습니다.", response, userDetails);
     }
 
     @PostMapping("/projects")
@@ -95,7 +96,7 @@ public class CompanyWorkspaceController {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.createProject(userDetails.getId(), request);
 
-        return ApiResponse.success("새 프로젝트 등록에 성공했습니다.", response);
+        return apiResponseFactory.success("새 프로젝트 등록에 성공했습니다.", response, userDetails);
     }
 
     @PatchMapping("/projects/{projectId}")
@@ -107,7 +108,7 @@ public class CompanyWorkspaceController {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.updateProject(userDetails.getId(), projectId, request);
 
-        return ApiResponse.success("프로젝트 수정에 성공했습니다.", response);
+        return apiResponseFactory.success("프로젝트 수정에 성공했습니다.", response, userDetails);
     }
 
     @DeleteMapping("/projects/{projectId}")
@@ -117,7 +118,7 @@ public class CompanyWorkspaceController {
     ) {
         companyWorkspaceService.deleteProject(userDetails.getId(), projectId);
 
-        return ApiResponse.success("프로젝트 삭제에 성공했습니다.");
+        return apiResponseFactory.success("프로젝트 삭제에 성공했습니다.", userDetails);
     }
 
     @PostMapping("/project-drafts")
@@ -128,7 +129,7 @@ public class CompanyWorkspaceController {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.createProjectDraft(userDetails.getId(), request);
 
-        return ApiResponse.success("프로젝트 임시저장에 성공했습니다.", response);
+        return apiResponseFactory.success("프로젝트 임시저장에 성공했습니다.", response, userDetails);
     }
 
     @PatchMapping("/project-drafts/{draftId}")
@@ -140,7 +141,7 @@ public class CompanyWorkspaceController {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.updateProjectDraft(userDetails.getId(), draftId, request);
 
-        return ApiResponse.success("임시저장 프로젝트 수정에 성공했습니다.", response);
+        return apiResponseFactory.success("임시저장 프로젝트 수정에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/project-drafts/{draftId}")
@@ -151,7 +152,7 @@ public class CompanyWorkspaceController {
         CompanyProjectDraftResponse response =
                 companyWorkspaceService.getProjectDraft(userDetails.getId(), draftId);
 
-        return ApiResponse.success("임시저장 프로젝트 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("임시저장 프로젝트 조회에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/projects/{projectId}/review")
@@ -162,7 +163,7 @@ public class CompanyWorkspaceController {
         CompanyWorkspaceProjectDetailResponse response =
                 companyWorkspaceService.getProjectReviewDetail(userDetails.getId(), projectId);
 
-        return ApiResponse.success("검수할 프로젝트 상세 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("검수할 프로젝트 상세 조회에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/projects/{projectId}/applications")
@@ -173,7 +174,7 @@ public class CompanyWorkspaceController {
         List<CompanyProjectApplicationResponse> response =
                 companyWorkspaceService.getProjectApplications(userDetails.getId(), projectId);
 
-        return ApiResponse.success("프로젝트 지원서 목록 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("프로젝트 지원서 목록 조회에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/projects/{projectId}/applications/{applicationId}")
@@ -189,7 +190,7 @@ public class CompanyWorkspaceController {
                         applicationId
                 );
 
-        return ApiResponse.success("프로젝트 지원서 상세 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("프로젝트 지원서 상세 조회에 성공했습니다.", response, userDetails);
     }
 
     @PostMapping("/projects/{projectId}/applications/{applicationId}/select")
@@ -205,7 +206,7 @@ public class CompanyWorkspaceController {
                         applicationId
                 );
 
-        return ApiResponse.success("프로젝트 참여 크루 선정에 성공했습니다.", response);
+        return apiResponseFactory.success("프로젝트 참여 크루 선정에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/projects/{projectId}/partner-crew")
@@ -216,7 +217,7 @@ public class CompanyWorkspaceController {
         CompanyPartnerCrewResponse response =
                 companyWorkspaceService.getPartnerCrew(userDetails.getId(), projectId);
 
-        return ApiResponse.success("파트너 크루 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("파트너 크루 조회에 성공했습니다.", response, userDetails);
     }
 
     @PostMapping("/projects/{projectId}/revision-requests")
@@ -232,7 +233,7 @@ public class CompanyWorkspaceController {
                         request
                 );
 
-        return ApiResponse.success("프로젝트 결과물 수정 요청에 성공했습니다.", response);
+        return apiResponseFactory.success("프로젝트 결과물 수정 요청에 성공했습니다.", response, userDetails);
     }
 
     @PostMapping("/projects/{projectId}/approval")
@@ -243,7 +244,7 @@ public class CompanyWorkspaceController {
         CompanyProjectApprovalResponse response =
                 companyWorkspaceService.approveProject(userDetails.getId(), projectId);
 
-        return ApiResponse.success("프로젝트 결과물 승인에 성공했습니다.", response);
+        return apiResponseFactory.success("프로젝트 결과물 승인에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/settlements")
@@ -254,7 +255,7 @@ public class CompanyWorkspaceController {
         List<CompanySettlementResponse> response =
                 companyWorkspaceService.getSettlements(userDetails.getId(), status);
 
-        return ApiResponse.success("정산 프로젝트 목록 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("정산 프로젝트 목록 조회에 성공했습니다.", response, userDetails);
     }
 
     @PatchMapping("/settlements/{settlementId}/expected-payment-date")
@@ -270,6 +271,6 @@ public class CompanyWorkspaceController {
                         request
                 );
 
-        return ApiResponse.success("예상 지급 날짜 설정에 성공했습니다.", response);
+        return apiResponseFactory.success("예상 지급 날짜 설정에 성공했습니다.", response, userDetails);
     }
 }

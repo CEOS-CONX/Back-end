@@ -59,12 +59,21 @@ public class Crew extends User {
 
     private int totalSubsidy;
 
-    public static Crew create(String email, String password){
-        return new Crew(email, password);
+    private int totalProjectCount;
+    //누적 프로젝트 수
+
+    public void plusTotalProjectCount(){
+        totalProjectCount++;
     }
 
     public void completeAdjustment(int subsidy){
         totalSubsidy += subsidy;
+    }
+    //TODO: 어드민 정산 기능 후에 위 메서드 두 개 호출하여 최종 프로젝트 결과(누적 프로젝트 수 및 지원금 총액 증가)를 반영하기
+
+
+    public static Crew create(String email, String password){
+        return new Crew(email, password);
     }
 
     public void activateCrew(String crewName, CrewType crewType,
@@ -75,29 +84,6 @@ public class Crew extends User {
         this.managerName = managerName;
         this.job = job;
         super.activate(UserRole.CREW);
-    }
-
-    public void modifyProfile(String profileImage, String crewName, String crewSchool,
-                           CrewType crewType, String customCrewType, String crewIntroduction,
-                           Integer memberAmount, String additionalIntroduction,
-                           List<String> advantages, Industry interestingIndustry){
-        this.profileImage = profileImage;
-        this.crewName = crewName;
-        this.crewSchool = crewSchool;
-        this.crewType = crewType;
-        this.customCrewType = customCrewType;
-        this.crewIntroduction = crewIntroduction;
-        this.memberAmount = memberAmount;
-        this.additionalIntroduction = additionalIntroduction;
-        this.advantages = advantages;
-        this.interestingIndustry = interestingIndustry;
-    }
-
-    public void modifyAccount(String managerName, String managerPhoneNumber,
-                              String kakaotalkLink){
-        this.managerName = managerName;
-        this.managerPhoneNumber = managerPhoneNumber;
-        this.kakaotalkLink = kakaotalkLink;
     }
 
     public void modifyMyPageProfile(
