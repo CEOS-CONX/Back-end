@@ -11,6 +11,12 @@ import com.conx.server.user.service.workspace.CrewDashboardService;
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.service.workspace.CrewWorkSpaceService;
+import com.conx.server.user.dto.crew.response.CrewParticipatedProjectResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectRewardResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionResponse;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
+import com.conx.server.user.dto.crew.response.CrewSettlementResponse;
+import org.springframework.data.domain.Page;
 import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -96,5 +102,79 @@ public class CrewWorkSpaceController {
     ){
         crewWorkSpaceService.draftProjectResult(customUserDetails, projectId, req);
         return ResponseEntity.ok(ApiResponse.success("결과물 임시 저장 성공"));
+    }
+
+    /**
+     * 내 참여 프로젝트 목록 조회
+     */
+    @GetMapping("/me/projects")
+    public ResponseEntity<ApiResponse<Page<CrewParticipatedProjectResponse>>> getMyProjects(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) ProjectStatus status
+    ) {
+        Page<CrewParticipatedProjectResponse> result =
+                crewWorkSpaceService.getMyProjects(customUserDetails, page, size, status);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * 내 결과물 조회
+     */
+    @GetMapping("/me/projects/{projectId}/submissions")
+    public ResponseEntity<ApiResponse<CrewProjectSubmissionResponse>> getMySubmission(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable long projectId
+    ) {
+        CrewProjectSubmissionResponse result =
+                crewWorkSpaceService.getMySubmission(customUserDetails, projectId);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * 제출한 결과물 수정
+     */
+    @PatchMapping("/me/projects/{projectId}")
+    public ResponseEntity<ApiResponse<?>> updateSubmission(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable long projectId,
+            @RequestBody SubmitProjectResultRequestDTO req
+    ) {
+        crewWorkSpaceService.updateSubmission(customUserDetails, projectId, req);
+
+        return ResponseEntity.ok(ApiResponse.success("결과물 수정 성공"));
+    }
+
+    /**
+     * 리워드 상태 조회
+     */
+    @GetMapping("/me/projects/{projectId}/rewards")
+    public ResponseEntity<ApiResponse<CrewProjectRewardResponse>> getReward(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable long projectId
+    ) {
+        CrewProjectRewardResponse result =
+                crewWorkSpaceService.getReward(customUserDetails, projectId);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * 크루 정산 내역 조회
+     */
+    @GetMapping("/me/settlements")
+    public ResponseEntity<ApiResponse<Page<CrewSettlementResponse>>> getMySettlements(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) ProjectSettlementStatus status
+    ) {
+        Page<CrewSettlementResponse> result =
+                crewWorkSpaceService.getMySettlements(customUserDetails, page, size, status);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

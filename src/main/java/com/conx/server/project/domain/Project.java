@@ -395,6 +395,10 @@ public class Project extends BaseEntity {
 
     public void selectCrew(Crew crew) {
         this.selectedCrew = crew;
+        this.status = ProjectStatus.CONTRACT_PENDING;
+    }
+
+    public void completeContract() {
         this.status = ProjectStatus.PROGRESS;
     }
 

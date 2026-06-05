@@ -74,6 +74,16 @@ public class SecurityConfig {
                                 "/api/v1/crews"
                         ).permitAll()
 
+                        // 이메일 보기 API
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/email-views"
+                        ).hasAnyRole("COMPANY", "CREW")
+
+                        // 어드민 전용 API
+                        .requestMatchers(
+                                "/api/v1/admin/**"
+                        ).hasRole("ADMIN")
+
                         // 기업 전용 API
                         .requestMatchers(
                                 "/api/v1/landing/company",
