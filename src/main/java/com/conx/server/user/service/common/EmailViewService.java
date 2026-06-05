@@ -27,10 +27,11 @@ public class EmailViewService {
     private static final String CONSENT_TEXT =
             "이메일 정보를 조회하면 상대방에게 연락하기 위한 목적으로 개인정보를 확인하는 것에 동의한 것으로 간주됩니다.";
 
-    private final CrewRepository crewRepository;
-    private final CompanyRepository companyRepository;
     private final ProjectRepository projectRepository;
     private final EmailViewLogRepository emailViewLogRepository;
+    private final UserFinder userFinder;
+    private final CompanyRepository companyRepository;
+    private final CrewRepository crewRepository;
 
     @Transactional
     public EmailViewResponse viewEmail(
@@ -58,8 +59,7 @@ public class EmailViewService {
             ViewerInfo viewerInfo,
             Long crewId
     ) {
-        Crew crew = crewRepository.findByIdAndStatus(crewId, UserStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.CREW_NOT_FOUND));
+        Crew crew = userFinder.findActiveCrew(crewId);
 
         saveEmailViewLog(
                 viewerInfo,

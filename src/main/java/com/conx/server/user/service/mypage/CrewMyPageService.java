@@ -8,7 +8,7 @@ import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.dto.crew.request.CrewProfileUpdateRequest;
 import com.conx.server.user.dto.crew.response.CrewBookmarkedProjectResponse;
 import com.conx.server.user.dto.crew.response.CrewProfileResponse;
-import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,18 +20,18 @@ import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 @RequiredArgsConstructor
 public class CrewMyPageService {
 
-    private final CrewRepository crewRepository;
     private final ProjectBookmarkRepository projectBookmarkRepository;
+    private final UserFinder userFinder;
 
     @Transactional(readOnly = true)
     public CrewProfileResponse getProfile(Long crewId) {
-        Crew crew = findActiveCrew(crewId);
+        Crew crew = userFinder.findActiveCrew(crewId);
         return CrewProfileResponse.from(crew);
     }
 
     @Transactional
     public CrewProfileResponse updateProfile(Long crewId, CrewProfileUpdateRequest request) {
-        Crew crew = findActiveCrew(crewId);
+        Crew crew = userFinder.findActiveCrew(crewId);
 
         crew.modifyMyPageProfile(
                 getOrDefault(request.profileImage(), crew.getProfileImage()),
@@ -56,14 +56,9 @@ public class CrewMyPageService {
 
     @Transactional(readOnly = true)
     public Page<CrewBookmarkedProjectResponse> getBookmarkedProjects(Long crewId, Pageable pageable) {
-        Crew crew = findActiveCrew(crewId);
+        Crew crew = userFinder.findActiveCrew(crewId);
 
         return projectBookmarkRepository.findAllByCrewId(crew.getId(), pageable)
                 .map(CrewBookmarkedProjectResponse::from);
-    }
-
-    private Crew findActiveCrew(Long crewId) {
-        return crewRepository.findByIdAndStatus(crewId, UserStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.CREW_NOT_FOUND));
     }
 }

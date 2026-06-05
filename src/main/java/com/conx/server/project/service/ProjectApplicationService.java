@@ -9,8 +9,7 @@ import com.conx.server.project.dto.response.ProjectApplicationResponse;
 import com.conx.server.project.repository.ProjectApplicationRepository;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.crew.Crew;
-import com.conx.server.user.domain.types.UserStatus;
-import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectApplicationService {
 
     private final ProjectRepository projectRepository;
-    private final CrewRepository crewRepository;
     private final ProjectApplicationRepository projectApplicationRepository;
+    private final UserFinder userFinder;
 
     @Transactional
     public ProjectApplicationResponse applyProject(
@@ -32,8 +31,7 @@ public class ProjectApplicationService {
         Project project = projectRepository.findRecruitingProjectById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
 
-        Crew crew = crewRepository.findByIdAndStatus(crewId, UserStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.CREW_NOT_FOUND));
+        Crew crew = userFinder.findActiveCrew(crewId);
 
         if (projectApplicationRepository.existsByProjectIdAndCrewId(projectId, crewId)) {
             throw new CustomException(ErrorCode.APPLICATION_ALREADY_EXISTS);

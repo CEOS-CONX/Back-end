@@ -3,18 +3,14 @@ package com.conx.server.user.service.mypage;
 import com.conx.server.bookmark.domain.CrewBookmark;
 import com.conx.server.bookmark.repository.CrewBookmarkRepository;
 import static com.conx.server.global.common.GetOrDefault.getOrDefault;
-import com.conx.server.global.exception.CustomException;
-import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
-import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.dto.company.request.CompanyAccountUpdateRequest;
 import com.conx.server.user.dto.company.request.CompanyProfileUpdateRequest;
 import com.conx.server.user.dto.company.response.CompanyAccountResponse;
 import com.conx.server.user.dto.company.response.CompanyBookmarkedCrewResponse;
 import com.conx.server.user.dto.company.response.CompanyCrewBookmarkToggleResponse;
 import com.conx.server.user.dto.company.response.CompanyProfileResponse;
-import com.conx.server.user.repository.CrewRepository;
 import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,9 +22,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CompanyMyPageService {
 
-    private final CrewRepository crewRepository;
-    private final CrewBookmarkRepository crewBookmarkRepository;
     private final UserFinder userFinder;
+    private final CrewBookmarkRepository crewBookmarkRepository;
 
     @Transactional(readOnly = true)
     public CompanyProfileResponse getProfile(Long companyId) {
@@ -78,7 +73,7 @@ public class CompanyMyPageService {
     @Transactional
     public CompanyCrewBookmarkToggleResponse toggleCrewBookmark(Long companyId, Long crewId) {
         Company company = userFinder.findActiveCompany(companyId);
-        Crew crew = findActiveCrew(crewId);
+        Crew crew = userFinder.findActiveCrew(crewId);
 
         return crewBookmarkRepository.findByCompanyIdAndCrewId(company.getId(), crew.getId())
                 .map(crewBookmark -> {
@@ -101,10 +96,5 @@ public class CompanyMyPageService {
                 .map(CrewBookmark::getCrew)
                 .map(CompanyBookmarkedCrewResponse::from)
                 .toList();
-    }
-
-    private Crew findActiveCrew(Long crewId) {
-        return crewRepository.findByIdAndStatus(crewId, UserStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.CREW_NOT_FOUND));
     }
 }
