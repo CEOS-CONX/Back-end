@@ -13,8 +13,9 @@ import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -25,20 +26,24 @@ public class CrewBrowseService {
     private final CrewRepository crewRepository;
 
     @Transactional(readOnly = true)
-    public List<CrewBrowseResponse> getCrews(
+    public Page<CrewBrowseResponse> getCrews(
             String keyword,
             Industry category,
             CrewType crewType,
-            CrewBrowseSort sort
+            CrewBrowseSort sort,
+            int page,
+            int size
     ) {
         String normalizedKeyword = normalizeKeyword(keyword);
         CrewBrowseSort browseSort = getOrDefault(sort, CrewBrowseSort.RECENT);
+        Pageable pageable = PageRequest.of(page, size);
 
         return findCrews(
                 normalizedKeyword,
                 category,
                 crewType,
-                browseSort
+                browseSort,
+                pageable
         );
     }
 
@@ -50,17 +55,19 @@ public class CrewBrowseService {
         return CrewBrowseDetailResponse.from(crew, point);
     }
 
-    private List<CrewBrowseResponse> findCrews(
+    private Page<CrewBrowseResponse> findCrews(
             String keyword,
             Industry category,
             CrewType crewType,
-            CrewBrowseSort sort
+            CrewBrowseSort sort,
+            Pageable pageable
     ) {
         if (sort == CrewBrowseSort.POPULAR) {
             return crewRepository.findBrowseCrewsOrderByPopular(
                     keyword,
                     category,
-                    crewType
+                    crewType,
+                    pageable
             );
         }
 
@@ -68,7 +75,8 @@ public class CrewBrowseService {
             return crewRepository.findBrowseCrewsOrderByRating(
                     keyword,
                     category,
-                    crewType
+                    crewType,
+                    pageable
             );
         }
 
@@ -76,14 +84,16 @@ public class CrewBrowseService {
             return crewRepository.findBrowseCrewsOrderByRecommended(
                     keyword,
                     category,
-                    crewType
+                    crewType,
+                    pageable
             );
         }
 
         return crewRepository.findBrowseCrewsOrderByRecent(
                 keyword,
                 category,
-                crewType
+                crewType,
+                pageable
         );
     }
 

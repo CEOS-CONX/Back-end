@@ -1,7 +1,6 @@
 package com.conx.server.project.domain;
 
 import com.conx.server.global.BaseEntity;
-import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.company.Company;
@@ -20,11 +19,45 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Project extends BaseEntity {
+
+    public Project(Company company,
+                   String brandName, String managerName, String managerEmail, String managerPhone,
+                   String name, String objectives, ProjectType type, String requirement, String resultForm, String essentialSubmitPart,
+                   LocalDate recruitDeadLine, LocalDate projectStartDate, LocalDate projectDeadline, LocalDate submitDeadline,
+                   CrewType crewType, String competency, String preferenceCondition, long subsidy,
+                   boolean incentive, String incentiveCondition,
+                   List<String> additionalFileLinks, String referenceLink) {
+        this.company = company;
+        this.brandName = brandName;
+        this.managerName = managerName;
+        this.managerEmail = managerEmail;
+        this.managerPhone = managerPhone;
+        this.name = name;
+        this.objectives = objectives;
+        this.projectType = type;
+        this.requirement = requirement;
+        this.resultForm = resultForm;
+        this.essentialSubmitPart = essentialSubmitPart;
+        this.recruitDeadLine = recruitDeadLine;
+        this.projectStartDate = projectStartDate;
+        this.projectDeadline = projectDeadline;
+        this.submitDeadline = submitDeadline;
+        this.crewType = crewType;
+        this.competency = competency;
+        this.preferenceCondition = preferenceCondition;
+        this.subsidy = subsidy;
+        this.incentive = incentive;
+        this.incentiveCondition = incentiveCondition;
+        this.additionalFileLinks = additionalFileLinks;
+        this.referenceLink = referenceLink;
+        this.status = ProjectStatus.RECRUITING;
+    }
 
     private Project(Company company,
                     String projectImage,
@@ -78,7 +111,6 @@ public class Project extends BaseEntity {
         this.additionalFileLinks = additionalFileLinks;
         this.referenceLink = referenceLink;
         this.status = status;
-        this.views = 0;
     }
 
     @Id
@@ -259,11 +291,11 @@ public class Project extends BaseEntity {
         this.status = ProjectStatus.INSPECTION;
     }
 
-    public void afterProjectDeadline() {
+    public void requestRevision() {
         this.status = ProjectStatus.WAITING_RESULT;
     }
 
-    public void requestRevision() {
+    public void afterProjectDeadline() {
         this.status = ProjectStatus.WAITING_RESULT;
     }
 
@@ -277,5 +309,9 @@ public class Project extends BaseEntity {
 
     public void expire(){
         this.status = ProjectStatus.EXPIRED;
+    }
+
+    public void completeContract() {
+        this.status = ProjectStatus.PROGRESS;
     }
 }

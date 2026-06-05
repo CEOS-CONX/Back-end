@@ -1,6 +1,5 @@
 package com.conx.server.project.service;
 
-import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.project.domain.Project;
@@ -13,9 +12,11 @@ import com.conx.server.user.domain.types.Industry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,16 +25,19 @@ public class ProjectBrowseService {
     private final ProjectRepository projectRepository;
 
     @Transactional(readOnly = true)
-    public List<ProjectBrowseResponse> getProjects(
+    public Page<ProjectBrowseResponse> getProjects(
             String keyword,
             Industry category,
             ProjectType projectType,
             LocalDate startDate,
             LocalDate endDate,
-            ProjectBrowseSort sort
+            ProjectBrowseSort sort,
+            int page,
+            int size
     ) {
         String normalizedKeyword = normalizeKeyword(keyword);
         ProjectBrowseSort browseSort = getOrDefault(sort, ProjectBrowseSort.RECENT);
+        Pageable pageable = PageRequest.of(page, size);
 
         return findProjects(
                 normalizedKeyword,
@@ -41,11 +45,9 @@ public class ProjectBrowseService {
                 projectType,
                 startDate,
                 endDate,
-                browseSort
-        )
-                .stream()
-                .map(ProjectBrowseResponse::from)
-                .toList();
+                browseSort,
+                pageable
+        ).map(ProjectBrowseResponse::from);
     }
 
     @Transactional
@@ -58,13 +60,14 @@ public class ProjectBrowseService {
         return ProjectBrowseDetailResponse.from(project);
     }
 
-    private List<Project> findProjects(
+    private Page<Project> findProjects(
             String keyword,
             Industry category,
             ProjectType projectType,
             LocalDate startDate,
             LocalDate endDate,
-            ProjectBrowseSort sort
+            ProjectBrowseSort sort,
+            Pageable pageable
     ) {
         if (sort == ProjectBrowseSort.POPULAR) {
             return projectRepository.findBrowseProjectsOrderByPopular(
@@ -72,7 +75,8 @@ public class ProjectBrowseService {
                     category,
                     projectType,
                     startDate,
-                    endDate
+                    endDate,
+                    pageable
             );
         }
 
@@ -82,7 +86,8 @@ public class ProjectBrowseService {
                     category,
                     projectType,
                     startDate,
-                    endDate
+                    endDate,
+                    pageable
             );
         }
 
@@ -91,7 +96,8 @@ public class ProjectBrowseService {
                 category,
                 projectType,
                 startDate,
-                endDate
+                endDate,
+                pageable
         );
     }
 
@@ -101,5 +107,13 @@ public class ProjectBrowseService {
         }
 
         return keyword.trim();
+    }
+
+    private <T> T getOrDefault(T newValue, T defaultValue) {
+        if (newValue == null) {
+            return defaultValue;
+        }
+
+        return newValue;
     }
 }
