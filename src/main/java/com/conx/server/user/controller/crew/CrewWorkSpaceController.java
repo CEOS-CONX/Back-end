@@ -14,6 +14,8 @@ import com.conx.server.user.service.workspace.CrewWorkSpaceService;
 import com.conx.server.user.dto.crew.response.CrewParticipatedProjectResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectRewardResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionResponse;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
+import com.conx.server.user.dto.crew.response.CrewSettlementResponse;
 import org.springframework.data.domain.Page;
 import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
@@ -156,6 +158,22 @@ public class CrewWorkSpaceController {
     ) {
         CrewProjectRewardResponse result =
                 crewWorkSpaceService.getReward(customUserDetails, projectId);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * 크루 정산 내역 조회
+     */
+    @GetMapping("/me/settlements")
+    public ResponseEntity<ApiResponse<Page<CrewSettlementResponse>>> getMySettlements(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) ProjectSettlementStatus status
+    ) {
+        Page<CrewSettlementResponse> result =
+                crewWorkSpaceService.getMySettlements(customUserDetails, page, size, status);
 
         return ResponseEntity.ok(ApiResponse.success(result));
     }

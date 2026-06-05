@@ -21,6 +21,8 @@ import com.conx.server.project.repository.ProjectSettlementRepository;
 import com.conx.server.user.dto.crew.response.CrewParticipatedProjectResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectRewardResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionResponse;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
+import com.conx.server.user.dto.crew.response.CrewSettlementResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -219,5 +221,36 @@ public class CrewWorkSpaceService {
                 .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
 
         return CrewProjectRewardResponse.from(settlement);
+    }
+
+    /**
+     * 크루 정산 내역 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<CrewSettlementResponse> getMySettlements(
+            CustomUserDetails customUserDetails,
+            int page,
+            int size,
+            ProjectSettlementStatus status
+    ) {
+        Crew crew = userFinder.findActiveCrew(customUserDetails.getUserEmail());
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ProjectSettlement> settlements;
+
+        if (status == null) {
+            settlements = projectSettlementRepository.findAllByCrewIdOrderByIdDesc(
+                    crew.getId(),
+                    pageable
+            );
+        } else {
+            settlements = projectSettlementRepository.findAllByCrewIdAndStatusOrderByIdDesc(
+                    crew.getId(),
+                    status,
+                    pageable
+            );
+        }
+
+        return settlements.map(CrewSettlementResponse::from);
     }
 }

@@ -74,6 +74,11 @@ public class SecurityConfig {
                                 "/api/v1/crews"
                         ).permitAll()
 
+                        // 어드민 전용 API
+                        .requestMatchers(
+                                "/api/v1/admin/**"
+                        ).hasRole("ADMIN")
+
                         // 기업 전용 API
                         .requestMatchers(
                                 "/api/v1/landing/company",

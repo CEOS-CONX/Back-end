@@ -10,6 +10,9 @@ public enum ProjectStatus {
     RECRUITING,
     //크루 모집 중
 
+    CONTRACT_PENDING,
+    //계약서 작성 대기 중
+
     PROGRESS,
     //프로젝트 진행 중
 
