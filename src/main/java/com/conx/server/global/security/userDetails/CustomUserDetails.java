@@ -55,8 +55,8 @@ public class CustomUserDetails implements UserDetails {
                         new SimpleGrantedAuthority(user.getRole().getRole())
                 );
 
+        System.out.println("Role in CustomUserDetails >>> " + user.getRole());
+
         return new CustomUserDetails(user.getId(), user.getEmail(), user.getPassword(), role, user.getStatus());
     }
-
-
 }

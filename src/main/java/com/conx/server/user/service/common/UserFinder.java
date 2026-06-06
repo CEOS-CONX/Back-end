@@ -51,17 +51,16 @@ public class UserFinder {
     }
 
     @Transactional
-    public Crew findActiveCrew(String email){
-        return crewRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).orElseThrow(
+    public Crew findActiveCrew(long id){
+        return crewRepository.findByIdAndStatus(id, UserStatus.ACTIVE).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
     }
 
     @Transactional
-    public Company findActiveCompany(String email){
-        return companyRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).orElseThrow(
+    public Company findActiveCompany(long id){
+        return companyRepository.findByIdAndStatus(id, UserStatus.ACTIVE).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
     }
-
 }

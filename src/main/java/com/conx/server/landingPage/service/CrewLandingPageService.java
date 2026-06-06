@@ -17,11 +17,7 @@ public class CrewLandingPageService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectWrapperForLandingPageDTO> landing(IndustryForLandingPage category){
-        if(category.equals(IndustryForLandingPage.ALL)){
-            return projectRepository.findAllActiveProjectWithViews();
-        } else {
-            return projectRepository.findActiveProjectByCategoryWithViews(category.toIndustry());
-        }
+    public List<ProjectWrapperForLandingPageDTO> landing(){
+        return projectRepository.findAllActiveProjectWithViews();
     }
 }

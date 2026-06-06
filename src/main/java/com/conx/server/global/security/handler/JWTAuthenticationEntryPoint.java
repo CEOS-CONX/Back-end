@@ -22,6 +22,7 @@ public class JWTAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(@NonNull HttpServletRequest request,
                          @NonNull HttpServletResponse response,
                          @NonNull AuthenticationException ae) throws IOException, ServletException {
+        System.out.println(ae.getClass().getName());
         if (ae instanceof CustomAuthenticationException cae){
             ErrorResponseDTO errorResponseDTO = ErrorResponseDTO.create(cae.getCode());
 

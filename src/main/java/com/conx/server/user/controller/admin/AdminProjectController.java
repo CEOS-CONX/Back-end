@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.admin;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.user.dto.admin.response.AdminProjectContractCompleteResponse;
 import com.conx.server.user.service.admin.AdminProjectService;
 import lombok.RequiredArgsConstructor;
@@ -16,14 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminProjectController {
 
     private final AdminProjectService adminProjectService;
+    private final ApiResponseFactory apiResponseFactory;
 
     @PatchMapping("/{projectId}/contract-complete")
-    public ResponseEntity<ApiResponse<AdminProjectContractCompleteResponse>> completeContract(
+    public ApiResponse<AdminProjectContractCompleteResponse> completeContract(
             @PathVariable Long projectId
     ) {
         AdminProjectContractCompleteResponse response =
                 adminProjectService.completeContract(projectId);
 
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return apiResponseFactory.success(response, null);
     }
 }

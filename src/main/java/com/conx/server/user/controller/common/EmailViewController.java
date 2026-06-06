@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.common;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.email.EmailViewRequest;
 import com.conx.server.user.dto.email.EmailViewResponse;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmailViewController {
 
     private final EmailViewService emailViewService;
+    private final ApiResponseFactory apiResponseFactory;
 
     @PostMapping("/api/v1/email-views")
     public ApiResponse<EmailViewResponse> viewEmail(
@@ -27,6 +29,6 @@ public class EmailViewController {
                 request
         );
 
-        return ApiResponse.success("이메일 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("이메일 조회에 성공했습니다.", response, customUserDetails);
     }
 }

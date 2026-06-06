@@ -20,6 +20,8 @@ public class ProjectSubmission extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private boolean isRevised;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
@@ -47,6 +49,7 @@ public class ProjectSubmission extends BaseEntity {
         this.project = project;
         this.content = content;
         this.fileLinks = fileLinks;
+        this.isRevised = false;
     }
 
     public static ProjectSubmission create(
@@ -90,6 +93,7 @@ public class ProjectSubmission extends BaseEntity {
     public void requestRevision(String revisionReason) {
         this.revisionReason = revisionReason;
         this.status = ProjectSubmissionStatus.REVISION_REQUESTED;
+        this.isRevised = true;
     }
 
     public void approve() {
@@ -102,6 +106,6 @@ public class ProjectSubmission extends BaseEntity {
 
     public boolean isEditable() {
         return status == ProjectSubmissionStatus.DRAFT ||
-                status == ProjectSubmissionStatus.REVISION_REQUESTED;
+                (status == ProjectSubmissionStatus.REVISION_REQUESTED && !isRevised);
     }
 }

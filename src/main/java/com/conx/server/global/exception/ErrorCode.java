@@ -64,6 +64,8 @@ public enum ErrorCode {
     //Error for Project
     PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "프로젝트 정보를 찾을 수 없습니다."),
     INVALID_PROJECT_STATUS(HttpStatus.BAD_REQUEST, "P002", "현재 프로젝트 상태에서는 처리할 수 없습니다."),
+    PROJECT_ALREADY_END(HttpStatus.BAD_REQUEST, "P003", "이미 끝난 프로젝트입니다."),
+    PROJECT_CONTRACT_UNSIGNED(HttpStatus.BAD_REQUEST, "P004", "계약서가 작성되지 않았습니다."),
 
     //Error for Project Application
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "AP001", "지원서를 찾을 수 없습니다."),

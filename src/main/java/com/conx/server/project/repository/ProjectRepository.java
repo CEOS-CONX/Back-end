@@ -7,13 +7,12 @@ import com.conx.server.project.dto.response.TodoProjectInfoDTO;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.project.domain.enums.ProjectType;
-import com.conx.server.user.dto.crew.response.CrewProjectInfoDTO;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -240,15 +239,57 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("crew") Crew crew
     );
 
-    Optional<Project> findBySelectedCrewAndStatus(Crew selectedCrew, ProjectStatus status);
-
     Optional<Project> findBySelectedCrewAndId(Crew selectedCrew, long id);
 
-    Page<Project> findAllBySelectedCrewOrderByIdDesc(Crew selectedCrew, Pageable pageable);
-
-    Page<Project> findAllBySelectedCrewAndStatusOrderByIdDesc(
-            Crew selectedCrew,
-            ProjectStatus status,
-            Pageable pageable
+    @Query("""
+        select p
+        from Project p
+        where p.recruitDeadLine = :now
+    """)
+    List<Project> findExpireProject(
+            @Param("now") LocalDate now
     );
+
+    @Query("""
+        select p
+        from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
+        and p.submitDeadline in :deadline
+    """)
+    List<Project> findAllAboutSubmitDeadlineProject(
+            @Param("deadline") List<LocalDate> deadline
+    );
+
+    @Query("""
+        select p
+        from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.PROGRESS
+        and p.projectDeadline in :deadline
+    """)
+    List<Project> findAllAboutProjectDeadlineProject(
+            @Param("deadline") List<LocalDate> deadline
+    );
+
+    @Query("""
+        select p from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
+        and p.projectDeadline in :deadlines
+    """)
+    List<Project> findAllAboutRecruitingDeadline(
+            @Param("deadlines") List<LocalDate> deadlines
+    );
+
+    @Query("""
+        select p
+        from Project p
+        where p.status = com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
+        and p.submitDeadline > :now
+    """)
+    List<Project> findAllAboutLateProject(
+            @Param("now") LocalDate now
+    );
+
+    List<Project> findAllByProjectDeadlineAndStatus(LocalDate projectDeadline, ProjectStatus status);
+
+    List<Project> findAllBySelectedCrew(Crew selectedCrew);
 }

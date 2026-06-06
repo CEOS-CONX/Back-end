@@ -25,6 +25,9 @@ public enum ProjectStatus {
     ADJUSTING,
     //정산 중
 
-    DONE
+    DONE,
     //완전 완료
+
+    EXPIRED
+    //크루가 선정되지 않고 만료됨
 }

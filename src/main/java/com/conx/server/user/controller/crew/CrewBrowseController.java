@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.crew;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.crew.CrewBrowseSort;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CrewBrowseController {
 
     private final CrewBrowseService crewBrowseService;
+    private final ApiResponseFactory apiResponseFactory;
 
     @GetMapping
     public ApiResponse<Page<CrewBrowseResponse>> getCrews(
@@ -42,7 +44,7 @@ public class CrewBrowseController {
                 size
         );
 
-        return ApiResponse.success("크루 목록 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("크루 목록 조회에 성공했습니다.", response, null);
     }
 
     @GetMapping("/{crewId}")
@@ -51,6 +53,6 @@ public class CrewBrowseController {
     ) {
         CrewBrowseDetailResponse response = crewBrowseService.getCrewDetail(crewId);
 
-        return ApiResponse.success("크루 상세 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("크루 상세 조회에 성공했습니다.", response, null);
     }
 }

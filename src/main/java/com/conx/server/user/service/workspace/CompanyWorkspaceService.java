@@ -1,19 +1,19 @@
 package com.conx.server.user.service.workspace;
 
+import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
+import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.company.Company;
-import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.dto.company.request.CompanyProjectRequest;
 import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
-import com.conx.server.user.repository.CompanyRepository;
 import com.conx.server.project.domain.ProjectApplication;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.repository.ProjectApplicationRepository;
@@ -28,13 +28,13 @@ import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectApprovalResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectRevisionResponse;
 import com.conx.server.project.domain.enums.ProjectType;
-import com.conx.server.user.domain.types.Industry;
 import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.repository.ProjectSettlementRepository;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
+import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,15 +46,17 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class CompanyWorkspaceService {
 
-    private final CompanyRepository companyRepository;
     private final ProjectRepository projectRepository;
     private final ProjectApplicationRepository projectApplicationRepository;
     private final ProjectSubmissionRepository projectSubmissionRepository;
     private final ProjectSettlementRepository projectSettlementRepository;
+    private final NotificationFacadeService notificationFacadeService;
+    private final UserFinder userFinder;
+
 
     @Transactional(readOnly = true)
     public CompanyWorkspaceDashboardResponse getDashboard(Long companyId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
 
         long totalProjectCount = projectRepository.countByCompanyIdAndStatusNot(
                 company.getId(),
@@ -76,12 +78,11 @@ public class CompanyWorkspaceService {
     public List<CompanyWorkspaceProjectResponse> getProjects(
             Long companyId,
             String keyword,
-            Industry category,
             ProjectType projectType,
             LocalDate startDate,
             LocalDate endDate
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
 
         return projectRepository.findCompanyProjectsByFilter(
                         company.getId(),
@@ -97,7 +98,7 @@ public class CompanyWorkspaceService {
 
     @Transactional(readOnly = true)
     public CompanyWorkspaceProjectDetailResponse getProjectDetail(Long companyId, Long projectId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
         return CompanyWorkspaceProjectDetailResponse.from(project);
@@ -105,35 +106,9 @@ public class CompanyWorkspaceService {
 
     @Transactional
     public CompanyProjectIdResponse createProject(Long companyId, CompanyProjectRequest request) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
 
-        Project project = Project.createRecruitingProject(
-                company,
-                request.projectImage(),
-                request.brandName(),
-                request.managerName(),
-                request.managerEmail(),
-                request.managerPhone(),
-                request.name(),
-                request.objectives(),
-                request.projectType(),
-                request.requirement(),
-                request.projectExplanation(),
-                request.resultForm(),
-                request.essentialSubmitPart(),
-                request.recruitDeadLine(),
-                request.projectStartDate(),
-                request.projectDeadline(),
-                request.submitDeadline(),
-                request.crewType(),
-                request.competency(),
-                request.preferenceCondition(),
-                getOrDefault(request.subsidy(), 0L),
-                getOrDefault(request.incentive(), false),
-                request.incentiveCondition(),
-                request.additionalFileLinks(),
-                request.referenceLink()
-        );
+        Project project = Project.createRecruitingProject(company, request);
 
         Project savedProject = projectRepository.save(project);
         return CompanyProjectIdResponse.from(savedProject);
@@ -141,35 +116,9 @@ public class CompanyWorkspaceService {
 
     @Transactional
     public CompanyProjectIdResponse createProjectDraft(Long companyId, CompanyProjectRequest request) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
 
-        Project draft = Project.createDraft(
-                company,
-                request.projectImage(),
-                request.brandName(),
-                request.managerName(),
-                request.managerEmail(),
-                request.managerPhone(),
-                request.name(),
-                request.objectives(),
-                request.projectType(),
-                request.requirement(),
-                request.projectExplanation(),
-                request.resultForm(),
-                request.essentialSubmitPart(),
-                request.recruitDeadLine(),
-                request.projectStartDate(),
-                request.projectDeadline(),
-                request.submitDeadline(),
-                request.crewType(),
-                request.competency(),
-                request.preferenceCondition(),
-                getOrDefault(request.subsidy(), 0L),
-                getOrDefault(request.incentive(), false),
-                request.incentiveCondition(),
-                request.additionalFileLinks(),
-                request.referenceLink()
-        );
+        Project draft = Project.createDraft(company, request);
 
         Project savedDraft = projectRepository.save(draft);
         return CompanyProjectIdResponse.from(savedDraft);
@@ -177,81 +126,31 @@ public class CompanyWorkspaceService {
 
     @Transactional
     public CompanyProjectIdResponse updateProject(Long companyId, Long projectId, CompanyProjectRequest request) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
         if (project.getStatus() == ProjectStatus.DRAFT) {
             throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
         }
 
-        project.modifyProject(
-                getOrDefault(request.projectImage(), project.getProjectImage()),
-                getOrDefault(request.brandName(), project.getBrandName()),
-                getOrDefault(request.managerName(), project.getManagerName()),
-                getOrDefault(request.managerEmail(), project.getManagerEmail()),
-                getOrDefault(request.managerPhone(), project.getManagerPhone()),
-                getOrDefault(request.name(), project.getName()),
-                getOrDefault(request.objectives(), project.getObjectives()),
-                getOrDefault(request.projectType(), project.getProjectType()),
-                getOrDefault(request.requirement(), project.getRequirement()),
-                getOrDefault(request.projectExplanation(), project.getProjectExplanation()),
-                getOrDefault(request.resultForm(), project.getResultForm()),
-                getOrDefault(request.essentialSubmitPart(), project.getEssentialSubmitPart()),
-                getOrDefault(request.recruitDeadLine(), project.getRecruitDeadLine()),
-                getOrDefault(request.projectStartDate(), project.getProjectStartDate()),
-                getOrDefault(request.projectDeadline(), project.getProjectDeadline()),
-                getOrDefault(request.submitDeadline(), project.getSubmitDeadline()),
-                getOrDefault(request.crewType(), project.getCrewType()),
-                getOrDefault(request.competency(), project.getCompetency()),
-                getOrDefault(request.preferenceCondition(), project.getPreferenceCondition()),
-                getOrDefault(request.subsidy(), project.getSubsidy()),
-                getOrDefault(request.incentive(), project.isIncentive()),
-                getOrDefault(request.incentiveCondition(), project.getIncentiveCondition()),
-                getOrDefault(request.additionalFileLinks(), project.getAdditionalFileLinks()),
-                getOrDefault(request.referenceLink(), project.getReferenceLink())
-        );
+        project.modifyProject(request);
 
         return CompanyProjectIdResponse.from(project);
     }
 
     @Transactional
     public CompanyProjectIdResponse updateProjectDraft(Long companyId, Long draftId, CompanyProjectRequest request) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);
 
-        draft.modifyDraft(
-                getOrDefault(request.projectImage(), draft.getProjectImage()),
-                getOrDefault(request.brandName(), draft.getBrandName()),
-                getOrDefault(request.managerName(), draft.getManagerName()),
-                getOrDefault(request.managerEmail(), draft.getManagerEmail()),
-                getOrDefault(request.managerPhone(), draft.getManagerPhone()),
-                getOrDefault(request.name(), draft.getName()),
-                getOrDefault(request.objectives(), draft.getObjectives()),
-                getOrDefault(request.projectType(), draft.getProjectType()),
-                getOrDefault(request.requirement(), draft.getRequirement()),
-                getOrDefault(request.projectExplanation(), draft.getProjectExplanation()),
-                getOrDefault(request.resultForm(), draft.getResultForm()),
-                getOrDefault(request.essentialSubmitPart(), draft.getEssentialSubmitPart()),
-                getOrDefault(request.recruitDeadLine(), draft.getRecruitDeadLine()),
-                getOrDefault(request.projectStartDate(), draft.getProjectStartDate()),
-                getOrDefault(request.projectDeadline(), draft.getProjectDeadline()),
-                getOrDefault(request.submitDeadline(), draft.getSubmitDeadline()),
-                getOrDefault(request.crewType(), draft.getCrewType()),
-                getOrDefault(request.competency(), draft.getCompetency()),
-                getOrDefault(request.preferenceCondition(), draft.getPreferenceCondition()),
-                getOrDefault(request.subsidy(), draft.getSubsidy()),
-                getOrDefault(request.incentive(), draft.isIncentive()),
-                getOrDefault(request.incentiveCondition(), draft.getIncentiveCondition()),
-                getOrDefault(request.additionalFileLinks(), draft.getAdditionalFileLinks()),
-                getOrDefault(request.referenceLink(), draft.getReferenceLink())
-        );
+        draft.modifyDraft(request);
 
         return CompanyProjectIdResponse.from(draft);
     }
 
     @Transactional(readOnly = true)
     public CompanyProjectDraftResponse getProjectDraft(Long companyId, Long draftId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);
 
         return CompanyProjectDraftResponse.from(draft);
@@ -259,7 +158,7 @@ public class CompanyWorkspaceService {
 
     @Transactional
     public void deleteProject(Long companyId, Long projectId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
         projectRepository.delete(project);
@@ -270,7 +169,7 @@ public class CompanyWorkspaceService {
             Long companyId,
             Long projectId
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
         return projectApplicationRepository.findAllByProjectId(project.getId())
@@ -285,7 +184,7 @@ public class CompanyWorkspaceService {
             Long projectId,
             Long applicationId
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
         ProjectApplication application = findProjectApplication(project.getId(), applicationId);
 
@@ -298,7 +197,7 @@ public class CompanyWorkspaceService {
             Long projectId,
             Long applicationId
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
         if (project.getStatus() != ProjectStatus.RECRUITING) {
@@ -315,12 +214,14 @@ public class CompanyWorkspaceService {
         selectedApplication.select();
         rejectOtherApplications(project.getId(), selectedApplication.getId());
 
+        notificationFacadeService.saveNotificationAboutSelectedProject(project);
+
         return CompanyProjectApplicationSelectResponse.of(project, selectedApplication);
     }
 
     @Transactional(readOnly = true)
     public CompanyPartnerCrewResponse getPartnerCrew(Long companyId, Long projectId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
         Crew partnerCrew = findPartnerCrew(project);
 
@@ -333,7 +234,7 @@ public class CompanyWorkspaceService {
             Long projectId,
             CompanyProjectRevisionRequest request
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
         findPartnerCrew(project);
 
@@ -354,7 +255,7 @@ public class CompanyWorkspaceService {
             Long companyId,
             Long projectId
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
         findPartnerCrew(project);
 
@@ -398,7 +299,8 @@ public class CompanyWorkspaceService {
                 .orElseThrow(() -> new CustomException(ErrorCode.APPLICATION_NOT_FOUND));
     }
 
-    private void rejectOtherApplications(Long projectId, Long selectedApplicationId) {
+    @Transactional
+    protected void rejectOtherApplications(Long projectId, Long selectedApplicationId) {
         List<ProjectApplication> pendingApplications =
                 projectApplicationRepository.findAllByProjectIdAndStatus(
                         projectId,
@@ -407,12 +309,10 @@ public class CompanyWorkspaceService {
 
         pendingApplications.stream()
                 .filter(application -> !application.getId().equals(selectedApplicationId))
-                .forEach(ProjectApplication::reject);
-    }
-
-    private Company findActiveCompany(Long companyId) {
-        return companyRepository.findByIdAndStatus(companyId, UserStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
+                .forEach(application -> {
+                    application.reject();
+                    notificationFacadeService.saveNotificationAboutRejectedProject(application);
+                });
     }
 
     private Project findCompanyProject(Long companyId, Long projectId) {
@@ -425,17 +325,9 @@ public class CompanyWorkspaceService {
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
     }
 
-    private <T> T getOrDefault(T newValue, T currentValue) {
-        if (newValue == null) {
-            return currentValue;
-        }
-
-        return newValue;
-    }
-
     @Transactional(readOnly = true)
     public CompanyWorkspaceProjectDetailResponse getProjectReviewDetail(Long companyId, Long projectId) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
         if (project.getStatus() != ProjectStatus.INSPECTION) {
@@ -450,7 +342,7 @@ public class CompanyWorkspaceService {
             Long companyId,
             ProjectSettlementStatus status
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
 
         if (status == null) {
             return projectSettlementRepository.findAllByCompanyIdOrderByIdDesc(company.getId())
@@ -474,7 +366,7 @@ public class CompanyWorkspaceService {
             Long settlementId,
             CompanySettlementExpectedPaymentDateRequest request
     ) {
-        Company company = findActiveCompany(companyId);
+        Company company = userFinder.findActiveCompany(companyId);
         ProjectSettlement settlement = findCompanySettlement(company.getId(), settlementId);
 
         settlement.updateExpectedPaymentDate(request.expectedPaymentDate());

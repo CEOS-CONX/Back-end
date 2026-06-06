@@ -1,6 +1,7 @@
 package com.conx.server.user.controller.crew;
 
 import com.conx.server.global.common.ApiResponse;
+import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.crew.request.CrewProfileUpdateRequest;
 import com.conx.server.user.dto.crew.response.CrewBookmarkedProjectResponse;
@@ -23,13 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class CrewMyPageController {
 
     private final CrewMyPageService crewMyPageService;
+    private final ApiResponseFactory apiResponseFactory;
 
     @GetMapping
     public ApiResponse<CrewProfileResponse> getProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         CrewProfileResponse response = crewMyPageService.getProfile(userDetails.getId());
-        return ApiResponse.success("크루 프로필 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("크루 프로필 조회에 성공했습니다.", response, userDetails);
     }
 
     @PatchMapping
@@ -42,7 +44,7 @@ public class CrewMyPageController {
                 request
         );
 
-        return ApiResponse.success("크루 프로필 수정에 성공했습니다.", response);
+        return apiResponseFactory.success("크루 프로필 수정에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/bookmarked-projects")
@@ -57,6 +59,6 @@ public class CrewMyPageController {
                         PageRequest.of(page, size)
                 );
 
-        return ApiResponse.success("북마크한 프로젝트 목록 조회에 성공했습니다.", response);
+        return apiResponseFactory.success("북마크한 프로젝트 목록 조회에 성공했습니다.", response, userDetails);
     }
 }
