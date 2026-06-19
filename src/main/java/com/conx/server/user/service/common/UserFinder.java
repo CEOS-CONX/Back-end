@@ -42,9 +42,9 @@ public class UserFinder {
     @Transactional(readOnly = true)
     public boolean informationIsFilled(User user){
         if (user instanceof Crew crew){
-            return crew.getAdvantages() == null;
+            return crew.getCrewSchool() != null;
         } else if (user instanceof Company company){
-            return company.getCompanyName() == null;
+            return company.getCompanyIntroduction() != null;
         } else {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
