@@ -91,8 +91,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
         and (:projectType is null or p.projectType = :projectType)
-        and (:startDate is null or p.projectStartDate >= :startDate)
-        and (:endDate is null or p.projectDeadline <= :endDate)
+        and (:startDate is null or p.recruitDeadLine >= :startDate)
+        and (:endDate is null or p.recruitDeadLine <= :endDate)
         order by p.id desc
         """,
             countQuery = """
@@ -105,8 +105,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
         and (:projectType is null or p.projectType = :projectType)
-        and (:startDate is null or p.projectStartDate >= :startDate)
-        and (:endDate is null or p.projectDeadline <= :endDate)
+        and (:startDate is null or p.recruitDeadLine >= :startDate)
+        and (:endDate is null or p.recruitDeadLine <= :endDate)
         """
     )
     Page<Project> findBrowseProjectsOrderByRecent(
@@ -129,8 +129,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
         and (:projectType is null or p.projectType = :projectType)
-        and (:startDate is null or p.projectStartDate >= :startDate)
-        and (:endDate is null or p.projectDeadline <= :endDate)
+        and (:startDate is null or p.recruitDeadLine >= :startDate)
+        and (:endDate is null or p.recruitDeadLine <= :endDate)
         order by p.views desc, p.id desc
         """,
             countQuery = """
@@ -143,8 +143,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
         and (:projectType is null or p.projectType = :projectType)
-        and (:startDate is null or p.projectStartDate >= :startDate)
-        and (:endDate is null or p.projectDeadline <= :endDate)
+        and (:startDate is null or p.recruitDeadLine >= :startDate)
+        and (:endDate is null or p.recruitDeadLine <= :endDate)
         """
     )
     Page<Project> findBrowseProjectsOrderByPopular(
@@ -167,8 +167,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
         and (:projectType is null or p.projectType = :projectType)
-        and (:startDate is null or p.projectStartDate >= :startDate)
-        and (:endDate is null or p.projectDeadline <= :endDate)
+        and (:startDate is null or p.recruitDeadLine >= :startDate)
+        and (:endDate is null or p.recruitDeadLine <= :endDate)
         order by p.views desc, p.id desc
         """,
             countQuery = """
@@ -181,8 +181,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
         and (:projectType is null or p.projectType = :projectType)
-        and (:startDate is null or p.projectStartDate >= :startDate)
-        and (:endDate is null or p.projectDeadline <= :endDate)
+        and (:startDate is null or p.recruitDeadLine >= :startDate)
+        and (:endDate is null or p.recruitDeadLine <= :endDate)
         """
     )
     Page<Project> findBrowseProjectsOrderByRecommended(

@@ -38,14 +38,14 @@ public class ProjectBrowseController {
      */
     @GetMapping
     public ApiResponse<Page<ProjectBrowseResponse>> getProjects(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Industry category,
-            @RequestParam(required = false) ProjectType projectType,
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate,
-            @RequestParam(required = false) ProjectBrowseSort sort,
-            @RequestParam int page,
-            @RequestParam int size
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "category", required = false) Industry category,
+            @RequestParam(name = "projectType", required = false) ProjectType projectType,
+            @RequestParam(name = "startDate", required = false) LocalDate startDate,
+            @RequestParam(name = "endDate", required = false) LocalDate endDate,
+            @RequestParam(name = "sort", required = false) ProjectBrowseSort sort,
+            @RequestParam(name = "page") int page,
+            @RequestParam(name = "size") int size
     ) {
         Page<ProjectBrowseResponse> response = projectBrowseService.getProjects(
                 keyword,
@@ -67,7 +67,7 @@ public class ProjectBrowseController {
      */
     @GetMapping("/{projectId}")
     public ApiResponse<ProjectBrowseDetailResponse> getProjectDetail(
-            @PathVariable Long projectId
+            @PathVariable(name = "projectId") Long projectId
     ) {
         ProjectBrowseDetailResponse response = projectBrowseService.getProjectDetail(projectId);
 

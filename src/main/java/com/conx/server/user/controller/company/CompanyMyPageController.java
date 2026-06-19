@@ -66,7 +66,7 @@ public class CompanyMyPageController {
     @PatchMapping("/bookmarked-crews/{crewId}")
     public ApiResponse<CompanyCrewBookmarkToggleResponse> toggleCrewBookmark(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long crewId
+            @PathVariable(name = "crewId") Long crewId
     ) {
         CompanyCrewBookmarkToggleResponse response =
                 companyMyPageService.toggleCrewBookmark(userDetails.getId(), crewId);
