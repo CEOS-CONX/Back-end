@@ -1,4 +1,4 @@
-package com.conx.server.user.domain;
+package com.conx.server.global.common;
 
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectType;
