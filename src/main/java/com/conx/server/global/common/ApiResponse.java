@@ -2,6 +2,8 @@ package com.conx.server.global.common;
 
 import com.conx.server.global.exception.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
