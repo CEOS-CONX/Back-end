@@ -280,7 +280,8 @@ public class Project extends BaseEntity {
     }
 
     public boolean isWaitingResult(){
-        return this.status == ProjectStatus.WAITING_RESULT;
+        return this.status == ProjectStatus.WAITING_RESULT
+                || this.status == ProjectStatus.PROGRESS;
     }
 
     public boolean isBeforeSigningContract(){
