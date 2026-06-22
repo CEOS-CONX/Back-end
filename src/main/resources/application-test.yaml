@@ -1,4 +1,8 @@
 spring:
+  h2:
+    console:
+      enabled: true
+
   config:
     activate:
       on-profile: test
@@ -14,3 +18,17 @@ spring:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    s3:
+      bucket: test-bucket
+
+jwt:
+  secret:
+    key: bXlTdXBlclNlY3JldEtleUZvckpXVFRlc3RpbmdBbmRTcHJpbmdCb290M1NlY3VyaXR5
+
+google:
+  user: test@gmail.com
+  password: 1q2w3e4r!!

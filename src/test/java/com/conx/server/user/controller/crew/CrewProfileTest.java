@@ -1,0 +1,160 @@
+package com.conx.server.user.controller.crew;
+
+import com.conx.server.global.common.ApiResponse;
+import com.conx.server.project.repository.ProjectRepository;
+import com.conx.server.user.domain.types.CrewType;
+import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.crew.request.CrewProfileUpdateRequest;
+import com.conx.server.user.dto.crew.response.CrewProfileResponse;
+import com.conx.server.user.dto.login.request.LoginRequestDTO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.annotation.Transactional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+public class CrewProfileTest {
+    @Transactional
+    String loginSetting() throws Exception {
+        LoginRequestDTO req = new LoginRequestDTO("kimdoes2143@naver.com", "1q2w3e4r!!");
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return mvcResult.getResponse().getHeader("Authorization");
+    }
+
+    @Transactional
+    String loginSetting_Admin() throws Exception {
+        LoginRequestDTO req = new LoginRequestDTO("jclee@gmail.com", "1q2w3e4r!!");
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return mvcResult.getResponse().getHeader("Authorization");
+    }
+
+    @Transactional
+    String loginSetting_Company() throws Exception {
+        LoginRequestDTO req = new LoginRequestDTO("navernaver@gmail.com", "1q2w3e4r!!");
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return mvcResult.getResponse().getHeader("Authorization");
+    }
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Test
+    @Transactional
+    @DisplayName("크루 개인정보 가져오기")
+    void getCrewPersonalInformation() throws Exception {
+        String crewToken = loginSetting();
+
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/me")
+                        .header("Authorization", crewToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewProfileResponse> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewProfileResponse>>() {
+                }
+        );
+        CrewProfileResponse responseDTO = response.payload();
+
+        assertThat(responseDTO.crewId()).isEqualTo(1);
+        assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
+        assertThat(responseDTO.crewSchool()).isEqualTo(null);
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루 개인정보 수정하기")
+    void modifyCrewPersonalInformation() throws Exception {
+        String crewToken = loginSetting();
+        CrewProfileUpdateRequest req = new CrewProfileUpdateRequest(
+                "$$$", "크루이름", CrewType.CLUB, null, "오정민",
+                "회장", "홍익대학교", 12, "저희는 재밌게 만들어가는 동아리입니다!",
+                null, null, Industry.CAREER, null, null, null
+        );
+
+        mockMvc.perform(patch("/api/v1/crews/me")
+                        .header("Authorization", crewToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/me")
+                        .header("Authorization", crewToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewProfileResponse> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewProfileResponse>>() {
+                }
+        );
+        CrewProfileResponse responseDTO = response.payload();
+
+        assertThat(responseDTO.crewId()).isEqualTo(1);
+        assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
+        assertThat(responseDTO.crewSchool()).isEqualTo("홍익대학교");
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("프로젝트 북마크하기")
+    void bookmarkProject() throws Exception {
+        String crewToken = loginSetting();
+
+        mockMvc.perform(post("/api/v1/projects/2/bookmarks")
+                        .header("Authorization", crewToken))
+                .andExpect(status().isOk());
+
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/me/bookmarked-projects")
+                        .header("Authorization", crewToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode root = objectMapper.readTree(
+                mvcResult.getResponse().getContentAsString()
+        );
+
+        JsonNode content = root.path("payload").path("content");
+
+        assertThat(content.size()).isEqualTo(1);
+        assertThat(content.get(0).path("projectId").asLong()).isEqualTo(2);
+    }
+}

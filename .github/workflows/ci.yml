@@ -15,6 +15,12 @@ jobs:
     permissions:
       contents: read
 
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK21
