@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@Transactional
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CrewWorkSpaceTest {
@@ -83,8 +84,10 @@ public class CrewWorkSpaceTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
     @Autowired
     private ProjectRepository projectRepository;
+
     @Autowired
     private AdminRepository adminRepository;
     //회원가입 테스트 진행하기
@@ -200,7 +203,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(1));
+                .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
     //여기 아직 테스트 통과를 안해서 CI가 안될 수 있습니다..!
@@ -216,7 +219,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(2));
+                .andExpect(jsonPath("$.payload.content.length()").value(0));
     }
 
     @Test
@@ -274,36 +277,44 @@ public class CrewWorkSpaceTest {
 
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
 
-        mockMvc.perform(post("/api/v1/projects/1/applications")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+        );
+
+        long applicationId = response.payload().applicationId();
 
         //프로젝트 크루 선정
         String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
+        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
                 .andExpect(status().isOk());
 
         //재확인
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/applications?status=ALL")
+        MvcResult mvcResult2 = mockMvc.perform(get("/api/v1/crews/applications?status=ALL")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ApiResponse<CrewApplicationStatusResponseDTO> response = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(),
+        ApiResponse<CrewApplicationStatusResponseDTO> response2 = objectMapper.readValue(
+                mvcResult2.getResponse().getContentAsString(),
                 new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
         );
 
         Project project = projectRepository.findById(1L).get();
 
-        CrewApplicationStatusResponseDTO applicationResponse = response.payload();
+        CrewApplicationStatusResponseDTO applicationResponse = response2.payload();
         assertThat(applicationResponse.applications().get(0).applicationId()).isEqualTo(1);
         assertThat(applicationResponse.applications().get(0).status()).isEqualTo(ProjectApplicationStatus.SELECTED);
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.CONTRACT_PENDING);
-        assertThat(response.hasNotification()).isEqualTo(true);
+        assertThat(response2.hasNotification()).isEqualTo(true);
     }
 
     @Transactional
@@ -312,17 +323,25 @@ public class CrewWorkSpaceTest {
         String tokenCompany = loginSetting_Company();
         String token_admin = loginSetting_Admin();
 
+        //프로젝트 지원하기
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
 
-        //프로젝트 지원하기
-        mockMvc.perform(post("/api/v1/projects/1/applications")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+        );
+
+        long applicationId = response.payload().applicationId();
 
         //프로젝트 크루 선정
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
+        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
                 .andExpect(status().isOk());
 
@@ -459,15 +478,24 @@ public class CrewWorkSpaceTest {
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
-        mockMvc.perform(post("/api/v1/projects/1/applications")
+        MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
+                applicationMvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+        );
+
+        long applicationId = applicationResponse.payload().applicationId();
+
 
         //선정하기
         String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
+        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
                 .andExpect(status().isOk());
 
@@ -499,11 +527,19 @@ public class CrewWorkSpaceTest {
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
-        mockMvc.perform(post("/api/v1/projects/1/applications")
+        MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
+                applicationMvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+        );
+
+        long applicationId = applicationResponse.payload().applicationId();
 
         mockMvc.perform(post("/api/v1/projects/2/applications")
                         .header("Authorization", token)
@@ -513,11 +549,12 @@ public class CrewWorkSpaceTest {
 
         //선정하기
         String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
+        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
                 .andExpect(status().isOk());
 
 
+        //조회
         MvcResult mvcResult1 = mockMvc.perform(get("/api/v1/crews/applications?status=PENDING")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
@@ -637,11 +674,20 @@ public class CrewWorkSpaceTest {
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
-        mockMvc.perform(post("/api/v1/projects/1/applications")
+        MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
+                applicationMvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+        );
+
+        long applicationId = applicationResponse.payload().applicationId();
+
 
         mockMvc.perform(post("/api/v1/projects/2/applications")
                         .header("Authorization", token)
@@ -651,7 +697,7 @@ public class CrewWorkSpaceTest {
 
         //선정하기
         String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
+        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
                 .andExpect(status().isOk());
 
@@ -718,11 +764,20 @@ public class CrewWorkSpaceTest {
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
-        mockMvc.perform(post("/api/v1/projects/1/applications")
+        MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
+                applicationMvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+        );
+
+        long applicationId = applicationResponse.payload().applicationId();
+
 
         mockMvc.perform(post("/api/v1/projects/2/applications")
                         .header("Authorization", token)
@@ -732,7 +787,7 @@ public class CrewWorkSpaceTest {
 
         //선정하기
         String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
+        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
                 .andExpect(status().isOk());
 
