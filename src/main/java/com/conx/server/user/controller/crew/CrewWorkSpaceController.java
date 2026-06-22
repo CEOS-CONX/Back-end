@@ -10,6 +10,7 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.crew.response.CrewWorkSpaceResponseDTO;
 import com.conx.server.user.service.workspace.CrewWorkSpaceService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -83,7 +84,7 @@ public class CrewWorkSpaceController {
     public ApiResponse<?> submitResult(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable long projectId,
-            @RequestBody SubmitProjectResultRequestDTO req
+            @Valid @RequestBody SubmitProjectResultRequestDTO req
     ){
         crewWorkSpaceService.submitProjectResult(customUserDetails, projectId, req);
         return apiResponseFactory.success("결과물 제출 성공", customUserDetails);
