@@ -77,11 +77,11 @@ public enum ErrorCode {
     PROJECT_BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "PB002", "프로젝트 북마크를 찾을 수 없습니다."),
 
     //Error for Partner Crew
-    PARTNER_CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR002", "선정된 파트너 크루를 찾을 수 없습니다."),
+        PARTNER_CREW_NOT_FOUND(HttpStatus.NOT_FOUND, "CR002", "선정된 파트너 크루를 찾을 수 없습니다."),
 
     //Error for Project Submission
-    SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "제출된 결과물을 찾을 수 없습니다."),
-    INVALID_SUBMISSION_STATUS(HttpStatus.BAD_REQUEST, "S002", "현재 결과물 상태에서는 처리할 수 없습니다."),
+    SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "S003", "제출된 결과물을 찾을 수 없습니다."),
+    INVALID_SUBMISSION_STATUS(HttpStatus.BAD_REQUEST, "S004", "현재 결과물 상태에서는 처리할 수 없습니다."),
 
     //Error for Settlement
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ST001", "정산 정보를 찾을 수 없습니다.");

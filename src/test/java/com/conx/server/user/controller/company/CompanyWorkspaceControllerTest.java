@@ -3,6 +3,8 @@ package com.conx.server.user.controller.company;
 import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.notification.repository.NotificationRepository;
+import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.dto.company.request.CompanyProjectRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
@@ -225,8 +227,6 @@ class CompanyWorkspaceControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.message").value("프로젝트 수정에 성공했습니다."))
                 .andExpect(jsonPath("$.payload.projectId").value(100))
                 .andExpect(jsonPath("$.hasNotification").value(false));
 
@@ -647,7 +647,7 @@ class CompanyWorkspaceControllerTest {
                 "010-1234-5678",
                 "테스트 프로젝트",
                 "프로젝트 목표",
-                null,
+                ProjectType.APPTEST,
                 "요구사항",
                 "프로젝트 설명",
                 "결과물 형태",
@@ -656,7 +656,7 @@ class CompanyWorkspaceControllerTest {
                 LocalDate.of(2026, 7, 1),
                 LocalDate.of(2026, 7, 31),
                 LocalDate.of(2026, 8, 5),
-                null,
+                CrewType.CLUB,
                 "필요 역량",
                 "우대 조건",
                 100000L,

@@ -10,6 +10,7 @@ import com.conx.server.user.dto.login.response.TokenReissueResponseDTO;
 import com.conx.server.user.service.login_logout.LoginService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,7 @@ public class LoginController {
      */
     @PostMapping
     public ApiResponse<LoginResponseDTO> login(
-            @RequestBody LoginRequestDTO req,
+            @Valid @RequestBody LoginRequestDTO req,
             HttpServletResponse res
     ){
         LoginServiceResponseDTO responseDTO = loginService.login(req);

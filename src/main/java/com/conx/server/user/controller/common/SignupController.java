@@ -35,7 +35,7 @@ public class SignupController {
      */
     @PostMapping("/email/send")
     public ApiResponse<?> requestEmailVerification(
-            @RequestBody SendingVerificationKeyRequestDTO req
+            @Valid @RequestBody SendingVerificationKeyRequestDTO req
     ){
         sendingVerificationNumberService.sendCorrectKey(req.email());
         return apiResponseFactory.success("인증번호 발송에 성공했습니다.", null);
@@ -48,7 +48,7 @@ public class SignupController {
      */
     @PostMapping("/email/verify")
     public ApiResponse<?> checkEmailVerification(
-            @RequestBody CheckingVerificationKeyRequestDTO req
+            @Valid @RequestBody CheckingVerificationKeyRequestDTO req
     ){
         sendingVerificationNumberService.checkCorrectKey(req);
         return apiResponseFactory.success("인증번호 인증에 성공했습니다.", null);
@@ -62,7 +62,7 @@ public class SignupController {
      */
     @PostMapping(value = "/userinfo/company")
     public ApiResponse<?> setCompany(
-            @RequestBody SignupRequestDTO req
+            @Valid @RequestBody SignupRequestDTO req
     ){
         companySignupService.userSetting(req);
         return apiResponseFactory.success("초기 사용자 정보 입력에 성공했습니다.(기업)", null);
@@ -89,7 +89,7 @@ public class SignupController {
      */
     @PostMapping(value = "/userinfo/crew")
     public ApiResponse<?> setCrew(
-            @RequestBody SignupRequestDTO req
+            @Valid @RequestBody SignupRequestDTO req
     ){
         crewSignupService.userSetting(req);
         return apiResponseFactory.success("초기 사용자 정보 입력에 성공했습니다.(크루)", null);
@@ -103,7 +103,7 @@ public class SignupController {
      */
     @PostMapping("/usersetting/crew")
     public ApiResponse<?> updateCrew(
-            @RequestBody UpdateCrewUserDTO req
+            @Valid @RequestBody UpdateCrewUserDTO req
     ){
         crewSignupService.update(req);
         return apiResponseFactory.success("사용자 정보 추가 입력에 성공했습니다.(크루)", null);

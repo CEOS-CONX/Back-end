@@ -38,6 +38,8 @@ public class ProjectSubmission extends BaseEntity {
 
     private String revisionReason;
 
+    private boolean editable;
+
     @Enumerated(EnumType.STRING)
     private ProjectSubmissionStatus status;
 
@@ -50,6 +52,7 @@ public class ProjectSubmission extends BaseEntity {
         this.content = content;
         this.fileLinks = fileLinks;
         this.isRevised = false;
+        this.editable = true;
     }
 
     public static ProjectSubmission create(
@@ -82,6 +85,10 @@ public class ProjectSubmission extends BaseEntity {
     }
 
     public void activateSubmission() {
+        if (isRevised){
+            editable = false;
+        }
+
         this.status = ProjectSubmissionStatus.SUBMITTED;
         this.revisionReason = null;
     }
@@ -102,10 +109,6 @@ public class ProjectSubmission extends BaseEntity {
 
     public boolean isSubmitted() {
         return this.status == ProjectSubmissionStatus.SUBMITTED;
-    }
 
-    public boolean isEditable() {
-        return status == ProjectSubmissionStatus.DRAFT ||
-                (status == ProjectSubmissionStatus.REVISION_REQUESTED && !isRevised);
     }
 }
