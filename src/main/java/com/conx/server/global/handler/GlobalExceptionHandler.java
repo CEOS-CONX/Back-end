@@ -40,6 +40,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleValidationException(
             MethodArgumentNotValidException exception
     ) {
+        exception.printStackTrace();
+
         String message = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()

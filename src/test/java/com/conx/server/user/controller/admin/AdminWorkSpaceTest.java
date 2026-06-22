@@ -5,6 +5,7 @@ import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.request.ProjectApplicationRequest;
+import com.conx.server.project.dto.response.ProjectApplicationResponse;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.dto.crew.response.CrewApplicationStatusResponseDTO;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
@@ -146,14 +147,22 @@ public class AdminWorkSpaceTest {
 
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
 
-        mockMvc.perform(post("/api/v1/projects/1/applications")
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+        );
+
+        long applicationId = response.payload().applicationId();
 
         String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
+        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
                 .andExpect(status().isOk());
 
