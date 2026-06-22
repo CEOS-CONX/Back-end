@@ -311,7 +311,7 @@ public class CrewWorkSpaceTest {
         Project project = projectRepository.findById(1L).get();
 
         CrewApplicationStatusResponseDTO applicationResponse = response2.payload();
-        assertThat(applicationResponse.applications().get(0).applicationId()).isEqualTo(1);
+        assertThat(applicationResponse.applications().get(0).applicationId()).isEqualTo(applicationId);
         assertThat(applicationResponse.applications().get(0).status()).isEqualTo(ProjectApplicationStatus.SELECTED);
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.CONTRACT_PENDING);
         assertThat(response2.hasNotification()).isEqualTo(true);
