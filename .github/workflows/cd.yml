@@ -75,7 +75,7 @@ jobs:
               docker compose up -d --force-recreate            
               
               for i in {1..15}; do
-                if curl -f http://localhost:80/health/ready; then
+                if curl -f http://localhost:8080/health/ready; then
                   echo "Health Check passed"
                   break
                 fi
