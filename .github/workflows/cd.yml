@@ -64,6 +64,7 @@ jobs:
               DB_URL=${{ secrets.DB_URL }}
               DB_USERNAME=admin
               DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+              AWS_REGION=ap-northeast-2
               GOOGLE_USER=${{ secrets.GOOGLE_USER }}
               GOOGLE_PASSWORD=${{ secrets.GOOGLE_PASSWORD }}
               JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
