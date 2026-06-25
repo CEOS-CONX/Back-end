@@ -100,6 +100,20 @@ public class SecurityConfig {
                                 "/api/v1/crews/projects/**"
                         ).hasRole("CREW")
 
+                        // 프로젝트 Q&A API
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/projects/*/questions",
+                                "/api/v1/projects/*/questions/*"
+                        ).authenticated()
+
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/projects/*/questions"
+                        ).hasAnyRole("CREW", "COMPANY")
+
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/api/v1/projects/*/questions/*/answer"
+                        ).hasAnyRole("COMPANY", "ADMIN")
+
                         // 크루 프로젝트 지원/북마크 API
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/projects/*/applications",

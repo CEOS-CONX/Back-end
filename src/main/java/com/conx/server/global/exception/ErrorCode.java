@@ -67,6 +67,11 @@ public enum ErrorCode {
     PROJECT_ALREADY_END(HttpStatus.BAD_REQUEST, "P003", "이미 끝난 프로젝트입니다."),
     PROJECT_CONTRACT_UNSIGNED(HttpStatus.BAD_REQUEST, "P004", "계약서가 작성되지 않았습니다."),
 
+    //Error for Project Question
+    PROJECT_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "PQ001", "프로젝트 질문을 찾을 수 없습니다."),
+    PROJECT_QUESTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PQ002", "프로젝트 질문에 접근할 권한이 없습니다."),
+    PROJECT_QUESTION_ANSWER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PQ003", "프로젝트 질문에 답변할 권한이 없습니다."),
+
     //Error for Project Application
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "AP001", "지원서를 찾을 수 없습니다."),
     INVALID_APPLICATION_STATUS(HttpStatus.BAD_REQUEST, "AP002", "현재 지원서 상태에서는 처리할 수 없습니다."),
