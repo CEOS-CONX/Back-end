@@ -8,13 +8,13 @@ services:
 
     image: contactconx/conx-server:${IMAGE_TAG}
     ports:
-      - "8083:8080"
+      - "8082:8080"
     restart: unless-stopped
     env_file:
       - .env
 
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8083/health/ready" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8082/health/ready" ]
       interval: 10s
       timeout: 3s
       retries: 5
