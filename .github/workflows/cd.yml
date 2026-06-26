@@ -71,11 +71,11 @@ jobs:
               SPRING_PROFILES_ACTIVE=prod
               EOF
               
-              docker compose pull
-              docker compose up -d --force-recreate            
+              docker compose -p conx-server pull
+              docker compose -p conx-server up -d --force-recreate            
               
               for i in {1..15}; do
-                if curl -f http://localhost:8080/health/ready; then
+                if curl -f http://localhost:8082/health/ready; then
                   echo "Health Check passed"
                   break
                 fi
@@ -83,6 +83,6 @@ jobs:
                 sleep 5
               done
   
-              curl -f http://localhost:80/health/ready || exit 1
+              curl -f http://localhost:8082/health/ready || exit 1
               
               sudo docker image prune -f

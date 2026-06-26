@@ -6,10 +6,15 @@ import com.conx.server.global.config.S3Properties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.time.Duration;
 import java.util.UUID;
@@ -20,6 +25,7 @@ public class FileService {
 
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
+    private final S3Client s3Client;
 
     @Value("${cloud.aws.region}")
     private String region;
@@ -58,5 +64,45 @@ public class FileService {
         return "https://" + s3Properties.getBucket()
                 + ".s3." + region + ".amazonaws.com/"
                 + fileKey;
+    }
+
+    public InputStream download(String fileKey) {
+
+        GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(s3Properties.getBucket())
+                .key(fileKey)
+                .build();
+
+        return s3Client.getObject(request);
+    }
+
+    public String upload(
+            byte[] image,
+            String key
+    ) {
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(s3Properties.getBucket())
+                .key(key)
+                .contentType("image/png")
+                .build();
+
+        s3Client.putObject(
+                request,
+                RequestBody.fromBytes(image)
+        );
+
+        return createFileUrl(key);
+    }
+
+    public void delete(String key) {
+
+        DeleteObjectRequest request =
+                DeleteObjectRequest.builder()
+                        .bucket(s3Properties.getBucket())
+                        .key(key)
+                        .build();
+
+        s3Client.deleteObject(request);
     }
 }
