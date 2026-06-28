@@ -58,6 +58,7 @@ jobs:
             key: ${{ secrets.EC2_KEY }}
             script: |
               cd /home/ubuntu/CONX-server
+              git pull origin main
               
               cat > .env << EOF
               IMAGE_TAG=${{ github.event.workflow_run.head_sha }}
