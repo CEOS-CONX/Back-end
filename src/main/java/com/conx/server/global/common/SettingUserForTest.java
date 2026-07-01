@@ -3,12 +3,14 @@ package com.conx.server.global.common;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.project.repository.ProjectRepository;
+import com.conx.server.user.domain.admin.Admin;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.company.request.CompanyProjectRequest;
+import com.conx.server.user.repository.AdminRepository;
 import com.conx.server.user.repository.CompanyRepository;
 import com.conx.server.user.repository.CrewRepository;
 import com.conx.server.user.repository.EvaluationRepository;
@@ -33,6 +35,7 @@ public class SettingUserForTest {
     private final CompanyRepository companyRepository;
     private final ProjectRepository projectRepository;
     private final EvaluationRepository evaluationRepository;
+    private final AdminRepository adminRepository;
 
     @PostConstruct
     @Transactional
@@ -44,6 +47,8 @@ public class SettingUserForTest {
     @Transactional
     protected void settingUser(){
         String password = passwordEncoder.encode("1q2w3e4r!!");
+
+        Admin admin = new Admin("jclee@gmail.com", password);
 
         Crew crew1 = Crew.create("kimdoes2143@naver.com", password);
         crew1.activateCrew("홍익대학교 서예동아리", CrewType.CLUB, null, "지수민", "동아리 학회장");
@@ -66,7 +71,7 @@ public class SettingUserForTest {
 
         crewRepository.saveAll(List.of(crew1, crew2, crew3));
         companyRepository.saveAll(List.of(company1, company2, company3));
-
+        adminRepository.save(admin);
 
         Evaluation evaluation1 = Evaluation.create(crew1);
         Evaluation evaluation2 = Evaluation.create(crew2);
@@ -105,5 +110,4 @@ public class SettingUserForTest {
 
         projectRepository.saveAll(List.of(project1, project2));
     }
-
 }

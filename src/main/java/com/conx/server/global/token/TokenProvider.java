@@ -159,8 +159,9 @@ public class TokenProvider implements InitializingBean {
 
         boolean isCrew = roles.contains(UserRole.CREW.getRole());
         boolean isCompany = roles.contains(UserRole.COMPANY.getRole());
+        boolean isAdmin = roles.contains(UserRole.ADMIN.getRole());
 
-        if (isCrew == isCompany) {
+        if ((isCrew == isCompany) && (isCompany == isAdmin)) {
             throw new CustomAuthenticationException(ErrorCode.INVALID_USER_TYPE);
         }
 
@@ -169,6 +170,8 @@ public class TokenProvider implements InitializingBean {
             user = userFinder.findActiveCrew(userId);
         } else if(roles.contains(UserRole.COMPANY.getRole())) {
             user = userFinder.findActiveCompany(userId);
+        } else if(roles.contains(UserRole.ADMIN.getRole())){
+            user = userFinder.findAdmin(userId);
         } else {
             throw new CustomAuthenticationException(ErrorCode.INVALID_USER_TYPE);
         }

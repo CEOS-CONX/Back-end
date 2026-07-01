@@ -10,6 +10,7 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.crew.response.CrewWorkSpaceResponseDTO;
 import com.conx.server.user.service.workspace.CrewWorkSpaceService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -54,7 +55,7 @@ public class CrewWorkSpaceController {
     /**
      * 크루 워크스페이스
      */
-    @GetMapping("/projects")
+    @GetMapping("/workSpace")
     public ApiResponse<CrewWorkSpaceResponseDTO> getCrewWorkSpace(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ){
@@ -65,7 +66,7 @@ public class CrewWorkSpaceController {
     /**
      * 프로젝트 상세 워크스페이스 가져오기
      */
-    @GetMapping("/projects/{projectId}")
+    @GetMapping("/workSpace/{projectId}")
     public ApiResponse<CrewProjectWorkSpaceDTO> getCrewDetailedProject(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable long projectId
@@ -83,7 +84,7 @@ public class CrewWorkSpaceController {
     public ApiResponse<?> submitResult(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @PathVariable long projectId,
-            @RequestBody SubmitProjectResultRequestDTO req
+            @Valid @RequestBody SubmitProjectResultRequestDTO req
     ){
         crewWorkSpaceService.submitProjectResult(customUserDetails, projectId, req);
         return apiResponseFactory.success("결과물 제출 성공", customUserDetails);

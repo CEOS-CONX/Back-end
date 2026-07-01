@@ -23,6 +23,7 @@ import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardRespon
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -91,7 +92,7 @@ public class CompanyWorkspaceController {
     @PostMapping("/projects")
     public ApiResponse<CompanyProjectIdResponse> createProject(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody CompanyProjectRequest request
+            @Valid @RequestBody CompanyProjectRequest request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.createProject(userDetails.getId(), request);
@@ -103,7 +104,7 @@ public class CompanyWorkspaceController {
     public ApiResponse<CompanyProjectIdResponse> updateProject(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId,
-            @RequestBody CompanyProjectRequest request
+            @Valid @RequestBody CompanyProjectRequest request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.updateProject(userDetails.getId(), projectId, request);
@@ -224,7 +225,7 @@ public class CompanyWorkspaceController {
     public ApiResponse<CompanyProjectRevisionResponse> requestProjectRevision(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId,
-            @RequestBody CompanyProjectRevisionRequest request
+            @Valid @RequestBody CompanyProjectRevisionRequest request
     ) {
         CompanyProjectRevisionResponse response =
                 companyWorkspaceService.requestProjectRevision(
