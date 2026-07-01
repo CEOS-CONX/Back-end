@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 public record UpdateCrewUserDTO(
         @NotBlank(message = "이메일을 입력해주세요") @Email String email,
         @NotBlank(message = "크루명을 입력해주세요") String crewName,
-        @NotBlank(message = "크루 유형을 입력해주세요") CrewType crewType,
+        @NotNull(message = "크루 유형을 입력해주세요") CrewType crewType,
         @NotBlank(message = "담당자 이름을 입력해주세요") String managerName,
         @NotBlank(message = "직무 이름을 입력해주세요") String job,
         String customCrewType
