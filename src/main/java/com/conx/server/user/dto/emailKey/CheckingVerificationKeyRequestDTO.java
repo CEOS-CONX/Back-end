@@ -7,7 +7,7 @@ public record CheckingVerificationKeyRequestDTO(
         @NotBlank(message = "이메일을 입력해주세요")
         String email,
 
-        @NotBlank(message = "인증번호를 입력해주세요")
+        @NotNull(message = "인증번호를 입력해주세요")
         Integer code
 ) {
 
