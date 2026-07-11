@@ -258,6 +258,14 @@ public class Project extends BaseEntity {
         this.referenceLink = getOrDefault(request.referenceLink(), this.getReferenceLink());
     }
 
+    public String getCompanyName(){
+        return company.getCompanyName();
+    }
+
+    public String getCrewName(){
+        return selectedCrew.getCrewName();
+    }
+
     public void modifyDraft(
             CompanyProjectRequest request
     ) {

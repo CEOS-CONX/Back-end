@@ -22,7 +22,8 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.RESULT_UPLOAD_CLOSE_TO_END,
                 project.getSelectedCrew().getId(),
-                NotificationType.RESULT_UPLOAD_CLOSE_TO_END.format(project.getName(), lastDay)
+                NotificationType.RESULT_UPLOAD_CLOSE_TO_END.format(project.getName(), lastDay),
+                project.getCompanyName()
         );
     }
 
@@ -35,7 +36,8 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.LATE_FOR_SUBMIT_DEADLINE,
                 project.getSelectedCrew().getId(),
-                NotificationType.LATE_FOR_SUBMIT_DEADLINE.format(project.getName(), afterDay)
+                NotificationType.LATE_FOR_SUBMIT_DEADLINE.format(project.getName(), afterDay),
+                project.getCompanyName()
         );
     }
 
@@ -48,7 +50,8 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.CLOSE_TO_END_OF_RECRUITING,
                 project.getCompany().getId(),
-                NotificationType.CLOSE_TO_END_OF_RECRUITING.format(project.getName(), lastDay)
+                NotificationType.CLOSE_TO_END_OF_RECRUITING.format(project.getName(), lastDay),
+                project.getCompanyName()
         );
     }
 
@@ -56,14 +59,17 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.RESULT_UPLOADED,
                 project.getCompany().getId(),
-                NotificationType.RESULT_UPLOADED.format(project.getName()));
+                NotificationType.RESULT_UPLOADED.format(project.getName()),
+                project.getCrewName()
+        );
     }
 
     static Notification selected(Project project){
         return Notification.create(
                 NotificationType.PROJECT_SELECTED,
                 project.getSelectedCrew().getId(),
-                NotificationType.PROJECT_SELECTED.format(project.getName())
+                NotificationType.PROJECT_SELECTED.format(project.getName()),
+                project.getCompanyName()
         );
     }
 
@@ -71,7 +77,8 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.PROJECT_REJECTED,
                 projectApplication.getCrew().getId(),
-                NotificationType.PROJECT_REJECTED.format(projectApplication.getProject().getName())
+                NotificationType.PROJECT_REJECTED.format(projectApplication.getProject().getName()),
+                projectApplication.getCompanyName()
         );
     }
 
@@ -84,7 +91,8 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.CLOSE_TO_END_OF_MARKED_PROJECT,
                 projectBookmark.getCrew().getId(),
-                NotificationType.CLOSE_TO_END_OF_MARKED_PROJECT.format(projectBookmark.getProject().getName(), lastDay)
+                NotificationType.CLOSE_TO_END_OF_MARKED_PROJECT.format(projectBookmark.getProject().getName(), lastDay),
+                projectBookmark.getProject().getCompanyName()
         );
     }
 
@@ -92,10 +100,12 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.ADJUSTMENT_DONE,
                 project.getSelectedCrew().getId(),
-                NotificationType.ADJUSTMENT_DONE.format(project.getName())
+                NotificationType.ADJUSTMENT_DONE.format(project.getName()),
+                "CONX"
         );
     }
 
+    //
     static Notification closeToProjectDeadline(Project project){
         long lastDay = ChronoUnit.DAYS.between(
                 LocalDate.now(),
@@ -105,7 +115,8 @@ class NotificationFactory {
         return Notification.create(
                 NotificationType.PROJECT_CLOSE_TO_END,
                 project.getSelectedCrew().getId(),
-                NotificationType.PROJECT_CLOSE_TO_END.format(project.getName(), lastDay)
+                NotificationType.PROJECT_CLOSE_TO_END.format(project.getName(), lastDay),
+                project.getCompany().getCompanyName()
         );
     }
 }

@@ -68,4 +68,12 @@ public class ProjectApplication extends BaseEntity {
     public boolean isPending() {
         return this.status == ProjectApplicationStatus.PENDING;
     }
+
+    public String getCrewName() {
+        return crew.getCrewName();
+    }
+
+    public String getCompanyName() {
+        return project.getCompanyName();
+    }
 }
