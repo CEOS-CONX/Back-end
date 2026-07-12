@@ -283,7 +283,8 @@ class CompanyMyPageControllerTest {
                 null,
                 null,
                 5,
-                300000
+                300000,
+                4.5
         );
 
         given(companyMyPageService.getBookmarkedCrews(COMPANY_ID))
@@ -300,6 +301,7 @@ class CompanyMyPageControllerTest {
                 .andExpect(jsonPath("$.payload[0].crewIntroduction").value("크루 소개입니다."))
                 .andExpect(jsonPath("$.payload[0].memberAmount").value(5))
                 .andExpect(jsonPath("$.payload[0].cumulative").value(300000))
+                .andExpect(jsonPath("$.payload[0].point").value(4.5))
                 .andExpect(jsonPath("$.hasNotification").value(false));
 
         verify(companyMyPageService).getBookmarkedCrews(COMPANY_ID);

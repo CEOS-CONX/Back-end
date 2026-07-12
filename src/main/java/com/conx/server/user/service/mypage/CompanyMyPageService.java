@@ -91,10 +91,7 @@ public class CompanyMyPageService {
     public List<CompanyBookmarkedCrewResponse> getBookmarkedCrews(Long companyId) {
         Company company = userFinder.findActiveCompany(companyId);
 
-        return crewBookmarkRepository.findAllByCompanyId(company.getId())
-                .stream()
-                .map(CrewBookmark::getCrew)
-                .map(CompanyBookmarkedCrewResponse::from)
-                .toList();
+        return crewBookmarkRepository
+                .findAllBookmarkedCrewResponsesByCompanyId(company.getId());
     }
 }

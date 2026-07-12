@@ -13,10 +13,11 @@ public record CompanyBookmarkedCrewResponse(
         String customCrewType,
         Industry interestingIndustry,
         int memberAmount,
-        int cumulative
+        int cumulative,
+        double point
 ) {
 
-    public static CompanyBookmarkedCrewResponse from(Crew crew) {
+    public static CompanyBookmarkedCrewResponse of(Crew crew, double point) {
         return new CompanyBookmarkedCrewResponse(
                 crew.getId(),
                 crew.getProfileImage(),
@@ -26,7 +27,8 @@ public record CompanyBookmarkedCrewResponse(
                 crew.getCustomCrewType(),
                 crew.getInterestingIndustry(),
                 crew.getMemberAmount(),
-                crew.getTotalSubsidy()
+                crew.getTotalSubsidy(),
+                point
         );
     }
 }
