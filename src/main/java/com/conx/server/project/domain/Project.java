@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+
 import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 
 @Entity
@@ -26,13 +27,35 @@ import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Project extends BaseEntity {
 
-    public Project(Company company,
-                   String brandName, String managerName, String managerEmail, String managerPhone,
-                   String name, String objectives, ProjectType type, String requirement, String resultForm, String essentialSubmitPart,
-                   LocalDate recruitDeadLine, LocalDate projectStartDate, LocalDate projectDeadline, LocalDate submitDeadline,
-                   CrewType crewType, String competency, String preferenceCondition, long subsidy,
-                   boolean incentive, String incentiveCondition,
-                   List<String> additionalFileLinks, String referenceLink) {
+    /*
+     * 기존 코드 및 테스트 호환을 위한 생성자입니다.
+     * 기존 생성자에는 플랫폼명과 콘텐츠 유형이 없으므로 null로 저장합니다.
+     */
+    public Project(
+            Company company,
+            String brandName,
+            String managerName,
+            String managerEmail,
+            String managerPhone,
+            String name,
+            String objectives,
+            ProjectType type,
+            String requirement,
+            String resultForm,
+            String essentialSubmitPart,
+            LocalDate recruitDeadLine,
+            LocalDate projectStartDate,
+            LocalDate projectDeadline,
+            LocalDate submitDeadline,
+            CrewType crewType,
+            String competency,
+            String preferenceCondition,
+            long subsidy,
+            boolean incentive,
+            String incentiveCondition,
+            List<String> additionalFileLinks,
+            String referenceLink
+    ) {
         this.company = company;
         this.brandName = brandName;
         this.managerName = managerName;
@@ -42,6 +65,10 @@ public class Project extends BaseEntity {
         this.objectives = objectives;
         this.projectType = type;
         this.requirement = requirement;
+
+        this.platformName = null;
+        this.contentType = null;
+
         this.resultForm = resultForm;
         this.essentialSubmitPart = essentialSubmitPart;
         this.recruitDeadLine = recruitDeadLine;
@@ -59,32 +86,36 @@ public class Project extends BaseEntity {
         this.status = ProjectStatus.RECRUITING;
     }
 
-    private Project(Company company,
-                    String projectImage,
-                    String brandName,
-                    String managerName,
-                    String managerEmail,
-                    String managerPhone,
-                    String name,
-                    String objectives,
-                    ProjectType projectType,
-                    String requirement,
-                    String projectExplanation,
-                    String resultForm,
-                    String essentialSubmitPart,
-                    LocalDate recruitDeadLine,
-                    LocalDate projectStartDate,
-                    LocalDate projectDeadline,
-                    LocalDate submitDeadline,
-                    CrewType crewType,
-                    String competency,
-                    String preferenceCondition,
-                    long subsidy,
-                    boolean incentive,
-                    String incentiveCondition,
-                    List<String> additionalFileLinks,
-                    String referenceLink,
-                    ProjectStatus status) {
+    private Project(
+            Company company,
+            String projectImage,
+            String brandName,
+            String managerName,
+            String managerEmail,
+            String managerPhone,
+            String name,
+            String objectives,
+            ProjectType projectType,
+            String requirement,
+            String projectExplanation,
+            String platformName,
+            String contentType,
+            String resultForm,
+            String essentialSubmitPart,
+            LocalDate recruitDeadLine,
+            LocalDate projectStartDate,
+            LocalDate projectDeadline,
+            LocalDate submitDeadline,
+            CrewType crewType,
+            String competency,
+            String preferenceCondition,
+            long subsidy,
+            boolean incentive,
+            String incentiveCondition,
+            List<String> additionalFileLinks,
+            String referenceLink,
+            ProjectStatus status
+    ) {
         this.company = company;
         this.projectImage = projectImage;
         this.brandName = brandName;
@@ -96,6 +127,10 @@ public class Project extends BaseEntity {
         this.projectType = projectType;
         this.requirement = requirement;
         this.projectExplanation = projectExplanation;
+
+        this.platformName = platformName;
+        this.contentType = contentType;
+
         this.resultForm = resultForm;
         this.essentialSubmitPart = essentialSubmitPart;
         this.recruitDeadLine = recruitDeadLine;
@@ -145,6 +180,18 @@ public class Project extends BaseEntity {
 
     private String projectExplanation;
 
+    /*
+     * 대표 프로젝트 카드에 표시할 플랫폼명입니다.
+     * 예: 인스타그램, 유튜브, 블로그
+     */
+    private String platformName;
+
+    /*
+     * 대표 프로젝트 카드에 표시할 콘텐츠 유형입니다.
+     * 예: 릴스 영상, 숏폼 영상, 카드뉴스
+     */
+    private String contentType;
+
     private String resultForm;
 
     private String essentialSubmitPart;
@@ -181,7 +228,7 @@ public class Project extends BaseEntity {
             Company company,
             CompanyProjectRequest request,
             ProjectStatus status
-    ){
+    ) {
         return new Project(
                 company,
                 request.projectImage(),
@@ -194,6 +241,10 @@ public class Project extends BaseEntity {
                 request.projectType(),
                 request.requirement(),
                 request.projectExplanation(),
+
+                request.platformName(),
+                request.contentType(),
+
                 request.resultForm(),
                 request.essentialSubmitPart(),
                 request.recruitDeadLine(),
@@ -216,46 +267,156 @@ public class Project extends BaseEntity {
             Company company,
             CompanyProjectRequest request
     ) {
-        return createWithStatus(company, request, ProjectStatus.RECRUITING);
+        return createWithStatus(
+                company,
+                request,
+                ProjectStatus.RECRUITING
+        );
     }
 
     public static Project createDraft(
             Company company,
             CompanyProjectRequest request
     ) {
-        return createWithStatus(company, request, ProjectStatus.DRAFT);
+        return createWithStatus(
+                company,
+                request,
+                ProjectStatus.DRAFT
+        );
     }
-
-
 
     private void modify(
             CompanyProjectRequest request
-    )
-    {
-        this.projectImage = getOrDefault(request.projectImage(), this.getProjectImage());
-        this.brandName = getOrDefault(request.brandName(), this.getBrandName());
-        this.managerName = getOrDefault(request.managerName(), this.getManagerName());
-        this.managerEmail = getOrDefault(request.managerEmail(), this.getManagerEmail());
-        this.managerPhone = getOrDefault(request.managerPhone(), this.getManagerPhone());
-        this.name = getOrDefault(request.name(), this.getName());
-        this.objectives = getOrDefault(request.objectives(), this.getObjectives());
-        this.projectType = getOrDefault(request.projectType(), this.getProjectType());
-        this.requirement = getOrDefault(request.requirement(), this.getRequirement());
-        this.projectExplanation = getOrDefault(request.projectExplanation(), this.getProjectExplanation());
-        this.resultForm = getOrDefault(request.resultForm(), this.getResultForm());
-        this.essentialSubmitPart = getOrDefault(request.essentialSubmitPart(), this.getEssentialSubmitPart());
-        this.recruitDeadLine = getOrDefault(request.recruitDeadLine(), this.getRecruitDeadLine());
-        this.projectStartDate = getOrDefault(request.projectStartDate(), this.getProjectStartDate());
-        this.projectDeadline = getOrDefault(request.projectDeadline(), this.getProjectDeadline());
-        this.submitDeadline = getOrDefault(request.submitDeadline(), this.getSubmitDeadline());
-        this.crewType = getOrDefault(request.crewType(), this.getCrewType());
-        this.competency = getOrDefault(request.competency(), this.getCompetency());
-        this.preferenceCondition = getOrDefault(request.preferenceCondition(), this.getPreferenceCondition());
-        this.subsidy = getOrDefault(request.subsidy(), this.getSubsidy());
-        this.incentive = getOrDefault(request.incentive(), this.isIncentive());
-        this.incentiveCondition = getOrDefault(request.incentiveCondition(), this.getIncentiveCondition());
-        this.additionalFileLinks = getOrDefault(request.additionalFileLinks(), this.getAdditionalFileLinks());
-        this.referenceLink = getOrDefault(request.referenceLink(), this.getReferenceLink());
+    ) {
+        this.projectImage = getOrDefault(
+                request.projectImage(),
+                this.getProjectImage()
+        );
+
+        this.brandName = getOrDefault(
+                request.brandName(),
+                this.getBrandName()
+        );
+
+        this.managerName = getOrDefault(
+                request.managerName(),
+                this.getManagerName()
+        );
+
+        this.managerEmail = getOrDefault(
+                request.managerEmail(),
+                this.getManagerEmail()
+        );
+
+        this.managerPhone = getOrDefault(
+                request.managerPhone(),
+                this.getManagerPhone()
+        );
+
+        this.name = getOrDefault(
+                request.name(),
+                this.getName()
+        );
+
+        this.objectives = getOrDefault(
+                request.objectives(),
+                this.getObjectives()
+        );
+
+        this.projectType = getOrDefault(
+                request.projectType(),
+                this.getProjectType()
+        );
+
+        this.requirement = getOrDefault(
+                request.requirement(),
+                this.getRequirement()
+        );
+
+        this.projectExplanation = getOrDefault(
+                request.projectExplanation(),
+                this.getProjectExplanation()
+        );
+
+        this.platformName = getOrDefault(
+                request.platformName(),
+                this.getPlatformName()
+        );
+
+        this.contentType = getOrDefault(
+                request.contentType(),
+                this.getContentType()
+        );
+
+        this.resultForm = getOrDefault(
+                request.resultForm(),
+                this.getResultForm()
+        );
+
+        this.essentialSubmitPart = getOrDefault(
+                request.essentialSubmitPart(),
+                this.getEssentialSubmitPart()
+        );
+
+        this.recruitDeadLine = getOrDefault(
+                request.recruitDeadLine(),
+                this.getRecruitDeadLine()
+        );
+
+        this.projectStartDate = getOrDefault(
+                request.projectStartDate(),
+                this.getProjectStartDate()
+        );
+
+        this.projectDeadline = getOrDefault(
+                request.projectDeadline(),
+                this.getProjectDeadline()
+        );
+
+        this.submitDeadline = getOrDefault(
+                request.submitDeadline(),
+                this.getSubmitDeadline()
+        );
+
+        this.crewType = getOrDefault(
+                request.crewType(),
+                this.getCrewType()
+        );
+
+        this.competency = getOrDefault(
+                request.competency(),
+                this.getCompetency()
+        );
+
+        this.preferenceCondition = getOrDefault(
+                request.preferenceCondition(),
+                this.getPreferenceCondition()
+        );
+
+        this.subsidy = getOrDefault(
+                request.subsidy(),
+                this.getSubsidy()
+        );
+
+        this.incentive = getOrDefault(
+                request.incentive(),
+                this.isIncentive()
+        );
+
+        this.incentiveCondition = getOrDefault(
+                request.incentiveCondition(),
+                this.getIncentiveCondition()
+        );
+
+        this.additionalFileLinks = getOrDefault(
+                request.additionalFileLinks(),
+                this.getAdditionalFileLinks()
+        );
+
+        this.referenceLink = getOrDefault(
+                request.referenceLink(),
+                this.getReferenceLink()
+        );
     }
 
     public void modifyDraft(
@@ -275,16 +436,16 @@ public class Project extends BaseEntity {
         this.status = ProjectStatus.CONTRACT_PENDING;
     }
 
-    public boolean isDone(){
+    public boolean isDone() {
         return this.status == ProjectStatus.DONE;
     }
 
-    public boolean isWaitingResult(){
+    public boolean isWaitingResult() {
         return this.status == ProjectStatus.WAITING_RESULT
                 || this.status == ProjectStatus.PROGRESS;
     }
 
-    public boolean isBeforeSigningContract(){
+    public boolean isBeforeSigningContract() {
         return this.status == ProjectStatus.CONTRACT_PENDING;
     }
 
@@ -308,7 +469,7 @@ public class Project extends BaseEntity {
         this.views++;
     }
 
-    public void expire(){
+    public void expire() {
         this.status = ProjectStatus.EXPIRED;
     }
 

@@ -292,4 +292,25 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findAllByProjectDeadlineAndStatus(LocalDate projectDeadline, ProjectStatus status);
 
     List<Project> findAllBySelectedCrew(Crew selectedCrew);
+
+    @Query(
+            value = """
+            select p
+            from Project p
+            join fetch p.company
+            where p.selectedCrew.id = :crewId
+            and p.status in :statuses
+            """,
+            countQuery = """
+            select count(p)
+            from Project p
+            where p.selectedCrew.id = :crewId
+            and p.status in :statuses
+            """
+    )
+    Page<Project> findCrewProjectHistory(
+            @Param("crewId") Long crewId,
+            @Param("statuses") List<ProjectStatus> statuses,
+            Pageable pageable
+    );
 }

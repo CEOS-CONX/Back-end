@@ -16,19 +16,33 @@ public record CrewProfileResponse(
         String managerName,
         String managerPhoneNumber,
         String job,
+
         String crewSchool,
         int memberAmount,
+
         String crewIntroduction,
         String additionalIntroduction,
+
         List<String> advantages,
         Industry interestingIndustry,
+
         String snsLink,
         String etcLink,
         String kakaotalkLink,
-        int totalSubsidy
+
+        int totalSubsidy,
+
+        List<String> schools,
+        List<String> specialties,
+        List<CrewLinkResponse> links,
+        List<CrewFileResponse> files
 ) {
 
-    public static CrewProfileResponse from(Crew crew) {
+    public static CrewProfileResponse from(
+            Crew crew,
+            List<CrewLinkResponse> links,
+            List<CrewFileResponse> files
+    ) {
         return new CrewProfileResponse(
                 crew.getId(),
                 crew.getEmail(),
@@ -39,16 +53,34 @@ public record CrewProfileResponse(
                 crew.getManagerName(),
                 crew.getManagerPhoneNumber(),
                 crew.getJob(),
+
                 crew.getCrewSchool(),
                 crew.getMemberAmount(),
+
                 crew.getCrewIntroduction(),
                 crew.getAdditionalIntroduction(),
+
                 crew.getAdvantages(),
                 crew.getInterestingIndustry(),
+
                 crew.getSnsLink(),
                 crew.getEtcLink(),
                 crew.getKakaotalkLink(),
-                crew.getTotalSubsidy()
+
+                crew.getTotalSubsidy(),
+
+                crew.getPublicSchools(),
+                crew.getPublicSpecialties(),
+                links == null ? List.of() : List.copyOf(links),
+                files == null ? List.of() : List.copyOf(files)
+        );
+    }
+
+    public static CrewProfileResponse from(Crew crew) {
+        return from(
+                crew,
+                List.of(),
+                List.of()
         );
     }
 }

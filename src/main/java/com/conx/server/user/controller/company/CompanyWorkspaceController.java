@@ -23,6 +23,8 @@ import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardRespon
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
+import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
+import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -246,6 +248,33 @@ public class CompanyWorkspaceController {
                 companyWorkspaceService.approveProject(userDetails.getId(), projectId);
 
         return apiResponseFactory.success("프로젝트 결과물 승인에 성공했습니다.", response, userDetails);
+    }
+
+    @PostMapping("/projects/{projectId}/evaluation")
+    public ApiResponse<CompanyProjectEvaluationResponse>
+    evaluateProject(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @PathVariable
+            Long projectId,
+
+            @Valid
+            @RequestBody
+            CompanyProjectEvaluationRequest request
+    ) {
+        CompanyProjectEvaluationResponse response =
+                companyWorkspaceService.evaluateProject(
+                        userDetails.getId(),
+                        projectId,
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "크루 평가 등록에 성공했습니다.",
+                response,
+                userDetails
+        );
     }
 
     @GetMapping("/settlements")

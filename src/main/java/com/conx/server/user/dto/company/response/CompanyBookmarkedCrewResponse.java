@@ -14,10 +14,21 @@ public record CompanyBookmarkedCrewResponse(
         Industry interestingIndustry,
         int memberAmount,
         int cumulative,
-        double point
+        Double point
 ) {
 
-    public static CompanyBookmarkedCrewResponse of(Crew crew, double point) {
+    /*
+     * JPQL의 avg() 결과는 Double 타입입니다.
+     * 혹시 null이 전달되더라도 0점으로 정규화합니다.
+     */
+    public CompanyBookmarkedCrewResponse {
+        point = point == null ? 0.0 : point;
+    }
+
+    public static CompanyBookmarkedCrewResponse of(
+            Crew crew,
+            double point
+    ) {
         return new CompanyBookmarkedCrewResponse(
                 crew.getId(),
                 crew.getProfileImage(),

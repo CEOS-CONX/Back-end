@@ -8,9 +8,31 @@ public record CrewWrapperForLandingPageDTO(
         String crewImageLink,
         String crewName,
         String crewIntroduction,
-
         Industry industry,
         CrewType crewType,
         double point,
         int cumulative
-) {}
+) {
+
+    public CrewWrapperForLandingPageDTO(
+            long crewId,
+            String crewImageLink,
+            String crewName,
+            String crewIntroduction,
+            Industry industry,
+            CrewType crewType,
+            Double point,
+            int cumulative
+    ) {
+        this(
+                crewId,
+                crewImageLink,
+                crewName,
+                crewIntroduction,
+                industry,
+                crewType,
+                point == null ? 0.0 : point,
+                cumulative
+        );
+    }
+}

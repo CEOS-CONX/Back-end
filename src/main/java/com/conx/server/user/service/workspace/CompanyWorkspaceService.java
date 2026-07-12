@@ -35,6 +35,10 @@ import com.conx.server.user.dto.company.request.CompanySettlementExpectedPayment
 import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.service.common.UserFinder;
+import com.conx.server.user.domain.crew.Evaluation;
+import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
+import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
+import com.conx.server.user.repository.EvaluationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +56,7 @@ public class CompanyWorkspaceService {
     private final ProjectSettlementRepository projectSettlementRepository;
     private final NotificationFacadeService notificationFacadeService;
     private final UserFinder userFinder;
+    private final EvaluationRepository evaluationRepository;
 
 
     @Transactional(readOnly = true)
@@ -270,6 +275,69 @@ public class CompanyWorkspaceService {
         createSettlementIfNotExists(project);
 
         return CompanyProjectApprovalResponse.of(project, submission);
+    }
+
+    @Transactional
+    public CompanyProjectEvaluationResponse evaluateProject(
+            Long companyId,
+            Long projectId,
+            CompanyProjectEvaluationRequest request
+    ) {
+        Company company =
+                userFinder.findActiveCompany(companyId);
+
+        Project project =
+                findCompanyProject(
+                        company.getId(),
+                        projectId
+                );
+
+        if (
+                project.getStatus() != ProjectStatus.ADJUSTING
+                        && project.getStatus() != ProjectStatus.DONE
+        ) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_EVALUATION_NOT_ALLOWED
+            );
+        }
+
+        Crew selectedCrew =
+                project.getSelectedCrew();
+
+        if (selectedCrew == null) {
+            throw new CustomException(
+                    ErrorCode.PARTNER_CREW_NOT_FOUND
+            );
+        }
+
+        if (
+                evaluationRepository.existsByProjectId(
+                        project.getId()
+                )
+        ) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_EVALUATION_ALREADY_EXISTS
+            );
+        }
+
+        Evaluation evaluation =
+                Evaluation.create(
+                        project,
+                        selectedCrew,
+                        company,
+                        request.completeness(),
+                        request.schedule(),
+                        request.ability(),
+                        request.recooperation(),
+                        request.communication()
+                );
+
+        Evaluation savedEvaluation =
+                evaluationRepository.save(evaluation);
+
+        return CompanyProjectEvaluationResponse.from(
+                savedEvaluation
+        );
     }
 
     private void createSettlementIfNotExists(Project project) {
