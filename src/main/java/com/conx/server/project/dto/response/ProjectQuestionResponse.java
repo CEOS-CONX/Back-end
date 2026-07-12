@@ -13,6 +13,7 @@ public record ProjectQuestionResponse(
         String writerName,
         String content,
         boolean secret,
+        boolean canView,
         boolean answered,
         LocalDateTime answeredAt,
         LocalDateTime createdAt
@@ -20,15 +21,19 @@ public record ProjectQuestionResponse(
 
     private static final String SECRET_CONTENT = "비밀글입니다.";
 
-    public static ProjectQuestionResponse from(ProjectQuestion question, boolean canViewSecret) {
+    public static ProjectQuestionResponse from(
+            ProjectQuestion question,
+            boolean canView
+    ) {
         return new ProjectQuestionResponse(
                 question.getId(),
                 question.getProject().getId(),
                 question.getWriterId(),
                 question.getWriterRole(),
                 question.getWriterName(),
-                question.isSecret() && !canViewSecret ? SECRET_CONTENT : question.getContent(),
+                canView ? question.getContent() : SECRET_CONTENT,
                 question.isSecret(),
+                canView,
                 question.getAnswerContent() != null,
                 question.getAnsweredAt(),
                 question.getCreatedAt()
