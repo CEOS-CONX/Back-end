@@ -117,7 +117,6 @@ public class CompanyWorkspaceService {
     @Transactional
     public CompanyProjectIdResponse createProject(Long companyId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
-
         Project project = Project.createRecruitingProject(company, request);
 
         Project savedProject = projectRepository.save(project);

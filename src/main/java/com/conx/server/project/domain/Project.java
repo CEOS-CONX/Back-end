@@ -1,6 +1,7 @@
 package com.conx.server.project.domain;
 
 import com.conx.server.domain.file.domain.File;
+import com.conx.server.domain.file.dto.FileRequestDTO;
 import com.conx.server.global.BaseEntity;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
@@ -201,7 +202,7 @@ public class Project extends BaseEntity {
                 request.peopleNumber(),
                 request.competency(),
                 request.preferenceCondition(),
-                request.fileLinks(),
+                request.fileLinks() == null ? null : request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList(),
                 request.additionalLinks() == null ? null : request.additionalLinks().stream().map(AdditionalLinksWrapper::from).toList(),
                 status,
                 0                         // 조회수 초기값
@@ -248,7 +249,7 @@ public class Project extends BaseEntity {
         this.competency = getOrDefault(request.competency(), this.getCompetency());
         this.preferenceCondition = getOrDefault(request.preferenceCondition(), this.getPreferenceCondition());
 
-        this.fileLinks = getOrDefault(request.fileLinks(), this.getFileLinks());
+        this.fileLinks = getOrDefault(request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList(), this.getFileLinks());
 
         this.links = getOrDefault(request.additionalLinks().stream().map(AdditionalLinksWrapper::from).toList(), this.links);
     }

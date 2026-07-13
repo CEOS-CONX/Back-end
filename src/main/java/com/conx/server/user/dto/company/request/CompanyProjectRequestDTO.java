@@ -1,5 +1,6 @@
 package com.conx.server.user.dto.company.request;
 
+import com.conx.server.domain.file.dto.FileRequestDTO;
 import com.conx.server.project.domain.AdditionalLinksRequestDTO;
 import com.conx.server.project.domain.ResultForm;
 import com.conx.server.project.domain.ResultFormRequestDTO;
@@ -66,7 +67,7 @@ public record CompanyProjectRequestDTO(
         String preferenceCondition,
 
         // 참고자료
-        List<String> fileLinks,
+        List<FileRequestDTO> fileLinks,
 
         // 링크
         List<AdditionalLinksRequestDTO> additionalLinks
