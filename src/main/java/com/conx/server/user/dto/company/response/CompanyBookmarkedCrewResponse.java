@@ -13,7 +13,7 @@ public record CompanyBookmarkedCrewResponse(
         String customCrewType,
         Industry interestingIndustry,
         int memberAmount,
-        int cumulative
+        int totalProject
 ) {
 
     public static CompanyBookmarkedCrewResponse from(Crew crew) {

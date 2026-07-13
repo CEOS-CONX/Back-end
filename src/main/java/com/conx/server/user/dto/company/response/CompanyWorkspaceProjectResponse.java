@@ -5,10 +5,11 @@ import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record CompanyWorkspaceProjectResponse(
         Long projectId,
-        String projectImage,
+        List<String> projectImage,
         String name,
         String brandName,
         ProjectType projectType,
@@ -26,7 +27,7 @@ public record CompanyWorkspaceProjectResponse(
         return new CompanyWorkspaceProjectResponse(
                 project.getId(),
                 project.getProjectImage(),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 project.getProjectType(),
                 project.getStatus(),

@@ -12,5 +12,5 @@ public record CrewWrapperForLandingPageDTO(
         Industry industry,
         CrewType crewType,
         double point,
-        int cumulative
+        int totalProject
 ) {}

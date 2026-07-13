@@ -29,7 +29,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("""
         select new com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO(
-            p.id, p.projectImage, p.name, p.company.companyName, p.company.industry, p.projectType,
+            p.id, p.projectImage, p.projectName, p.company.companyName, p.company.industry, p.projectType,
             p.projectStartDate, p.projectDeadline
         )
         from Project p
@@ -43,7 +43,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("""
         select new com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO(
-            p.id, p.projectImage, p.name, p.company.companyName, p.company.industry, p.projectType,
+            p.id, p.projectImage, p.projectName, p.company.companyName, p.company.industry, p.projectType,
             p.projectStartDate, p.projectDeadline
         )
         from Project p
@@ -66,7 +66,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     from Project p
     where p.company.id = :companyId
     and p.status <> com.conx.server.project.domain.enums.ProjectStatus.DRAFT
-    and (:keyword is null or p.name like concat('%', :keyword, '%'))
+    and (:keyword is null or p.projectName like concat('%', :keyword, '%'))
     and (:projectType is null or p.projectType = :projectType)
     and (:startDate is null or p.projectStartDate >= :startDate)
     and (:endDate is null or p.projectDeadline <= :endDate)
@@ -86,7 +86,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         from Project p
         join fetch p.company c
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and (:keyword is null or p.name like concat('%', :keyword, '%')
+        and (:keyword is null or p.projectName like concat('%', :keyword, '%')
             or c.companyName like concat('%', :keyword, '%')
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
@@ -100,7 +100,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         from Project p
         join p.company c
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and (:keyword is null or p.name like concat('%', :keyword, '%')
+        and (:keyword is null or p.projectName like concat('%', :keyword, '%')
             or c.companyName like concat('%', :keyword, '%')
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
@@ -124,7 +124,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         from Project p
         join fetch p.company c
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and (:keyword is null or p.name like concat('%', :keyword, '%')
+        and (:keyword is null or p.projectName like concat('%', :keyword, '%')
             or c.companyName like concat('%', :keyword, '%')
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
@@ -138,7 +138,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         from Project p
         join p.company c
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and (:keyword is null or p.name like concat('%', :keyword, '%')
+        and (:keyword is null or p.projectName like concat('%', :keyword, '%')
             or c.companyName like concat('%', :keyword, '%')
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
@@ -162,7 +162,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         from Project p
         join fetch p.company c
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and (:keyword is null or p.name like concat('%', :keyword, '%')
+        and (:keyword is null or p.projectName like concat('%', :keyword, '%')
             or c.companyName like concat('%', :keyword, '%')
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)
@@ -176,7 +176,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         from Project p
         join p.company c
         where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and (:keyword is null or p.name like concat('%', :keyword, '%')
+        and (:keyword is null or p.projectName like concat('%', :keyword, '%')
             or c.companyName like concat('%', :keyword, '%')
             or p.brandName like concat('%', :keyword, '%'))
         and (:category is null or c.industry = :category)

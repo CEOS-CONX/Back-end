@@ -1,6 +1,9 @@
 package com.conx.server.user.service.workspace;
 
-import static com.conx.server.global.common.GetOrDefault.getOrDefault;
+
+import com.conx.server.domain.file.domain.File;
+import com.conx.server.domain.file.dto.FileResponseDTO;
+import com.conx.server.domain.file.repository.FileRepository;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
@@ -8,7 +11,7 @@ import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.company.Company;
-import com.conx.server.user.dto.company.request.CompanyProjectRequest;
+import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
@@ -52,6 +55,7 @@ public class CompanyWorkspaceService {
     private final ProjectSettlementRepository projectSettlementRepository;
     private final NotificationFacadeService notificationFacadeService;
     private final UserFinder userFinder;
+    private final FileRepository fileRepository;
 
 
     @Transactional(readOnly = true)
@@ -101,11 +105,17 @@ public class CompanyWorkspaceService {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
-        return CompanyWorkspaceProjectDetailResponse.from(project);
+        List<String> fileLinks = project.getFileLinks();
+        List<File> files = fileRepository.findAllByUrlIn(fileLinks);
+        List<FileResponseDTO> fileResponseDTOS = files.stream().map(
+                FileResponseDTO::from
+        ).toList();
+
+        return CompanyWorkspaceProjectDetailResponse.from(project, fileResponseDTOS);
     }
 
     @Transactional
-    public CompanyProjectIdResponse createProject(Long companyId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse createProject(Long companyId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
 
         Project project = Project.createRecruitingProject(company, request);
@@ -115,23 +125,19 @@ public class CompanyWorkspaceService {
     }
 
     @Transactional
-    public CompanyProjectIdResponse createProjectDraft(Long companyId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse createProjectDraft(Long companyId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
 
-        Project draft = Project.createDraft(company, request);
+        Project project = Project.createDraft(company, request);
 
-        Project savedDraft = projectRepository.save(draft);
+        Project savedDraft = projectRepository.save(project);
         return CompanyProjectIdResponse.from(savedDraft);
     }
 
     @Transactional
-    public CompanyProjectIdResponse updateProject(Long companyId, Long projectId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse updateProject(Long companyId, Long projectId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
-
-        if (project.getStatus() == ProjectStatus.DRAFT) {
-            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
-        }
 
         project.modifyProject(request);
 
@@ -139,7 +145,7 @@ public class CompanyWorkspaceService {
     }
 
     @Transactional
-    public CompanyProjectIdResponse updateProjectDraft(Long companyId, Long draftId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse updateProjectDraft(Long companyId, Long draftId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);
 
@@ -153,7 +159,13 @@ public class CompanyWorkspaceService {
         Company company = userFinder.findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);
 
-        return CompanyProjectDraftResponse.from(draft);
+        List<String> fileLinks = draft.getFileLinks();
+        List<File> files = fileRepository.findAllByUrlIn(fileLinks);
+        List<FileResponseDTO> fileResponseDTOS = files.stream().map(
+                FileResponseDTO::from
+        ).toList();
+
+        return CompanyProjectDraftResponse.from(draft, fileResponseDTOS);
     }
 
     @Transactional
@@ -334,7 +346,13 @@ public class CompanyWorkspaceService {
             throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
         }
 
-        return CompanyWorkspaceProjectDetailResponse.from(project);
+        List<String> fileLinks = project.getFileLinks();
+        List<File> files = fileRepository.findAllByUrlIn(fileLinks);
+        List<FileResponseDTO> fileResponseDTOS = files.stream().map(
+                FileResponseDTO::from
+        ).toList();
+
+        return CompanyWorkspaceProjectDetailResponse.from(project, fileResponseDTOS);
     }
 
     @Transactional(readOnly = true)

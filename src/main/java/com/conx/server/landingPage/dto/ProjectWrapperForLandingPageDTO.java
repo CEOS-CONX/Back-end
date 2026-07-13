@@ -4,10 +4,11 @@ import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.Industry;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record ProjectWrapperForLandingPageDTO(
     long projectId,
-    String projectImageLink,
+    List<String> projectImageLink,
 
     String projectName,
     String companyName,

@@ -1,8 +1,11 @@
 package com.conx.server.user.dto.company.response;
 
+import com.conx.server.domain.file.dto.FileResponseDTO;
+import com.conx.server.project.domain.AdditionalLinksWrapper;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.project.dto.response.ResultFormResponse;
 import com.conx.server.user.domain.types.CrewType;
 
 import java.time.LocalDate;
@@ -10,71 +13,80 @@ import java.util.List;
 
 public record CompanyWorkspaceProjectDetailResponse(
         Long projectId,
-        String projectImage,
+
+        List<String> projectImage,
+
         String brandName,
-        String name,
-        String objectives,
-        ProjectType projectType,
-        String requirement,
+        String projectName,
         String projectExplanation,
-        String resultForm,
-        String essentialSubmitPart,
+
+        ProjectType projectType,
+        List<ResultFormResponse> resultForm,
+
         LocalDate recruitDeadLine,
         LocalDate projectStartDate,
         LocalDate projectDeadline,
         LocalDate submitDeadline,
+
         CrewType crewType,
+        int peopleNumber,
         String competency,
         String preferenceCondition,
+
         long subsidy,
         boolean incentive,
         String incentiveCondition,
-        List<String> additionalFileLinks,
-        String referenceLink,
+
+        List<FileResponseDTO> files,
+
+        List<AdditionalLinksWrapper> links,
+
         ProjectStatus status,
         int views,
+
         String managerName,
         String managerEmail,
-        String managerPhone,
+
         Long selectedCrewId
 ) {
 
-    public static CompanyWorkspaceProjectDetailResponse from(Project project) {
-        Long selectedCrewId = null;
-
-        if (project.getSelectedCrew() != null) {
-            selectedCrewId = project.getSelectedCrew().getId();
-        }
-
+    public static CompanyWorkspaceProjectDetailResponse from(Project project,
+                                                             List<FileResponseDTO> files) {
         return new CompanyWorkspaceProjectDetailResponse(
                 project.getId(),
+
                 project.getProjectImage(),
+
                 project.getBrandName(),
-                project.getName(),
-                project.getObjectives(),
-                project.getProjectType(),
-                project.getRequirement(),
+                project.getProjectName(),
                 project.getProjectExplanation(),
-                project.getResultForm(),
-                project.getEssentialSubmitPart(),
+
+                project.getProjectType(),
+                project.getResultForm().stream().map(ResultFormResponse::from).toList(),
+
                 project.getRecruitDeadLine(),
                 project.getProjectStartDate(),
                 project.getProjectDeadline(),
                 project.getSubmitDeadline(),
+
                 project.getCrewType(),
+                project.getPeopleNumber(),
                 project.getCompetency(),
                 project.getPreferenceCondition(),
+
                 project.getSubsidy(),
                 project.isIncentive(),
                 project.getIncentiveCondition(),
-                project.getAdditionalFileLinks(),
-                project.getReferenceLink(),
+
+                files,
+                project.getLinks(),
+
                 project.getStatus(),
                 project.getViews(),
+
                 project.getManagerName(),
                 project.getManagerEmail(),
-                project.getManagerPhone(),
-                selectedCrewId
+                project.getSelectedCrew().getId()
         );
     }
 }

@@ -11,6 +11,6 @@ public record CrewBrowseResponse(
         Industry category,
         CrewType crewType,
         double point,
-        int cumulative
+        int totalProject
 ) {
 }

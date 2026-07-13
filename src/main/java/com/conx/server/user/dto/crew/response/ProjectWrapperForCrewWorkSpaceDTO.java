@@ -23,6 +23,6 @@ public record ProjectWrapperForCrewWorkSpaceDTO(
         );
 
         return new ProjectWrapperForCrewWorkSpaceDTO(project.getId(), project.getStatus(),
-                project.getName(), project.getBrandName(), project.getSubmitDeadline(), lastDays);
+                project.getProjectName(), project.getBrandName(), project.getSubmitDeadline(), lastDays);
     }
 }

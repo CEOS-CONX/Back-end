@@ -23,7 +23,7 @@ public record CrewSettlementResponse(
         return new CrewSettlementResponse(
                 settlement.getId(),
                 project.getId(),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 project.getStatus(),
                 settlement.getAmount(),

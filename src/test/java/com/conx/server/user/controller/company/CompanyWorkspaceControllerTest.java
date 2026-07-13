@@ -3,9 +3,12 @@ package com.conx.server.user.controller.company;
 import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.notification.repository.NotificationRepository;
+import com.conx.server.project.domain.ResultForm;
+import com.conx.server.project.domain.ResultFormRequestDTO;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.CrewType;
-import com.conx.server.user.dto.company.request.CompanyProjectRequest;
+import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
@@ -182,7 +185,7 @@ class CompanyWorkspaceControllerTest {
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("기업 프로젝트 상세 조회에 성공했습니다."))
                 .andExpect(jsonPath("$.payload.projectId").value(100))
-                .andExpect(jsonPath("$.payload.name").value("테스트 프로젝트"))
+                .andExpect(jsonPath("$.payload.projectName").value("테스트 프로젝트"))
                 .andExpect(jsonPath("$.payload.brandName").value("테스트 브랜드"))
                 .andExpect(jsonPath("$.payload.selectedCrewId").value(10))
                 .andExpect(jsonPath("$.hasNotification").value(false));
@@ -193,7 +196,7 @@ class CompanyWorkspaceControllerTest {
     @Test
     @DisplayName("새 프로젝트를 등록한다")
     void createProject() throws Exception {
-        CompanyProjectRequest request = createProjectRequest();
+        CompanyProjectRequestDTO request = createProjectRequest();
         CompanyProjectIdResponse response = new CompanyProjectIdResponse(100L, null);
 
         given(companyWorkspaceService.createProject(eq(COMPANY_ID), eq(request)))
@@ -216,7 +219,7 @@ class CompanyWorkspaceControllerTest {
     @DisplayName("프로젝트를 수정한다")
     void updateProject() throws Exception {
         Long projectId = 100L;
-        CompanyProjectRequest request = createProjectRequest();
+        CompanyProjectRequestDTO request = createProjectRequest();
         CompanyProjectIdResponse response = new CompanyProjectIdResponse(projectId, null);
 
         given(companyWorkspaceService.updateProject(eq(COMPANY_ID), eq(projectId), eq(request)))
@@ -251,7 +254,7 @@ class CompanyWorkspaceControllerTest {
     @Test
     @DisplayName("프로젝트를 임시저장한다")
     void createProjectDraft() throws Exception {
-        CompanyProjectRequest request = createProjectRequest();
+        CompanyProjectRequestDTO request = createProjectRequest();
         CompanyProjectIdResponse response = new CompanyProjectIdResponse(200L, null);
 
         given(companyWorkspaceService.createProjectDraft(eq(COMPANY_ID), eq(request)))
@@ -274,7 +277,7 @@ class CompanyWorkspaceControllerTest {
     @DisplayName("임시저장 프로젝트를 수정한다")
     void updateProjectDraft() throws Exception {
         Long draftId = 200L;
-        CompanyProjectRequest request = createProjectRequest();
+        CompanyProjectRequestDTO request = createProjectRequest();
         CompanyProjectIdResponse response = new CompanyProjectIdResponse(draftId, null);
 
         given(companyWorkspaceService.updateProjectDraft(eq(COMPANY_ID), eq(draftId), eq(request)))
@@ -308,7 +311,7 @@ class CompanyWorkspaceControllerTest {
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("임시저장 프로젝트 조회에 성공했습니다."))
                 .andExpect(jsonPath("$.payload.projectId").value(200))
-                .andExpect(jsonPath("$.payload.name").value("테스트 프로젝트"))
+                .andExpect(jsonPath("$.payload.projectName").value("테스트 프로젝트"))
                 .andExpect(jsonPath("$.hasNotification").value(false));
 
         verify(companyWorkspaceService).getProjectDraft(COMPANY_ID, draftId);
@@ -329,7 +332,7 @@ class CompanyWorkspaceControllerTest {
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("검수할 프로젝트 상세 조회에 성공했습니다."))
                 .andExpect(jsonPath("$.payload.projectId").value(100))
-                .andExpect(jsonPath("$.payload.name").value("테스트 프로젝트"))
+                .andExpect(jsonPath("$.payload.projectName").value("테스트 프로젝트"))
                 .andExpect(jsonPath("$.hasNotification").value(false));
 
         verify(companyWorkspaceService).getProjectReviewDetail(COMPANY_ID, projectId);
@@ -638,39 +641,48 @@ class CompanyWorkspaceControllerTest {
                 .updateSettlementExpectedPaymentDate(eq(COMPANY_ID), eq(settlementId), eq(request));
     }
 
-    private CompanyProjectRequest createProjectRequest() {
-        return new CompanyProjectRequest(
-                "project-image.png",
-                "테스트 브랜드",
-                "담당자",
-                "manager@test.com",
-                "010-1234-5678",
-                "테스트 프로젝트",
-                "프로젝트 목표",
-                ProjectType.APPTEST,
-                "요구사항",
-                "프로젝트 설명",
-                "결과물 형태",
-                "필수 제출 항목",
-                LocalDate.of(2026, 6, 30),
-                LocalDate.of(2026, 7, 1),
-                LocalDate.of(2026, 7, 31),
-                LocalDate.of(2026, 8, 5),
-                CrewType.CLUB,
-                "필요 역량",
-                "우대 조건",
-                100000L,
-                true,
-                "인센티브 조건",
-                List.of("file-link-1"),
-                "reference-link"
+    private CompanyProjectRequestDTO createProjectRequest() {
+        return new CompanyProjectRequestDTO(
+                "테스트 브랜드",                // brandName
+                "담당자",                     // managerName
+                "manager@test.com",          // managerEmail
+
+                List.of("project-image.png"), // projectImages
+
+                "테스트 프로젝트",             // projectName
+                "프로젝트 설명",               // projectExplanation
+                Industry.IT,                  // industry
+                ProjectType.APPTEST,          // projectType
+                List.of(new ResultFormRequestDTO(
+                        "유튜브",              // platform
+                        "숏폼",               // contentType
+                        2,                    // numberOfResult
+                        "프로젝트 보고서"       // finalResult
+                )),
+
+                LocalDate.of(2026, 6, 30),    // recruitDeadline
+                LocalDate.of(2026, 7, 1),     // projectStartDate
+                LocalDate.of(2026, 7, 31),    // projectDeadline
+                LocalDate.of(2026, 8, 5),     // submitDeadline
+
+                100000L,                      // subsidy
+                true,                         // incentive
+                "인센티브 조건",                // incentiveCondition
+
+                CrewType.CLUB,                // crewType
+                5,                            // peopleNumber
+                "필요 역량",                   // competency
+                "우대 조건",                   // preferenceCondition
+
+                null,                         // fileLink(or fileKey)
+                null
         );
     }
 
     private CompanyWorkspaceProjectResponse createProjectResponse(Long projectId) {
         return new CompanyWorkspaceProjectResponse(
                 projectId,
-                "project-image.png",
+                List.of("project-image.png"),
                 "테스트 프로젝트",
                 "테스트 브랜드",
                 null,
@@ -688,64 +700,76 @@ class CompanyWorkspaceControllerTest {
     private CompanyWorkspaceProjectDetailResponse createProjectDetailResponse(Long projectId) {
         return new CompanyWorkspaceProjectDetailResponse(
                 projectId,
-                "project-image.png",
+                List.of("project-image.png"),
+
                 "테스트 브랜드",
                 "테스트 프로젝트",
-                "프로젝트 목표",
-                null,
-                "요구사항",
                 "프로젝트 설명",
-                "결과물 형태",
-                "필수 제출 항목",
+
+                null, // ProjectType
+                List.of(), // resultForm
+
                 LocalDate.of(2026, 6, 30),
                 LocalDate.of(2026, 7, 1),
                 LocalDate.of(2026, 7, 31),
                 LocalDate.of(2026, 8, 5),
-                null,
+
+                null, // CrewType
+                5,    // peopleNumber
                 "필요 역량",
                 "우대 조건",
+
                 100000L,
                 true,
                 "인센티브 조건",
-                List.of("file-link-1"),
-                "reference-link",
-                null,
+
+                List.of(), // List<FileResponseDTO>
+                List.of(), // List<AdditionalLinksWrapper>
+
+                null, // ProjectStatus
                 20,
+
                 "담당자",
                 "manager@test.com",
-                "010-1234-5678",
-                10L
+
+                10L // selectedCrewId
         );
     }
 
     private CompanyProjectDraftResponse createProjectDraftResponse(Long draftId) {
         return new CompanyProjectDraftResponse(
                 draftId,
-                "project-image.png",
+                List.of("project-image.png"),
+
                 "테스트 브랜드",
                 "담당자",
                 "manager@test.com",
-                "010-1234-5678",
+
                 "테스트 프로젝트",
-                "프로젝트 목표",
-                null,
-                "요구사항",
                 "프로젝트 설명",
-                "결과물 형태",
-                "필수 제출 항목",
+
+                null, // ProjectType
+                List.of(), // resultForm
+
                 LocalDate.of(2026, 6, 30),
                 LocalDate.of(2026, 7, 1),
                 LocalDate.of(2026, 7, 31),
                 LocalDate.of(2026, 8, 5),
-                null,
+
+                null, // CrewType
+                5,    // peopleNumber
+
                 "필요 역량",
                 "우대 조건",
+
                 100000L,
                 true,
                 "인센티브 조건",
-                List.of("file-link-1"),
-                "reference-link",
-                null
+
+                List.of(), // List<FileResponseDTO>
+                List.of(), // List<AdditionalLinksWrapper>
+
+                null // ProjectStatus
         );
     }
 }

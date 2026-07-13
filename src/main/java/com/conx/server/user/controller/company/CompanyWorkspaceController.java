@@ -6,7 +6,7 @@ import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.Industry;
-import com.conx.server.user.dto.company.request.CompanyProjectRequest;
+import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
@@ -92,7 +92,7 @@ public class CompanyWorkspaceController {
     @PostMapping("/projects")
     public ApiResponse<CompanyProjectIdResponse> createProject(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody CompanyProjectRequest request
+            @Valid @RequestBody CompanyProjectRequestDTO request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.createProject(userDetails.getId(), request);
@@ -104,7 +104,7 @@ public class CompanyWorkspaceController {
     public ApiResponse<CompanyProjectIdResponse> updateProject(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId,
-            @Valid @RequestBody CompanyProjectRequest request
+            @Valid @RequestBody CompanyProjectRequestDTO request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.updateProject(userDetails.getId(), projectId, request);
@@ -125,7 +125,7 @@ public class CompanyWorkspaceController {
     @PostMapping("/project-drafts")
     public ApiResponse<CompanyProjectIdResponse> createProjectDraft(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody CompanyProjectRequest request
+            @RequestBody CompanyProjectRequestDTO request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.createProjectDraft(userDetails.getId(), request);
@@ -137,7 +137,7 @@ public class CompanyWorkspaceController {
     public ApiResponse<CompanyProjectIdResponse> updateProjectDraft(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long draftId,
-            @RequestBody CompanyProjectRequest request
+            @RequestBody CompanyProjectRequestDTO request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.updateProjectDraft(userDetails.getId(), draftId, request);
