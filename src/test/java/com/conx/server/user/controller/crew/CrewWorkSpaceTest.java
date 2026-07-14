@@ -6,9 +6,11 @@ import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.request.ProjectApplicationRequest;
+import com.conx.server.project.dto.response.CrewInfoForProjectApplicationDTO;
 import com.conx.server.project.dto.response.ProjectApplicationResponse;
 import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
 import com.conx.server.project.repository.ProjectRepository;
+import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
@@ -16,6 +18,7 @@ import com.conx.server.user.dto.crew.response.*;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
 import com.conx.server.user.dto.login.response.LoginResponseDTO;
 import com.conx.server.user.repository.AdminRepository;
+import com.conx.server.user.repository.CrewRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +45,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CrewWorkSpaceTest {
+    @Autowired
+    private CrewRepository crewRepository;
+
     @Transactional
     String loginSetting() throws Exception {
         LoginRequestDTO req = new LoginRequestDTO("kimdoes2143@naver.com", "1q2w3e4r!!");
@@ -191,7 +197,6 @@ public class CrewWorkSpaceTest {
                 .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
-    //여기 아직 테스트 통과를 안해서 CI가 안될 수 있습니다..!
     @Test
     @Transactional
     @DisplayName("크루 프로젝트 시작일 기준 조회")
@@ -206,7 +211,6 @@ public class CrewWorkSpaceTest {
                 .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
-    //여기 아직 테스트 통과를 안해서 CI가 안될 수 있습니다..!
     @Test
     @Transactional
     @DisplayName("크루 프로젝트 시작&마감일 기준 조회")
@@ -245,11 +249,34 @@ public class CrewWorkSpaceTest {
 
     @Test
     @Transactional
+    @DisplayName("프로젝트 지원 전 본인의 정보 확인하기")
+    void getMyInfoBeforeApplication() throws Exception {
+        String token = loginSetting();
+        Crew crew = crewRepository.findByEmail("kimdoes2143@naver.com").get();
+
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/projects/applications/my-info")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewInfoForProjectApplicationDTO> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewInfoForProjectApplicationDTO>>() {}
+        );
+
+        CrewInfoForProjectApplicationDTO info = response.payload();
+        assertThat(info.crewName()).isEqualTo(crew.getCrewName());
+        assertThat(info.managerName()).isEqualTo(crew.getManagerName());
+    }
+
+    @Test
+    @Transactional
     @DisplayName("프로젝트 지원하기")
     void applyProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -275,7 +302,7 @@ public class CrewWorkSpaceTest {
     void selectCrewAndGetNotification() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -324,7 +351,7 @@ public class CrewWorkSpaceTest {
         String token_admin = loginSetting_Admin();
 
         //프로젝트 지원하기
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -403,7 +430,7 @@ public class CrewWorkSpaceTest {
     void dashboardAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -438,7 +465,7 @@ public class CrewWorkSpaceTest {
     void applicationStatusAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -475,7 +502,7 @@ public class CrewWorkSpaceTest {
     void dashboardAfterSelectedProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -524,7 +551,7 @@ public class CrewWorkSpaceTest {
     void applicationStatusAfterSelected() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -635,7 +662,7 @@ public class CrewWorkSpaceTest {
     void workSpaceAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -671,7 +698,7 @@ public class CrewWorkSpaceTest {
     void workSpaceAfterSelected() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -761,7 +788,7 @@ public class CrewWorkSpaceTest {
     void workSpaceForUnContractedProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -777,7 +804,6 @@ public class CrewWorkSpaceTest {
         );
 
         long applicationId = applicationResponse.payload().applicationId();
-
 
         mockMvc.perform(post("/api/v1/projects/2/applications")
                         .header("Authorization", token)

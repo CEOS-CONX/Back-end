@@ -33,28 +33,24 @@ public class ProjectApplication extends BaseEntity {
     @JoinColumn(name = "crew_id")
     private Crew crew;
 
-    private String introduction;
-
-    private String proposal;
+    private String motivation;
 
     @Enumerated(EnumType.STRING)
     private ProjectApplicationStatus status;
 
-    private ProjectApplication(Project project, Crew crew, String introduction, String proposal) {
+    private ProjectApplication(Project project, Crew crew, String motivation) {
         this.project = project;
         this.crew = crew;
-        this.introduction = introduction;
-        this.proposal = proposal;
+        this.motivation = motivation;
         this.status = ProjectApplicationStatus.PENDING;
     }
 
     public static ProjectApplication create(
             Project project,
             Crew crew,
-            String introduction,
-            String proposal
+            String motivation
     ) {
-        return new ProjectApplication(project, crew, introduction, proposal);
+        return new ProjectApplication(project, crew, motivation);
     }
 
     public void select() {

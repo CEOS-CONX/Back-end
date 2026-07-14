@@ -393,7 +393,6 @@ class CompanyWorkspaceControllerTest {
                         "etc-link",
                         "kakao-link",
                         "지원 소개",
-                        "제안 내용",
                         null
                 );
 
