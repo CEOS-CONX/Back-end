@@ -201,6 +201,7 @@ class CrewBrowseControllerTest {
                         CrewType.ACADEMY,
                         null,
 
+                        "콘텐츠 마케팅",
                         List.of(
                                 "서강대학교",
                                 "연세대학교"
@@ -208,7 +209,8 @@ class CrewBrowseControllerTest {
                         10,
                         Industry.IT,
 
-                        "마케팅 전문 크루입니다.\n\n추가 소개입니다.",
+                        "마케팅 전문 크루입니다.",
+                        "추가 소개입니다.",
                         List.of(
                                 "기획",
                                 "콘텐츠 제작"
@@ -294,10 +296,16 @@ class CrewBrowseControllerTest {
                                 .value("연세대학교")
                 )
                 .andExpect(
+                        jsonPath("$.payload.activityField")
+                                .value("콘텐츠 마케팅")
+                )
+                .andExpect(
+                        jsonPath("$.payload.catchphrase")
+                                .value("마케팅 전문 크루입니다.")
+                )
+                .andExpect(
                         jsonPath("$.payload.crewIntroduction")
-                                .value(
-                                        "마케팅 전문 크루입니다.\n\n추가 소개입니다."
-                                )
+                                .value("추가 소개입니다.")
                 )
                 .andExpect(
                         jsonPath("$.payload.specialties[0]")

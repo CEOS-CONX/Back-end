@@ -49,7 +49,7 @@ public class Crew extends User {
 
     /*
      * 기존 데이터 호환을 위해 유지합니다.
-     * 신규 데이터는 schools를 우선 사용합니다.
+     * 신규 마이페이지 API는 schools를 사용합니다.
      */
     private String crewSchool;
 
@@ -63,7 +63,20 @@ public class Crew extends User {
 
     private int memberAmount;
 
+    /*
+     * 기존 API와 데이터 호환을 위해 유지합니다.
+     * 신규 마이페이지 API에서는 사용하지 않습니다.
+     */
     private String additionalIntroduction;
+
+    /*
+     * 신규 크루 프로필의 활동 분야입니다.
+     * 선택 옵션 확정 전까지 String으로 저장합니다.
+     */
+    private String activityField;
+
+    @Column(length = 30)
+    private String catchphrase;
 
     @Enumerated(EnumType.STRING)
     private Industry interestingIndustry;
@@ -84,7 +97,7 @@ public class Crew extends User {
 
     /*
      * 기존 데이터 호환을 위해 유지합니다.
-     * 신규 데이터는 CrewLink Entity를 사용합니다.
+     * 신규 마이페이지 API는 CrewLink Entity를 사용합니다.
      */
     private String snsLink;
 
@@ -130,6 +143,10 @@ public class Crew extends User {
         super.activate(UserRole.CREW);
     }
 
+    /*
+     * 마이페이지의 단일 값 필드만 수정합니다.
+     * 배열 필드는 replace 메서드에서 별도로 처리합니다.
+     */
     public void modifyMyPageProfile(
             String profileImage,
             String crewName,
@@ -137,15 +154,11 @@ public class Crew extends User {
             String customCrewType,
             String managerName,
             String job,
-            String crewSchool,
+            String activityField,
             Integer memberAmount,
+            String catchphrase,
             String crewIntroduction,
-            String additionalIntroduction,
-            List<String> advantages,
-            Industry interestingIndustry,
-            String snsLink,
-            String etcLink,
-            String kakaotalkLink
+            Industry interestingIndustry
     ) {
         this.profileImage = profileImage;
         this.crewName = crewName;
@@ -153,27 +166,37 @@ public class Crew extends User {
         this.customCrewType = customCrewType;
         this.managerName = managerName;
         this.job = job;
-        this.crewSchool = crewSchool;
+        this.activityField = activityField;
         this.memberAmount = memberAmount;
+        this.catchphrase = catchphrase;
         this.crewIntroduction = crewIntroduction;
-        this.additionalIntroduction = additionalIntroduction;
-        this.advantages = advantages;
         this.interestingIndustry = interestingIndustry;
-        this.snsLink = snsLink;
-        this.etcLink = etcLink;
-        this.kakaotalkLink = kakaotalkLink;
     }
 
-    public void replaceSchools(List<String> newSchools) {
+    public void replaceSchools(
+            List<String> newSchools
+    ) {
         if (newSchools == null) {
             return;
         }
 
         schools.clear();
-
         schools.addAll(
                 normalizeStringList(newSchools)
         );
+    }
+
+    public void replaceAdvantages(
+            List<String> newAdvantages
+    ) {
+        if (newAdvantages == null) {
+            return;
+        }
+
+        this.advantages =
+                new ArrayList<>(
+                        normalizeStringList(newAdvantages)
+                );
     }
 
     public void replaceSpecialties(
@@ -184,7 +207,6 @@ public class Crew extends User {
         }
 
         specialties.clear();
-
         specialties.addAll(
                 normalizeStringList(newSpecialties)
         );
@@ -202,6 +224,14 @@ public class Crew extends User {
         return List.of();
     }
 
+    public List<String> getPublicAdvantages() {
+        if (advantages == null) {
+            return List.of();
+        }
+
+        return List.copyOf(advantages);
+    }
+
     public List<String> getPublicSpecialties() {
         if (specialties == null) {
             return List.of();
@@ -216,8 +246,8 @@ public class Crew extends User {
      */
     public boolean hasPublicProfileContent() {
         return !getPublicSchools().isEmpty()
+                || hasText(catchphrase)
                 || hasText(crewIntroduction)
-                || hasText(additionalIntroduction)
                 || hasItems(advantages)
                 || !getPublicSpecialties().isEmpty()
                 || hasText(snsLink)
@@ -236,11 +266,17 @@ public class Crew extends User {
                 .toList();
     }
 
-    private boolean hasItems(List<?> values) {
-        return values != null && !values.isEmpty();
+    private boolean hasItems(
+            List<?> values
+    ) {
+        return values != null
+                && !values.isEmpty();
     }
 
-    private boolean hasText(String value) {
-        return value != null && !value.isBlank();
+    private boolean hasText(
+            String value
+    ) {
+        return value != null
+                && !value.isBlank();
     }
 }

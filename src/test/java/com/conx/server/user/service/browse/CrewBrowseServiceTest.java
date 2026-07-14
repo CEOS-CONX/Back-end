@@ -20,6 +20,8 @@ import com.conx.server.user.repository.CrewRepository;
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.repository.PortfolioRepository;
 import com.conx.server.user.service.common.UserFinder;
+import com.conx.server.user.domain.crew.CrewRepresentativeProject;
+import com.conx.server.user.repository.CrewRepresentativeProjectRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -92,6 +94,13 @@ class CrewBrowseServiceTest {
 
     @InjectMocks
     private CrewBrowseService crewBrowseService;
+
+    @Mock
+    private CrewRepresentativeProjectRepository
+            crewRepresentativeProjectRepository;
+
+    @Mock
+    private CrewRepresentativeProject representativeProject;
 
     @Test
     @DisplayName("기업이 크루 목록을 조회하면 북마크 여부를 반영한다")
@@ -199,7 +208,7 @@ class CrewBrowseServiceTest {
     }
 
     @Test
-    @DisplayName("크루 상세 상단은 크루 전체 평점을 반환하고 프로젝트 카드는 해당 프로젝트 평점을 반환한다")
+    @DisplayName("직접 선택한 대표 프로젝트와 프로젝트별 평점을 반환한다")
     void getCrewDetailWithProjectEvaluation() {
         // given
         given(companyUserDetails.getId())
@@ -229,6 +238,9 @@ class CrewBrowseServiceTest {
         given(crew.getCrewType())
                 .willReturn(CrewType.ACADEMY);
 
+        given(crew.getActivityField())
+                .willReturn("콘텐츠 마케팅");
+
         given(crew.getPublicSchools())
                 .willReturn(
                         List.of("서강대학교")
@@ -240,10 +252,15 @@ class CrewBrowseServiceTest {
         given(crew.getInterestingIndustry())
                 .willReturn(Industry.IT);
 
+        given(crew.getCatchphrase())
+                .willReturn(
+                        "브랜드의 이야기를 만드는 크루"
+                );
+
         given(crew.getCrewIntroduction())
                 .willReturn("크루 소개");
 
-        given(crew.getAdvantages())
+        given(crew.getPublicAdvantages())
                 .willReturn(
                         List.of("기획")
                 );
@@ -254,7 +271,7 @@ class CrewBrowseServiceTest {
                 );
 
         given(crew.getTotalSubsidy())
-                .willReturn(1000000);
+                .willReturn(1_000_000);
 
         given(
                 evaluationRepository.getMeanByCrew(crew)
@@ -285,29 +302,21 @@ class CrewBrowseServiceTest {
                         .findAllByCrewIdOrderByIdDesc(1L)
         ).willReturn(List.of());
 
-        Pageable representativePageable =
-                PageRequest.of(
-                        0,
-                        3,
-                        Sort.by(
-                                Sort.Order.desc("createdAt"),
-                                Sort.Order.desc("id")
-                        )
-                );
-
+        /*
+         * 최신 프로젝트 자동 조회가 아니라
+         * 저장된 대표 프로젝트 연결을 조회합니다.
+         */
         given(
-                projectRepository.findCrewProjectHistory(
-                        1L,
-                        HISTORY_STATUSES,
-                        representativePageable
-                )
+                crewRepresentativeProjectRepository
+                        .findAllByCrewIdOrderByDisplayOrderAsc(
+                                1L
+                        )
         ).willReturn(
-                new PageImpl<>(
-                        List.of(project),
-                        representativePageable,
-                        1
-                )
+                List.of(representativeProject)
         );
+
+        given(representativeProject.getProject())
+                .willReturn(project);
 
         given(project.getId())
                 .willReturn(100L);
@@ -329,12 +338,20 @@ class CrewBrowseServiceTest {
 
         given(project.getProjectStartDate())
                 .willReturn(
-                        LocalDate.of(2026, 1, 1)
+                        LocalDate.of(
+                                2026,
+                                1,
+                                1
+                        )
                 );
 
         given(project.getProjectDeadline())
                 .willReturn(
-                        LocalDate.of(2026, 2, 1)
+                        LocalDate.of(
+                                2026,
+                                2,
+                                1
+                        )
                 );
 
         given(
@@ -365,11 +382,20 @@ class CrewBrowseServiceTest {
         assertThat(result.bookmarked())
                 .isTrue();
 
+        assertThat(result.activityField())
+                .isEqualTo("콘텐츠 마케팅");
+
+        assertThat(result.catchphrase())
+                .isEqualTo(
+                        "브랜드의 이야기를 만드는 크루"
+                );
+
         assertThat(result.representativeProjects())
                 .hasSize(1);
 
         CrewProjectHistoryResponse projectResponse =
-                result.representativeProjects().get(0);
+                result.representativeProjects()
+                        .get(0);
 
         assertThat(projectResponse.projectId())
                 .isEqualTo(100L);
@@ -385,6 +411,12 @@ class CrewBrowseServiceTest {
 
         assertThat(projectResponse.contentType())
                 .isEqualTo("릴스 영상");
+
+        verify(
+                crewRepresentativeProjectRepository
+        ).findAllByCrewIdOrderByDisplayOrderAsc(
+                1L
+        );
     }
 
     @Test

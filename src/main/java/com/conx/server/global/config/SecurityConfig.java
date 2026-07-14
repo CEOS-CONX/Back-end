@@ -107,6 +107,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/landing/crew",
                                 "/api/v1/crews/me",
+                                "/api/v1/crews/me/**",
                                 "/api/v1/crews/dashboard",
                                 "/api/v1/crews/applications",
                                 "/api/v1/crews/applications/**",

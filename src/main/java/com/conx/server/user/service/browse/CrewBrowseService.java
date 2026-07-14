@@ -7,6 +7,7 @@ import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.crew.CrewLink;
+import com.conx.server.user.domain.crew.CrewRepresentativeProject;
 import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
@@ -22,6 +23,7 @@ import com.conx.server.user.dto.crew.response.CrewProjectHistoryResponse;
 import com.conx.server.user.repository.CrewFileRepository;
 import com.conx.server.user.repository.CrewLinkRepository;
 import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.repository.CrewRepresentativeProjectRepository;
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.repository.PortfolioRepository;
 import com.conx.server.user.service.common.UserFinder;
@@ -47,7 +49,6 @@ import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 @RequiredArgsConstructor
 public class CrewBrowseService {
 
-    private static final int REPRESENTATIVE_PROJECT_SIZE = 3;
     private static final int MAX_PROJECT_HISTORY_SIZE = 8;
 
     private static final List<ProjectStatus> CREW_HISTORY_STATUSES =
@@ -67,6 +68,8 @@ public class CrewBrowseService {
     private final CrewFileRepository crewFileRepository;
     private final PortfolioRepository portfolioRepository;
     private final ProjectRepository projectRepository;
+    private final CrewRepresentativeProjectRepository
+            crewRepresentativeProjectRepository;
 
     @Transactional(readOnly = true)
     public Page<CrewBrowseResponse> getCrews(
@@ -150,22 +153,16 @@ public class CrewBrowseService {
 
         List<CrewProjectHistoryResponse>
                 representativeProjects =
-                getRepresentativeProjects(crewId);
-
-        String introduction =
-                mergeIntroduction(
-                        crew.getCrewIntroduction(),
-                        crew.getAdditionalIntroduction()
+                getRepresentativeProjects(
+                        crewId
                 );
 
         boolean hasPublicDetail =
                 hasPublicDetail(
                         crew,
-                        introduction,
                         links,
                         files,
-                        portfolios,
-                        representativeProjects
+                        portfolios
                 );
 
         return CrewBrowseDetailResponse.from(
@@ -173,7 +170,6 @@ public class CrewBrowseService {
                 crewPoint,
                 bookmarked,
                 hasPublicDetail,
-                introduction,
                 links,
                 files,
                 portfolios,
@@ -226,34 +222,36 @@ public class CrewBrowseService {
         );
     }
 
+    /*
+     * 최신 프로젝트를 자동으로 선택하지 않고,
+     * 크루가 직접 선택한 대표 프로젝트만 가져옵니다.
+     */
     private List<CrewProjectHistoryResponse>
-    getRepresentativeProjects(Long crewId) {
-        Pageable pageable =
-                PageRequest.of(
-                        0,
-                        REPRESENTATIVE_PROJECT_SIZE,
-                        createProjectHistorySort(
-                                CrewProjectHistorySort.RECENT
+    getRepresentativeProjects(
+            Long crewId
+    ) {
+        List<Project> projects =
+                crewRepresentativeProjectRepository
+                        .findAllByCrewIdOrderByDisplayOrderAsc(
+                                crewId
                         )
-                );
+                        .stream()
+                        .map(
+                                CrewRepresentativeProject::getProject
+                        )
+                        .toList();
 
-        Page<Project> projectPage =
-                projectRepository.findCrewProjectHistory(
-                        crewId,
-                        CREW_HISTORY_STATUSES,
-                        pageable
-                );
-
-        return convertProjectHistory(
-                projectPage.getContent()
-        );
+        return convertProjectHistory(projects);
     }
 
     private List<CrewProjectHistoryResponse>
     convertProjectHistory(
             List<Project> projects
     ) {
-        if (projects == null || projects.isEmpty()) {
+        if (
+                projects == null
+                        || projects.isEmpty()
+        ) {
             return List.of();
         }
 
@@ -290,7 +288,9 @@ public class CrewBrowseService {
                 .toList();
     }
 
-    private double getCrewPoint(Crew crew) {
+    private double getCrewPoint(
+            Crew crew
+    ) {
         return evaluationRepository
                 .getMeanByCrew(crew)
                 .orElse(0.0);
@@ -311,6 +311,10 @@ public class CrewBrowseService {
                     .toList();
         }
 
+        /*
+         * 기존 데이터에 CrewLink가 없으면
+         * 이전 단일 링크 필드를 fallback으로 반환합니다.
+         */
         List<CrewLinkResponse> legacyLinks =
                 new ArrayList<>();
 
@@ -352,52 +356,25 @@ public class CrewBrowseService {
         );
     }
 
+    /*
+     * 대표 프로젝트만 선택해 놓은 경우에는
+     * 상세 프로필을 공개한 것으로 판단하지 않습니다.
+     */
     private boolean hasPublicDetail(
             Crew crew,
-            String introduction,
             List<CrewLinkResponse> links,
             List<CrewFileResponse> files,
-            List<CrewPortfolioItemResponse> portfolios,
-            List<CrewProjectHistoryResponse>
-                    representativeProjects
+            List<CrewPortfolioItemResponse> portfolios
     ) {
-        return !crew.getPublicSchools().isEmpty()
-                || hasText(introduction)
-                || hasItems(crew.getAdvantages())
+        return hasText(crew.getActivityField())
+                || !crew.getPublicSchools().isEmpty()
+                || hasText(crew.getCatchphrase())
+                || hasText(crew.getCrewIntroduction())
+                || !crew.getPublicAdvantages().isEmpty()
                 || !crew.getPublicSpecialties().isEmpty()
                 || hasItems(links)
                 || hasItems(files)
                 || hasItems(portfolios);
-    }
-
-    private String mergeIntroduction(
-            String crewIntroduction,
-            String additionalIntroduction
-    ) {
-        boolean hasCrewIntroduction =
-                hasText(crewIntroduction);
-
-        boolean hasAdditionalIntroduction =
-                hasText(additionalIntroduction);
-
-        if (
-                hasCrewIntroduction
-                        && hasAdditionalIntroduction
-        ) {
-            return crewIntroduction.trim()
-                    + "\n\n"
-                    + additionalIntroduction.trim();
-        }
-
-        if (hasCrewIntroduction) {
-            return crewIntroduction.trim();
-        }
-
-        if (hasAdditionalIntroduction) {
-            return additionalIntroduction.trim();
-        }
-
-        return null;
     }
 
     private Sort createProjectHistorySort(
@@ -430,7 +407,10 @@ public class CrewBrowseService {
             Page<CrewBrowseResponse> crews,
             CustomUserDetails userDetails
     ) {
-        if (!isCompany(userDetails) || crews.isEmpty()) {
+        if (
+                !isCompany(userDetails)
+                        || crews.isEmpty()
+        ) {
             return crews;
         }
 
@@ -523,12 +503,16 @@ public class CrewBrowseService {
                 );
     }
 
-    private boolean hasItems(List<?> values) {
+    private boolean hasItems(
+            List<?> values
+    ) {
         return values != null
                 && !values.isEmpty();
     }
 
-    private boolean hasText(String value) {
+    private boolean hasText(
+            String value
+    ) {
         return value != null
                 && !value.isBlank();
     }

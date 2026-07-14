@@ -13,10 +13,12 @@ public record CrewBrowseDetailResponse(
         CrewType crewType,
         String customCrewType,
 
+        String activityField,
         List<String> schools,
         Integer memberAmount,
         Industry category,
 
+        String catchphrase,
         String crewIntroduction,
         List<String> advantages,
         List<String> specialties,
@@ -38,7 +40,6 @@ public record CrewBrowseDetailResponse(
             double point,
             boolean bookmarked,
             boolean hasPublicDetail,
-            String crewIntroduction,
             List<CrewLinkResponse> links,
             List<CrewFileResponse> files,
             List<CrewPortfolioItemResponse> portfolios,
@@ -46,8 +47,7 @@ public record CrewBrowseDetailResponse(
     ) {
         /*
          * 상세 정보를 공개하지 않은 크루는
-         * hasPublicDetail만 확인해도 프론트에서 빈 화면을 처리할 수 있도록
-         * 상세 입력 항목을 null로 반환합니다.
+         * 상세 입력값을 null로 반환합니다.
          */
         if (!hasPublicDetail) {
             return new CrewBrowseDetailResponse(
@@ -59,8 +59,10 @@ public record CrewBrowseDetailResponse(
 
                     null,
                     null,
+                    null,
                     crew.getInterestingIndustry(),
 
+                    null,
                     null,
                     null,
                     null,
@@ -85,12 +87,14 @@ public record CrewBrowseDetailResponse(
                 crew.getCrewType(),
                 crew.getCustomCrewType(),
 
+                crew.getActivityField(),
                 crew.getPublicSchools(),
                 crew.getMemberAmount(),
                 crew.getInterestingIndustry(),
 
-                crewIntroduction,
-                safeList(crew.getAdvantages()),
+                crew.getCatchphrase(),
+                crew.getCrewIntroduction(),
+                crew.getPublicAdvantages(),
                 crew.getPublicSpecialties(),
 
                 safeList(links),
@@ -106,7 +110,9 @@ public record CrewBrowseDetailResponse(
         );
     }
 
-    private static <T> List<T> safeList(List<T> values) {
+    private static <T> List<T> safeList(
+            List<T> values
+    ) {
         if (values == null) {
             return List.of();
         }

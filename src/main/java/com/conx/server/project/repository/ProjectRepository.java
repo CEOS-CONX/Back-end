@@ -313,4 +313,23 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("statuses") List<ProjectStatus> statuses,
             Pageable pageable
     );
+
+    @Query("""
+    select project
+    from Project project
+    join fetch project.company
+    where project.id in :projectIds
+    and project.selectedCrew.id = :crewId
+    and project.status in :statuses
+""")
+    List<Project> findRepresentativeProjectsForCrew(
+            @Param("crewId")
+            Long crewId,
+
+            @Param("projectIds")
+            List<Long> projectIds,
+
+            @Param("statuses")
+            List<ProjectStatus> statuses
+    );
 }

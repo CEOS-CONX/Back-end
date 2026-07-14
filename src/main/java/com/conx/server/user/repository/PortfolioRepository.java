@@ -18,9 +18,4 @@ public interface PortfolioRepository
     List<Portfolio> findAllByCrewIdOrderByIdDesc(
             Long crewId
     );
-
-    void deleteByIdAndCrew(
-            long id,
-            Crew crew
-    );
 }

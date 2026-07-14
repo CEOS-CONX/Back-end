@@ -97,6 +97,23 @@ public enum ErrorCode {
     //Error for Settlement
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ST001", "정산 정보를 찾을 수 없습니다."),
 
+    //Error for Representative Project
+    REPRESENTATIVE_PROJECT_LIMIT_EXCEEDED(
+            HttpStatus.BAD_REQUEST,
+            "RP001",
+            "대표 프로젝트는 최대 3개까지 선택할 수 있습니다."
+    ),
+    REPRESENTATIVE_PROJECT_DUPLICATED(
+            HttpStatus.BAD_REQUEST,
+            "RP002",
+            "동일한 프로젝트를 중복하여 선택할 수 없습니다."
+    ),
+    REPRESENTATIVE_PROJECT_NOT_AVAILABLE(
+            HttpStatus.BAD_REQUEST,
+            "RP003",
+            "대표 프로젝트로 선택할 수 없는 프로젝트가 포함되어 있습니다."
+    ),
+
     //Error for Portfolio
     PORTFOLIO_NOT_FOUND(HttpStatus.NOT_FOUND, "CR002", "포트폴리오를 찾을 수 없습니다.");
 
