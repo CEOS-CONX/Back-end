@@ -18,8 +18,9 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class File extends BaseEntity {
-    private File(String storedName, String extension, String contentType,
+    private File(String originalName, String storedName, String extension, String contentType,
                  Long size, String url, String explanation){
+        this.originalName = originalName;
         this.storedName = storedName;
         this.extension = extension;
         this.contentType = contentType;
@@ -31,6 +32,8 @@ public class File extends BaseEntity {
     @Id
     @GeneratedValue
     private Long id;
+
+    private String originalName;
 
     // S3에 저장된 이름(UUID 등)
     private String storedName;
@@ -53,7 +56,7 @@ public class File extends BaseEntity {
     // 업로드 시간
     private LocalDateTime createdAt;
 
-    public static File create(HeadObjectResponse h, String url, String explanation){
+    public static File create(String originalName, HeadObjectResponse h, String url, String explanation){
         URI uri = URI.create(url);
         String storedName = uri.getPath().substring(1);
 
@@ -66,7 +69,7 @@ public class File extends BaseEntity {
         }
 
         return new File(
-            storedName, extension, h.contentType(), h.contentLength(), url, explanation
+            originalName, storedName, extension, h.contentType(), h.contentLength(), url, explanation
         );
     }
 }

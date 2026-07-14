@@ -409,7 +409,7 @@ public class CompanyWorkspaceService {
         List<File> files = request.fileLinks().stream().map(
                 f -> {
                     HeadObjectResponse headObjectResponse = fileService.getHeadObject(f.fileLinks());
-                    return File.create(headObjectResponse, f.fileLinks(), f.explanation());
+                    return File.create(f.originalName(), headObjectResponse, f.fileLinks(), f.explanation());
                 }
         ).toList();
 
@@ -423,7 +423,7 @@ public class CompanyWorkspaceService {
                     HeadObjectResponse head = fileService.getHeadObject(dto.fileLinks());
 
                     fileRepository.save(
-                            File.create(head, dto.fileLinks(), dto.explanation())
+                            File.create(dto.originalName(), head, dto.fileLinks(), dto.explanation())
                     );
                 }
             }
