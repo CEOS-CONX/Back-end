@@ -2,8 +2,10 @@ package com.conx.server.user.service.workspace;
 
 
 import com.conx.server.domain.file.domain.File;
+import com.conx.server.domain.file.dto.FileRequestDTO;
 import com.conx.server.domain.file.dto.FileResponseDTO;
 import com.conx.server.domain.file.repository.FileRepository;
+import com.conx.server.domain.file.service.FileService;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
@@ -41,6 +43,7 @@ import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
 import java.util.List;
 import java.time.LocalDate;
@@ -56,6 +59,7 @@ public class CompanyWorkspaceService {
     private final NotificationFacadeService notificationFacadeService;
     private final UserFinder userFinder;
     private final FileRepository fileRepository;
+    private final FileService fileService;
 
 
     @Transactional(readOnly = true)
@@ -119,6 +123,8 @@ public class CompanyWorkspaceService {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = Project.createRecruitingProject(company, request);
 
+        saveFiles(request);
+
         Project savedProject = projectRepository.save(project);
         return CompanyProjectIdResponse.from(savedProject);
     }
@@ -126,8 +132,9 @@ public class CompanyWorkspaceService {
     @Transactional
     public CompanyProjectIdResponse createProjectDraft(Long companyId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
-
         Project project = Project.createDraft(company, request);
+
+        saveFiles(request);
 
         Project savedDraft = projectRepository.save(project);
         return CompanyProjectIdResponse.from(savedDraft);
@@ -137,9 +144,9 @@ public class CompanyWorkspaceService {
     public CompanyProjectIdResponse updateProject(Long companyId, Long projectId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
+        saveUnexistFiles(request, project);
 
         project.modifyProject(request);
-
         return CompanyProjectIdResponse.from(project);
     }
 
@@ -147,6 +154,7 @@ public class CompanyWorkspaceService {
     public CompanyProjectIdResponse updateProjectDraft(Long companyId, Long draftId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);
+        saveUnexistFiles(request, draft);
 
         draft.modifyDraft(request);
 
@@ -172,6 +180,7 @@ public class CompanyWorkspaceService {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
+        fileRepository.deleteByUrlIn(project.getFileLinks());
         projectRepository.delete(project);
     }
 
@@ -394,5 +403,30 @@ public class CompanyWorkspaceService {
     private ProjectSettlement findCompanySettlement(Long companyId, Long settlementId) {
         return projectSettlementRepository.findByIdAndCompanyId(settlementId, companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
+    }
+
+    private void saveFiles (CompanyProjectRequestDTO request){
+        List<File> files = request.fileLinks().stream().map(
+                f -> {
+                    HeadObjectResponse headObjectResponse = fileService.getHeadObject(f.fileLinks());
+                    return File.create(headObjectResponse, f.fileLinks(), f.explanation());
+                }
+        ).toList();
+
+        fileRepository.saveAll(files);
+    }
+
+    private void saveUnexistFiles (CompanyProjectRequestDTO request, Project project){
+        if(!project.getFileLinks().equals(request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList())){
+            for (FileRequestDTO dto : request.fileLinks()) {
+                if (!fileRepository.existsByUrl(dto.fileLinks())){
+                    HeadObjectResponse head = fileService.getHeadObject(dto.fileLinks());
+
+                    fileRepository.save(
+                            File.create(head, dto.fileLinks(), dto.explanation())
+                    );
+                }
+            }
+        }
     }
 }

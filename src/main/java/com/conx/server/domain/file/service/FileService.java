@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -76,7 +77,7 @@ public class FileService {
                 + fileKey;
     }
 
-    public InputStream download(String fileKey) {
+    public ResponseInputStream<GetObjectResponse> download(String fileKey) {
         GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(s3Properties.getBucket())
                 .key(fileKey)
@@ -116,7 +117,6 @@ public class FileService {
     }
 
     //TODO: AWS 자격증명
-    /*
     public HeadObjectResponse getHeadObject(String presignedUrl){
         String key = extractKey(presignedUrl);
 
@@ -133,5 +133,4 @@ public class FileService {
         String path = uri.getPath(); // 쿼리스트링(서명 등)은 자동으로 분리됨
         return path.startsWith("/") ? path.substring(1) : path;
     }
-     */
 }
