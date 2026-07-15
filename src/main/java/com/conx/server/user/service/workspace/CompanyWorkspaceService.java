@@ -9,44 +9,39 @@ import com.conx.server.domain.file.service.FileService;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
-import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.*;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.company.Company;
+import com.conx.server.user.domain.types.CrewType;
+import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
-import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
-import com.conx.server.project.domain.ProjectApplication;
+import com.conx.server.user.dto.company.response.*;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.repository.ProjectApplicationRepository;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationSelectResponse;
-import com.conx.server.project.domain.ProjectSubmission;
 import com.conx.server.project.repository.ProjectSubmissionRepository;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
-import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApprovalResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectRevisionResponse;
 import com.conx.server.project.domain.enums.ProjectType;
-import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.repository.ProjectSettlementRepository;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
-import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,62 +55,97 @@ public class CompanyWorkspaceService {
     private final UserFinder userFinder;
     private final FileRepository fileRepository;
     private final FileService fileService;
+    private final ProjectInspectionFeedbackRepository projectInspectionFeedbackRepository;
 
 
     @Transactional(readOnly = true)
-    public CompanyWorkspaceDashboardResponse getDashboard(Long companyId) {
+    public CompanyWorkspaceDashboardResponse getDashboard(
+            Long companyId,
+            ProjectStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    ) {
         Company company = userFinder.findActiveCompany(companyId);
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 
-        long totalProjectCount = projectRepository.countByCompanyIdAndStatusNot(
-                company.getId(),
-                ProjectStatus.DRAFT
+        CompanyProjectStatusResponseDTO projectStatus = projectRepository.findCompanyStatusWithCompany(company);
+        CompanyExpenditureStatusResponseDTO expenditure = projectSettlementRepository.findCompanyStatusWithCompany(company);
+        Page<Project> projectPage = projectRepository.findByCompanyWithFilters(
+                company, status, startDateTime, endDateTime, pageable
         );
 
-        long recruitingProjectCount = projectRepository.countByCompanyIdAndStatus(
-                company.getId(),
-                ProjectStatus.RECRUITING
-        );
+        Page<TodoProjectWrapperDTO> todo = projectPage.map(TodoProjectWrapperDTO::from);
+
+
+        Map<ProjectStatus, List<TodoProjectWrapperDTO>> grouped = todo.getContent().stream()
+                .collect(Collectors.groupingBy(TodoProjectWrapperDTO::projectStatus));
+
+        List<CompanyTodoProjectResponseDTO> todoGroupedByStatus = Arrays.stream(ProjectStatus.values())
+                .map(s -> new CompanyTodoProjectResponseDTO(
+                        s,
+                        grouped.getOrDefault(s, List.of())
+                ))
+                .toList();
 
         return CompanyWorkspaceDashboardResponse.of(
-                totalProjectCount,
-                recruitingProjectCount
+                projectStatus, expenditure, todoGroupedByStatus
         );
     }
 
     @Transactional(readOnly = true)
-    public List<CompanyWorkspaceProjectResponse> getProjects(
+    public Page<CompanyWorkspaceProjectResponse> getProjects(
             Long companyId,
             String keyword,
-            ProjectType projectType,
+            Industry category,
+            CrewType crewType,
             LocalDate startDate,
-            LocalDate endDate
+            LocalDate endDate,
+            Pageable pageable
     ) {
         Company company = userFinder.findActiveCompany(companyId);
 
         return projectRepository.findCompanyProjectsByFilter(
                         company.getId(),
                         keyword,
-                        projectType,
+                        category,
+                        crewType,
                         startDate,
-                        endDate
+                        endDate,
+                        pageable
                 )
-                .stream()
-                .map(CompanyWorkspaceProjectResponse::from)
-                .toList();
+                .map(CompanyWorkspaceProjectResponse::from);
     }
 
     @Transactional(readOnly = true)
-    public CompanyWorkspaceProjectDetailResponse getProjectDetail(Long companyId, Long projectId) {
+    public CompanyWorkspaceProjectDetailResponse getProjectDetail(
+            Long companyId, Long projectId, int page, int size
+    ) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
-        List<String> fileLinks = project.getFileLinks();
-        List<File> files = fileRepository.findAllByUrlIn(fileLinks);
-        List<FileResponseDTO> fileResponseDTOS = files.stream().map(
-                FileResponseDTO::from
-        ).toList();
+        CompanyProjectDetailResponse common = CompanyProjectDetailResponse.create(project);
+        CompanyWorkspaceProjectDetailResponse response;
 
-        return CompanyWorkspaceProjectDetailResponse.from(project, fileResponseDTOS);
+        if (project.isInProgress()) {
+            List<CompanyWorkSpaceForProjectApplicationDTO> applications =
+                    projectApplicationRepository.findAllByProject(project).stream().map(
+                            CompanyWorkSpaceForProjectApplicationDTO::from
+                    ).toList();
+
+            response = ProjectApplicationForCompanyWrapperDTO.from(common, applications);
+        } else {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+            Page<InspectionInfoInOneLineDTO> inspections =
+                    projectSubmissionRepository.findByProject(project, pageable)
+                            .map(InspectionInfoInOneLineDTO::create);
+
+            response = ProjectStatusResponseDTO.create(common, inspections);
+        }
+
+        return response;
     }
 
     @Transactional
@@ -248,6 +278,7 @@ public class CompanyWorkspaceService {
         return CompanyPartnerCrewResponse.of(project, partnerCrew);
     }
 
+    /*
     @Transactional
     public CompanyProjectRevisionResponse requestProjectRevision(
             Long companyId,
@@ -260,7 +291,7 @@ public class CompanyWorkspaceService {
 
         ProjectSubmission submission = findLatestSubmission(project.getId());
 
-        if (!submission.isSubmitted()) {
+        if (!submission.isEditable()) {
             throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
         }
 
@@ -269,7 +300,9 @@ public class CompanyWorkspaceService {
 
         return CompanyProjectRevisionResponse.of(project, submission);
     }
+     */
 
+    /*
     @Transactional
     public CompanyProjectApprovalResponse approveProject(
             Long companyId,
@@ -291,6 +324,7 @@ public class CompanyWorkspaceService {
 
         return CompanyProjectApprovalResponse.of(project, submission);
     }
+     */
 
     private void createSettlementIfNotExists(Project project) {
         if (projectSettlementRepository.existsByProjectId(project.getId())) {
@@ -346,21 +380,33 @@ public class CompanyWorkspaceService {
     }
 
     @Transactional(readOnly = true)
-    public CompanyWorkspaceProjectDetailResponse getProjectReviewDetail(Long companyId, Long projectId) {
+    public ProjectInspectionWrapperDTO getProjectReviewDetail(Long companyId, Long projectId, Long submissionId) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
+        ProjectSubmission projectSubmission = projectSubmissionRepository.findById(submissionId).orElseThrow(
+                () -> new CustomException(ErrorCode.SUBMISSION_NOT_FOUND)
+        );
 
-        if (project.getStatus() != ProjectStatus.INSPECTION) {
-            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
+        if (!projectSubmission.isEditable()){
+            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
         }
 
-        List<String> fileLinks = project.getFileLinks();
-        List<File> files = fileRepository.findAllByUrlIn(fileLinks);
-        List<FileResponseDTO> fileResponseDTOS = files.stream().map(
-                FileResponseDTO::from
-        ).toList();
+        CompanyProjectDetailResponse common = CompanyProjectDetailResponse.create(project);
+        List<FileResponseDTO> filesInSubmission = fileRepository.findByUrlIn(projectSubmission.getFileLinks()).stream().map(FileResponseDTO::from).toList();
+        List<AdditionalLinksWrapper> additionalLinksInSubmission = projectSubmission.getAdditionalLinks();
+        ProjectSubmissionWrapperDTO submission = ProjectSubmissionWrapperDTO.from(projectSubmission, filesInSubmission, additionalLinksInSubmission);
 
-        return CompanyWorkspaceProjectDetailResponse.from(project, fileResponseDTOS);
+        ProjectInspectionFeedback feedback = projectInspectionFeedbackRepository.findBySubmission(projectSubmission);
+
+        if (feedback == null){
+            return ProjectInspectionWrapperDTO.from(common, submission, null);
+        }
+
+        List<FileResponseDTO> filesInFeedback = fileRepository.findByUrlIn(feedback.getFileLinks()).stream().map(FileResponseDTO::from).toList();
+        List<AdditionalLinksWrapper> additionalLinksInFeedback = feedback.getAdditionalLinks();
+        ProjectFeedBackWrapperDTO feedBackWrapperDTO = ProjectFeedBackWrapperDTO.from(feedback, filesInFeedback, additionalLinksInFeedback);
+
+        return ProjectInspectionWrapperDTO.from(common, submission, feedBackWrapperDTO);
     }
 
     @Transactional(readOnly = true)

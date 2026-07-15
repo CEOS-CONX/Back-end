@@ -89,17 +89,4 @@ public class CrewWorkSpaceController {
         crewWorkSpaceService.submitProjectResult(customUserDetails, projectId, req);
         return apiResponseFactory.success("결과물 제출 성공", customUserDetails);
     }
-
-    /**
-     * 결과물 임시 저장하기
-     */
-    @PostMapping("/projects/{projectId}/draft-submissions")
-    public ApiResponse<?> draftResult(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable long projectId,
-            @RequestBody SubmitProjectResultRequestDTO req
-    ){
-        crewWorkSpaceService.draftProjectResult(customUserDetails, projectId, req);
-        return apiResponseFactory.success("결과물 임시 저장 성공", customUserDetails);
-    }
 }

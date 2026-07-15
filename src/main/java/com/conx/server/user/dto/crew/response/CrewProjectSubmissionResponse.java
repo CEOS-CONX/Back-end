@@ -5,6 +5,7 @@ import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 
 import java.util.List;
 
+/*
 public record CrewProjectSubmissionResponse(
         Long submissionId,
         Long projectId,
@@ -24,3 +25,4 @@ public record CrewProjectSubmissionResponse(
         );
     }
 }
+*/

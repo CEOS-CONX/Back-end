@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.Month;
 
 @Entity
 @Getter
@@ -42,6 +43,8 @@ public class ProjectSettlement extends BaseEntity {
 
     private long amount;
 
+    private Month month;
+
     private LocalDate expectedPaymentDate;
 
     @Enumerated(EnumType.STRING)
@@ -51,13 +54,15 @@ public class ProjectSettlement extends BaseEntity {
             Project project,
             Company company,
             Crew crew,
-            long amount
+            long amount,
+            LocalDate date
     ) {
         this.project = project;
         this.company = company;
         this.crew = crew;
         this.amount = amount;
         this.status = ProjectSettlementStatus.WAITING;
+        this.month = date.getMonth();
     }
 
     public static ProjectSettlement create(Project project) {
@@ -65,7 +70,8 @@ public class ProjectSettlement extends BaseEntity {
                 project,
                 project.getCompany(),
                 project.getSelectedCrew(),
-                project.getSubsidy()
+                project.getSubsidy(),
+                LocalDate.now()
         );
     }
 

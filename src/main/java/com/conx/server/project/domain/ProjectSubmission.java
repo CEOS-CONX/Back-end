@@ -15,16 +15,17 @@ import java.util.List;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProjectSubmission extends BaseEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private boolean isRevised;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
+
+    private String subject;
+
+    private String writer;
 
     private String content;
 
@@ -36,79 +37,53 @@ public class ProjectSubmission extends BaseEntity {
     @Column(name = "file_link")
     private List<String> fileLinks;
 
-    private String revisionReason;
-
-    private boolean editable;
+    @ElementCollection
+    @CollectionTable(
+            name = "project_links",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
+    private List<AdditionalLinksWrapper> additionalLinks;
 
     @Enumerated(EnumType.STRING)
     private ProjectSubmissionStatus status;
 
     private ProjectSubmission(
             Project project,
+            String subject,
             String content,
-            List<String> fileLinks
+            List<String> fileLinks,
+            List<AdditionalLinksWrapper> additionalLinks
     ) {
         this.project = project;
+        this.subject = subject;
         this.content = content;
+        this.writer = project.getCrewName();
         this.fileLinks = fileLinks;
-        this.isRevised = false;
-        this.editable = true;
+        this.additionalLinks = additionalLinks;
+        this.status = ProjectSubmissionStatus.SUBMITTED;
     }
 
     public static ProjectSubmission create(
             Project project,
+            String subject,
             String content,
-            List<String> fileLinks
+            List<String> fileLinks,
+            List<AdditionalLinksWrapper> additionalLinks
     ) {
-        ProjectSubmission submission = new ProjectSubmission(project, content, fileLinks);
-        submission.activateSubmission();
+        ProjectSubmission submission = new ProjectSubmission(project, subject, content, fileLinks, additionalLinks);
         return submission;
-    }
-
-    public static ProjectSubmission createDraft(
-            Project project,
-            String content,
-            List<String> fileLinks
-    ) {
-        ProjectSubmission submission = new ProjectSubmission(project, content, fileLinks);
-        submission.draftSubmission();
-        return submission;
-    }
-
-    public void update(SubmitProjectResultRequestDTO req){
-        this.content = req.content();
-        this.fileLinks = req.fileLinks();
     }
 
     public Crew getCrew(){
         return project.getSelectedCrew();
     }
 
-    public void activateSubmission() {
-        if (isRevised){
-            editable = false;
-        }
-
-        this.status = ProjectSubmissionStatus.SUBMITTED;
-        this.revisionReason = null;
+    public void setFeedback(){
+        this.status = ProjectSubmissionStatus.FEEDBACKED;
     }
 
-    public void draftSubmission() {
-        this.status = ProjectSubmissionStatus.DRAFT;
-    }
-
-    public void requestRevision(String revisionReason) {
-        this.revisionReason = revisionReason;
-        this.status = ProjectSubmissionStatus.REVISION_REQUESTED;
-        this.isRevised = true;
-    }
-
-    public void approve() {
-        this.status = ProjectSubmissionStatus.APPROVED;
-    }
-
-    public boolean isSubmitted() {
+    public boolean isEditable(){
         return this.status == ProjectSubmissionStatus.SUBMITTED;
-
     }
+
 }

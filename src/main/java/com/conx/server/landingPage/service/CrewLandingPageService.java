@@ -3,6 +3,7 @@ package com.conx.server.landingPage.service;
 import com.conx.server.landingPage.dto.IndustryForLandingPage;
 import com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO;
 import com.conx.server.project.repository.ProjectRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ public class CrewLandingPageService {
 
     @Transactional(readOnly = true)
     public List<ProjectWrapperForLandingPageDTO> landing(){
-        return projectRepository.findAllActiveProjectWithViews();
+        return projectRepository.findAll(Sort.by(Sort.Direction.DESC, "views"))
+                .stream().map(ProjectWrapperForLandingPageDTO::from).toList();
     }
 }

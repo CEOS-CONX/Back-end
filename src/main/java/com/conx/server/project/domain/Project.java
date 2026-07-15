@@ -101,6 +101,11 @@ public class Project extends BaseEntity {
 
     //프로젝트 설명
     //프로젝트 이미지(5개)
+    @ElementCollection
+    @CollectionTable(
+            name = "project_images",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
     private List<String> projectImage;
 
     //프로젝트명
@@ -126,6 +131,7 @@ public class Project extends BaseEntity {
     //일정
     //크루 모집 마감일
     private LocalDate recruitDeadLine;
+    private LocalDate crewSelectedDate;
 
     //프로젝트 시작일
     private LocalDate projectStartDate;
@@ -135,6 +141,9 @@ public class Project extends BaseEntity {
 
     //결과물 제출일
     private LocalDate submitDeadline;
+    private LocalDate resultSubmittedDate;
+
+    private LocalDate projectEndedDate;
 
     //지원금
     private long subsidy;
@@ -158,8 +167,12 @@ public class Project extends BaseEntity {
     //우대 조건
     private String preferenceCondition;
 
-
     //참고자료
+    @ElementCollection
+    @CollectionTable(
+            name = "file_links",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
     private List<String> fileLinks;
 
     //링크
@@ -277,6 +290,12 @@ public class Project extends BaseEntity {
     public void selectCrew(Crew crew) {
         this.selectedCrew = crew;
         this.status = ProjectStatus.CONTRACT_PENDING;
+        this.crewSelectedDate = LocalDate.now();
+    }
+
+    public void end() {
+        this.projectEndedDate = LocalDate.now();
+        this.status = ProjectStatus.DONE;
     }
 
     public boolean isDone(){
@@ -294,6 +313,7 @@ public class Project extends BaseEntity {
 
     public void submitProjectResult() {
         this.status = ProjectStatus.INSPECTION;
+        this.resultSubmittedDate = LocalDate.now();
     }
 
     public void requestRevision() {
@@ -302,6 +322,15 @@ public class Project extends BaseEntity {
 
     public void afterProjectDeadline() {
         this.status = ProjectStatus.WAITING_RESULT;
+    }
+
+    public boolean isInProgress() {
+        return this.status == ProjectStatus.PROGRESS;
+    }
+
+    public boolean isAfterProgress() {
+        return this.status == ProjectStatus.PROGRESS || this.status == ProjectStatus.DONE || this.status == ProjectStatus.INSPECTION
+                || this.status == ProjectStatus.WAITING_RESULT;
     }
 
     public void approveResult() {
@@ -314,6 +343,7 @@ public class Project extends BaseEntity {
 
     public void expire(){
         this.status = ProjectStatus.EXPIRED;
+        this.projectEndedDate = LocalDate.now();
     }
 
     public void completeContract() {

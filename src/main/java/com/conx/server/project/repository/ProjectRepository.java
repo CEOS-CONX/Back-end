@@ -4,16 +4,23 @@ import com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.response.TodoProjectInfoDTO;
+import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
+import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.user.dto.company.response.CompanyProjectStatusResponseDTO;
+import com.conx.server.user.dto.company.response.CompanyTodoProjectResponseDTO;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,61 +30,25 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     Optional<Project> findByIdAndCompanyIdAndStatus(Long projectId, Long companyId, ProjectStatus status);
 
-    long countByCompanyIdAndStatusNot(Long companyId, ProjectStatus status);
-
-    long countByCompanyIdAndStatus(Long companyId, ProjectStatus status);
-
-    @Query("""
-        select new com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO(
-            p.id, p.projectImage, p.projectName, p.company.companyName, p.company.industry, p.projectType,
-            p.projectStartDate, p.projectDeadline
-        )
-        from Project p
-        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and p.company.industry = :category
-        order by p.views
-    """)
-    List<ProjectWrapperForLandingPageDTO> findActiveProjectByCategoryWithViews(
-            @Param("category") Industry category
-    );
-
-    @Query("""
-        select new com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO(
-            p.id, p.projectImage, p.projectName, p.company.companyName, p.company.industry, p.projectType,
-            p.projectStartDate, p.projectDeadline
-        )
-        from Project p
-        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        order by p.views
-    """)
-    List<ProjectWrapperForLandingPageDTO> findAllActiveProjectWithViews();
-
-    @Query("""
-        select p from Project p
-        where p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING
-        and p.projectDeadline in :deadlines
-    """)
-    List<Project> findAllAboutDeadline(
-            @Param("deadlines") List<LocalDate> deadlines
-    );
-
     @Query("""
     select p
     from Project p
     where p.company.id = :companyId
     and p.status <> com.conx.server.project.domain.enums.ProjectStatus.DRAFT
     and (:keyword is null or p.projectName like concat('%', :keyword, '%'))
-    and (:projectType is null or p.projectType = :projectType)
+    and (:crewType is null or p.crewType = :crewType)
     and (:startDate is null or p.projectStartDate >= :startDate)
     and (:endDate is null or p.projectDeadline <= :endDate)
-    order by p.id desc
+    and (:category is null or p.industry = :category)
 """)
-    List<Project> findCompanyProjectsByFilter(
+    Page<Project> findCompanyProjectsByFilter(
             @Param("companyId") Long companyId,
             @Param("keyword") String keyword,
-            @Param("projectType") ProjectType projectType,
+            @Param("category") Industry category,
+            @Param("crewType") CrewType crewType,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 
     @Query(
@@ -292,4 +263,46 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findAllByProjectDeadlineAndStatus(LocalDate projectDeadline, ProjectStatus status);
 
     List<Project> findAllBySelectedCrew(Crew selectedCrew);
+
+    @Query("""
+        select new com.conx.server.user.dto.company.response.CompanyProjectStatusResponseDTO(
+            count(case when p.status = com.conx.server.project.domain.enums.ProjectStatus.RECRUITING then 1 end),
+            count(case when p.status in (
+                com.conx.server.project.domain.enums.ProjectStatus.PROGRESS,
+                com.conx.server.project.domain.enums.ProjectStatus.CONTRACT_PENDING
+            ) then 1 end),
+            count(case when p.status = com.conx.server.project.domain.enums.ProjectStatus.INSPECTION then 1 end),
+            count(case when p.status = com.conx.server.project.domain.enums.ProjectStatus.ADJUSTING then 1 end),
+            count(case when p.status = com.conx.server.project.domain.enums.ProjectStatus.DONE then 1 end)
+        )
+        from Project p
+        where p.company = :company
+    """)
+    CompanyProjectStatusResponseDTO findCompanyStatusWithCompany(
+            @Param("company") Company company
+    );
+
+    @Query("""
+    select p from Project p
+    where p.company = :company
+    and (:status is null or p.status = :status)
+    and (:startDate is null or p.createdAt >= :startDate)
+    and (:endDate is null or p.createdAt <= :endDate)
+""")
+    Page<Project> findByCompanyWithFilters(
+            @Param("company") Company company,
+            @Param("status") ProjectStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable
+    );
+
+    List<Project> findAllByCompany(Company company);
+
+    List<Project> findAllOrderByViews(int views);
 }
+//int recruiting,
+//        int progress,
+//        int waiting_inspection,
+//        int waiting_settlement,
+//        int done

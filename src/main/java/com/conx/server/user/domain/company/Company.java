@@ -40,6 +40,8 @@ public class Company extends User {
 
     private String homepageLink;
 
+    private int totalExpenditure;
+
     public static Company create(String email, String password){
         return new Company(email, password);
     }
@@ -52,6 +54,7 @@ public class Company extends User {
         this.managerName = managerName;
         this.job = job;
         super.activate(UserRole.COMPANY);
+        this.totalExpenditure = 0;
     }
 
     public void modifyProfile(String companyName, String brandName,

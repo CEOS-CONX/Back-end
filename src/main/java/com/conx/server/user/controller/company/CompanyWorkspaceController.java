@@ -4,27 +4,22 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
+import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
-import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationSelectResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApprovalResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectRevisionResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
+import com.conx.server.user.dto.company.response.*;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,30 +44,37 @@ public class CompanyWorkspaceController {
 
     @GetMapping("/workspace/dashboard")
     public ApiResponse<CompanyWorkspaceDashboardResponse> getDashboard(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) ProjectStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         CompanyWorkspaceDashboardResponse response =
-                companyWorkspaceService.getDashboard(userDetails.getId());
+                companyWorkspaceService.getDashboard(userDetails.getId(), status, startDate, endDate, pageable);
 
         return apiResponseFactory.success("기업 워크스페이스 대시보드 조회에 성공했습니다.", response, userDetails);
     }
 
     @GetMapping("/projects")
-    public ApiResponse<List<CompanyWorkspaceProjectResponse>> getProjects(
+    public ApiResponse<Page<CompanyWorkspaceProjectResponse>> getProjects(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Industry category,
-            @RequestParam(required = false) ProjectType projectType,
+            @RequestParam(required = false) CrewType crewType,
             @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate
+            @RequestParam(required = false) LocalDate endDate,
+            @PageableDefault(size = 12, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        List<CompanyWorkspaceProjectResponse> response =
+        Page<CompanyWorkspaceProjectResponse> response =
                 companyWorkspaceService.getProjects(
                         userDetails.getId(),
                         keyword,
-                        projectType,
+                        category,
+                        crewType,
                         startDate,
-                        endDate
+                        endDate,
+                        pageable
                 );
 
         return apiResponseFactory.success("기업 프로젝트 목록 조회에 성공했습니다.", response, userDetails);
@@ -81,10 +83,12 @@ public class CompanyWorkspaceController {
     @GetMapping("/projects/{projectId}")
     public ApiResponse<CompanyWorkspaceProjectDetailResponse> getProjectDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId
+            @PathVariable Long projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
     ) {
         CompanyWorkspaceProjectDetailResponse response =
-                companyWorkspaceService.getProjectDetail(userDetails.getId(), projectId);
+                companyWorkspaceService.getProjectDetail(userDetails.getId(), projectId, page, size);
 
         return apiResponseFactory.success("기업 프로젝트 상세 조회에 성공했습니다.", response, userDetails);
     }
@@ -156,13 +160,13 @@ public class CompanyWorkspaceController {
         return apiResponseFactory.success("임시저장 프로젝트 조회에 성공했습니다.", response, userDetails);
     }
 
-    @GetMapping("/projects/{projectId}/review")
-    public ApiResponse<CompanyWorkspaceProjectDetailResponse> getProjectReviewDetail(
+    @GetMapping("/projects/{projectId}/review/{submissionwId}")
+    public ApiResponse<ProjectInspectionWrapperDTO> getProjectReviewDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId
-    ) {
-        CompanyWorkspaceProjectDetailResponse response =
-                companyWorkspaceService.getProjectReviewDetail(userDetails.getId(), projectId);
+            @PathVariable Long projectId,
+            @PathVariable Long submissionwId) {
+        ProjectInspectionWrapperDTO response =
+                companyWorkspaceService.getProjectReviewDetail(userDetails.getId(), projectId, submissionwId);
 
         return apiResponseFactory.success("검수할 프로젝트 상세 조회에 성공했습니다.", response, userDetails);
     }
@@ -221,6 +225,7 @@ public class CompanyWorkspaceController {
         return apiResponseFactory.success("파트너 크루 조회에 성공했습니다.", response, userDetails);
     }
 
+    /*
     @PostMapping("/projects/{projectId}/revision-requests")
     public ApiResponse<CompanyProjectRevisionResponse> requestProjectRevision(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -247,6 +252,8 @@ public class CompanyWorkspaceController {
 
         return apiResponseFactory.success("프로젝트 결과물 승인에 성공했습니다.", response, userDetails);
     }
+
+     */
 
     @GetMapping("/settlements")
     public ApiResponse<List<CompanySettlementResponse>> getSettlements(
