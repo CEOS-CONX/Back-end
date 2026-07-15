@@ -3,7 +3,6 @@ package com.conx.server.project.repository;
 import com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
-import com.conx.server.project.dto.response.TodoProjectInfoDTO;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.project.domain.enums.ProjectType;
@@ -225,18 +224,14 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             @Param("crew") Crew crew
     );
 
-    @Query("""
-    select p
-    from Project p
-    where p.selectedCrew = :crew
-    and (
-        p.status = com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
-        or p.status = com.conx.server.project.domain.enums.ProjectStatus.ADJUSTING
-    )
-    order by p.projectDeadline
-    """)
-    List<Project> findByTodoProjectCrew(
-            @Param("crew") Crew crew
+    long countBySelectedCrewAndStatus(
+            Crew selectedCrew,
+            ProjectStatus status
+    );
+
+    long countBySelectedCrewAndStatusIn(
+            Crew selectedCrew,
+            List<ProjectStatus> statuses
     );
 
     Optional<Project> findBySelectedCrewAndId(Crew selectedCrew, long id);

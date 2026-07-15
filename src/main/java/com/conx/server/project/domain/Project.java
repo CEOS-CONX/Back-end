@@ -1,6 +1,8 @@
 package com.conx.server.project.domain;
 
 import com.conx.server.global.BaseEntity;
+import com.conx.server.global.exception.CustomException;
+import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.company.Company;
@@ -463,6 +465,16 @@ public class Project extends BaseEntity {
 
     public void approveResult() {
         this.status = ProjectStatus.ADJUSTING;
+    }
+
+    public void completeSettlement() {
+        if (this.status != ProjectStatus.ADJUSTING) {
+            throw new CustomException(
+                    ErrorCode.INVALID_PROJECT_STATUS
+            );
+        }
+
+        this.status = ProjectStatus.DONE;
     }
 
     public void increaseViews() {

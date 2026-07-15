@@ -10,6 +10,20 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.crew.response.CrewWorkSpaceResponseDTO;
 import com.conx.server.user.service.workspace.CrewWorkSpaceService;
+import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
+import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.crew.CrewWorkspaceProjectStatus;
+import com.conx.server.user.dto.crew.CrewWorkspaceSort;
+import com.conx.server.user.dto.crew.response.CrewProjectStatusItemResponse;
+import com.conx.server.user.dto.crew.response.CrewSettlementItemResponse;
+import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
+import com.conx.server.user.dto.crew.response.CrewTodoProjectResponse;
+import com.conx.server.user.dto.crew.response.CrewSettlementSummaryResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +64,108 @@ public class CrewWorkSpaceController {
         );
 
         return apiResponseFactory.success(result, customUserDetails);
+    }
+
+    /**
+     * 크루 프로젝트 현황
+     */
+    @GetMapping("/projects")
+    public ApiResponse<Page<CrewProjectStatusItemResponse>>
+    getCrewProjects(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @RequestParam(required = false)
+            String keyword,
+
+            @RequestParam(required = false)
+            CrewWorkspaceProjectStatus status,
+
+            @RequestParam(required = false)
+            Industry category,
+
+            @RequestParam(required = false)
+            ProjectType projectType,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate startDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate endDate,
+
+            @RequestParam(defaultValue = "RECENT")
+            CrewWorkspaceSort sort,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+        Page<CrewProjectStatusItemResponse> result =
+                crewWorkSpaceService.getCrewProjects(
+                        customUserDetails,
+                        keyword,
+                        status,
+                        category,
+                        projectType,
+                        startDate,
+                        endDate,
+                        sort,
+                        page,
+                        size
+                );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
+    }
+
+    /**
+     * 크루 Todo 프로젝트 목록
+     */
+    @GetMapping("/todo-projects")
+    public ApiResponse<Page<CrewTodoProjectResponse>>
+    getCrewTodoProjects(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @RequestParam(required = false)
+            String keyword,
+
+            @RequestParam(required = false)
+            CrewTodoProgressStatus progressStatus,
+
+            @RequestParam(defaultValue = "RECENT")
+            CrewWorkspaceSort sort,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+        Page<CrewTodoProjectResponse> result =
+                crewWorkSpaceService.getCrewTodoProjects(
+                        customUserDetails,
+                        keyword,
+                        progressStatus,
+                        sort,
+                        page,
+                        size
+                );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
     }
 
     /**
@@ -101,5 +217,82 @@ public class CrewWorkSpaceController {
     ){
         crewWorkSpaceService.draftProjectResult(customUserDetails, projectId, req);
         return apiResponseFactory.success("결과물 임시 저장 성공", customUserDetails);
+    }
+
+    /**
+     * 크루 정산 요약
+     */
+    @GetMapping("/settlements/summary")
+    public ApiResponse<CrewSettlementSummaryResponse>
+    getCrewSettlementSummary(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails
+    ) {
+        CrewSettlementSummaryResponse result =
+                crewWorkSpaceService
+                        .getCrewSettlementSummary(
+                                customUserDetails
+                        );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
+    }
+
+    /**
+     * 크루 정산 목록
+     */
+    @GetMapping("/settlements")
+    public ApiResponse<Page<CrewSettlementItemResponse>>
+    getCrewSettlements(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @RequestParam(required = false)
+            String keyword,
+
+            @RequestParam(required = false)
+            ProjectSettlementStatus settlementStatus,
+
+            @RequestParam(required = false)
+            Industry category,
+
+            @RequestParam(required = false)
+            ProjectType projectType,
+
+            @RequestParam(required = false)
+            LocalDate startDate,
+
+            @RequestParam(required = false)
+            LocalDate endDate,
+
+            @RequestParam(defaultValue = "RECENT")
+            CrewWorkspaceSort sort,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+        Page<CrewSettlementItemResponse> result =
+                crewWorkSpaceService.getCrewSettlements(
+                        customUserDetails,
+                        keyword,
+                        settlementStatus,
+                        category,
+                        projectType,
+                        startDate,
+                        endDate,
+                        sort,
+                        page,
+                        size
+                );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
     }
 }

@@ -31,7 +31,9 @@ import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.repository.ProjectSettlementRepository;
+import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
+import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.service.common.UserFinder;
@@ -39,6 +41,8 @@ import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
 import com.conx.server.user.repository.EvaluationRepository;
+import com.conx.server.project.domain.enums.CrewProjectTodoType;
+import com.conx.server.project.service.CrewProjectTodoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +61,7 @@ public class CompanyWorkspaceService {
     private final NotificationFacadeService notificationFacadeService;
     private final UserFinder userFinder;
     private final EvaluationRepository evaluationRepository;
+    private final CrewProjectTodoService crewProjectTodoService;
 
 
     @Transactional(readOnly = true)
@@ -239,20 +244,43 @@ public class CompanyWorkspaceService {
             Long projectId,
             CompanyProjectRevisionRequest request
     ) {
-        Company company = userFinder.findActiveCompany(companyId);
-        Project project = findCompanyProject(company.getId(), projectId);
-        findPartnerCrew(project);
+        Company company =
+                userFinder.findActiveCompany(companyId);
 
-        ProjectSubmission submission = findLatestSubmission(project.getId());
+        Project project =
+                findCompanyProject(
+                        company.getId(),
+                        projectId
+                );
+
+        Crew partnerCrew =
+                findPartnerCrew(project);
+
+        ProjectSubmission submission =
+                findLatestSubmission(project.getId());
 
         if (!submission.isSubmitted()) {
-            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
+            throw new CustomException(
+                    ErrorCode.INVALID_SUBMISSION_STATUS
+            );
         }
 
-        submission.requestRevision(request.revisionReason());
+        submission.requestRevision(
+                request.revisionReason()
+        );
+
         project.requestRevision();
 
-        return CompanyProjectRevisionResponse.of(project, submission);
+        crewProjectTodoService.createIfAbsent(
+                partnerCrew,
+                project,
+                CrewProjectTodoType.REVISION_SUBMISSION
+        );
+
+        return CompanyProjectRevisionResponse.of(
+                project,
+                submission
+        );
     }
 
     @Transactional
@@ -260,21 +288,42 @@ public class CompanyWorkspaceService {
             Long companyId,
             Long projectId
     ) {
-        Company company = userFinder.findActiveCompany(companyId);
-        Project project = findCompanyProject(company.getId(), projectId);
-        findPartnerCrew(project);
+        Company company =
+                userFinder.findActiveCompany(companyId);
 
-        ProjectSubmission submission = findLatestSubmission(project.getId());
+        Project project =
+                findCompanyProject(
+                        company.getId(),
+                        projectId
+                );
+
+        Crew partnerCrew =
+                findPartnerCrew(project);
+
+        ProjectSubmission submission =
+                findLatestSubmission(project.getId());
 
         if (!submission.isSubmitted()) {
-            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
+            throw new CustomException(
+                    ErrorCode.INVALID_SUBMISSION_STATUS
+            );
         }
 
         submission.approve();
         project.approveResult();
+
         createSettlementIfNotExists(project);
 
-        return CompanyProjectApprovalResponse.of(project, submission);
+        crewProjectTodoService.createIfAbsent(
+                partnerCrew,
+                project,
+                CrewProjectTodoType.SETTLEMENT_CONFIRMATION
+        );
+
+        return CompanyProjectApprovalResponse.of(
+                project,
+                submission
+        );
     }
 
     @Transactional
@@ -442,8 +491,69 @@ public class CompanyWorkspaceService {
         return CompanySettlementExpectedPaymentDateResponse.from(settlement);
     }
 
+    @Transactional
+    public CompanySettlementCompleteResponse completeSettlement(
+            Long companyId,
+            Long settlementId,
+            CompanySettlementCompleteRequest request
+    ) {
+        Company company = userFinder.findActiveCompany(companyId);
+
+        ProjectSettlement settlement =
+                findCompanySettlementForUpdate(
+                        company.getId(),
+                        settlementId
+                );
+
+        if (settlement.getStatus() == ProjectSettlementStatus.PAID) {
+            throw new CustomException(
+                    ErrorCode.SETTLEMENT_ALREADY_PAID
+            );
+        }
+
+        Project project = settlement.getProject();
+
+        if (project.getStatus() != ProjectStatus.ADJUSTING) {
+            throw new CustomException(
+                    ErrorCode.INVALID_PROJECT_STATUS
+            );
+        }
+
+        settlement.markAsPaid(
+                request.settlementDate()
+        );
+
+        project.completeSettlement();
+
+        crewProjectTodoService.completeIfExists(
+                settlement.getCrew(),
+                project,
+                CrewProjectTodoType.SETTLEMENT_CONFIRMATION
+        );
+
+        return CompanySettlementCompleteResponse.from(
+                settlement
+        );
+    }
+
     private ProjectSettlement findCompanySettlement(Long companyId, Long settlementId) {
         return projectSettlementRepository.findByIdAndCompanyId(settlementId, companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
+    }
+
+    private ProjectSettlement findCompanySettlementForUpdate(
+            Long companyId,
+            Long settlementId
+    ) {
+        return projectSettlementRepository
+                .findByIdAndCompanyIdForUpdate(
+                        settlementId,
+                        companyId
+                )
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.SETTLEMENT_NOT_FOUND
+                        )
+                );
     }
 }

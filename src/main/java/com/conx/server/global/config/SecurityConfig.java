@@ -111,7 +111,12 @@ public class SecurityConfig {
                                 "/api/v1/crews/dashboard",
                                 "/api/v1/crews/applications",
                                 "/api/v1/crews/applications/**",
-                                "/api/v1/crews/projects/**"
+                                "/api/v1/crews/todo-projects",
+                                "/api/v1/crews/todo-projects/**",
+                                "/api/v1/crews/projects",
+                                "/api/v1/crews/projects/**",
+                                "/api/v1/crews/settlements",
+                                "/api/v1/crews/settlements/**"
                         ).hasRole("CREW")
 
                         // 프로젝트 Q&A 조회

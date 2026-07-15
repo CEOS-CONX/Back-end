@@ -1,29 +1,29 @@
 package com.conx.server.user.dto.crew.response;
 
 public record CrewEvaluationWrapperDTO(
-        double mean,
+        double overall,
         double completeness,
         double ability,
         double communication,
         double schedule,
-        double reCooperation
+        double recooperation
 ) {
 
     public CrewEvaluationWrapperDTO(
-            Double mean,
+            Double overall,
             Double completeness,
             Double ability,
             Double communication,
             Double schedule,
-            Double reCooperation
+            Double recooperation
     ) {
         this(
-                valueOrZero(mean),
+                valueOrZero(overall),
                 valueOrZero(completeness),
                 valueOrZero(ability),
                 valueOrZero(communication),
                 valueOrZero(schedule),
-                valueOrZero(reCooperation)
+                valueOrZero(recooperation)
         );
     }
 

@@ -8,6 +8,7 @@ import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.company.request.CompanyProjectRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
+import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectApplicationDetailResponse;
@@ -17,6 +18,7 @@ import com.conx.server.user.dto.company.response.CompanyProjectApprovalResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectRevisionResponse;
+import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
@@ -292,7 +294,7 @@ public class CompanyWorkspaceController {
     public ApiResponse<CompanySettlementExpectedPaymentDateResponse> updateSettlementExpectedPaymentDate(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long settlementId,
-            @RequestBody CompanySettlementExpectedPaymentDateRequest request
+            @Valid @RequestBody CompanySettlementExpectedPaymentDateRequest request
     ) {
         CompanySettlementExpectedPaymentDateResponse response =
                 companyWorkspaceService.updateSettlementExpectedPaymentDate(
@@ -302,5 +304,25 @@ public class CompanyWorkspaceController {
                 );
 
         return apiResponseFactory.success("예상 지급 날짜 설정에 성공했습니다.", response, userDetails);
+    }
+
+    @PatchMapping("/settlements/{settlementId}/complete")
+    public ApiResponse<CompanySettlementCompleteResponse> completeSettlement(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long settlementId,
+            @Valid @RequestBody CompanySettlementCompleteRequest request
+    ) {
+        CompanySettlementCompleteResponse response =
+                companyWorkspaceService.completeSettlement(
+                        userDetails.getId(),
+                        settlementId,
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "정산 지급 완료 처리에 성공했습니다.",
+                response,
+                userDetails
+        );
     }
 }

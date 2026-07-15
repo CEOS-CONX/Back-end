@@ -1,6 +1,8 @@
 package com.conx.server.project.domain;
 
 import com.conx.server.global.BaseEntity;
+import com.conx.server.global.exception.CustomException;
+import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
@@ -44,6 +46,8 @@ public class ProjectSettlement extends BaseEntity {
 
     private LocalDate expectedPaymentDate;
 
+    private LocalDate settlementDate;
+
     @Enumerated(EnumType.STRING)
     private ProjectSettlementStatus status;
 
@@ -73,7 +77,20 @@ public class ProjectSettlement extends BaseEntity {
         this.expectedPaymentDate = expectedPaymentDate;
     }
 
-    public void markAsPaid() {
+    public void markAsPaid(LocalDate settlementDate) {
+        if (this.status == ProjectSettlementStatus.PAID) {
+            throw new CustomException(
+                    ErrorCode.SETTLEMENT_ALREADY_PAID
+            );
+        }
+
+        if (settlementDate == null) {
+            throw new CustomException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
+        }
+
         this.status = ProjectSettlementStatus.PAID;
+        this.settlementDate = settlementDate;
     }
 }

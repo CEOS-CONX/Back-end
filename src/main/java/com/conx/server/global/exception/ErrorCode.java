@@ -95,7 +95,16 @@ public enum ErrorCode {
     ),
 
     //Error for Settlement
-    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ST001", "정산 정보를 찾을 수 없습니다."),
+    SETTLEMENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "ST001",
+            "정산 정보를 찾을 수 없습니다."
+    ),
+    SETTLEMENT_ALREADY_PAID(
+            HttpStatus.CONFLICT,
+            "ST002",
+            "이미 지급 완료된 정산입니다."
+    ),
 
     //Error for Representative Project
     REPRESENTATIVE_PROJECT_LIMIT_EXCEEDED(

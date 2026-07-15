@@ -4,39 +4,27 @@ import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
-import com.conx.server.user.domain.crew.Crew;
 
 import java.time.LocalDate;
 
-public record CompanySettlementResponse(
+public record CompanySettlementCompleteResponse(
         Long settlementId,
         Long projectId,
-        String projectName,
-        ProjectStatus projectStatus,
-        Long crewId,
-        String crewName,
-        long amount,
         ProjectSettlementStatus settlementStatus,
-        LocalDate expectedPaymentDate,
+        ProjectStatus projectStatus,
         LocalDate settlementDate
 ) {
 
-    public static CompanySettlementResponse from(
+    public static CompanySettlementCompleteResponse from(
             ProjectSettlement settlement
     ) {
         Project project = settlement.getProject();
-        Crew crew = settlement.getCrew();
 
-        return new CompanySettlementResponse(
+        return new CompanySettlementCompleteResponse(
                 settlement.getId(),
                 project.getId(),
-                project.getName(),
-                project.getStatus(),
-                crew.getId(),
-                crew.getCrewName(),
-                settlement.getAmount(),
                 settlement.getStatus(),
-                settlement.getExpectedPaymentDate(),
+                project.getStatus(),
                 settlement.getSettlementDate()
         );
     }

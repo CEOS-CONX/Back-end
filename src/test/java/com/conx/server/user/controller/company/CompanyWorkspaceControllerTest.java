@@ -3,10 +3,13 @@ package com.conx.server.user.controller.company;
 import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.notification.repository.NotificationRepository;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
+import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.dto.company.request.CompanyProjectRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
+import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectApplicationDetailResponse;
@@ -16,6 +19,7 @@ import com.conx.server.user.dto.company.response.CompanyProjectApprovalResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectRevisionResponse;
+import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
@@ -45,8 +49,11 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -86,9 +93,18 @@ class CompanyWorkspaceControllerTest {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        given(userDetails.getId()).willReturn(COMPANY_ID);
-        given(notificationRepository.existsByreceiverIdAndIsRead(COMPANY_ID, false))
-                .willReturn(false);
+        lenient()
+                .when(userDetails.getId())
+                .thenReturn(COMPANY_ID);
+
+        lenient()
+                .when(
+                        notificationRepository.existsByreceiverIdAndIsRead(
+                                COMPANY_ID,
+                                false
+                        )
+                )
+                .thenReturn(false);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(companyWorkspaceController)
@@ -573,7 +589,8 @@ class CompanyWorkspaceControllerTest {
                         "테스트 크루",
                         100000L,
                         null,
-                        LocalDate.of(2026, 8, 1)
+                        LocalDate.of(2026, 8, 1),
+                        null
                 );
 
         given(companyWorkspaceService.getSettlements(COMPANY_ID, null))
@@ -636,6 +653,119 @@ class CompanyWorkspaceControllerTest {
 
         verify(companyWorkspaceService)
                 .updateSettlementExpectedPaymentDate(eq(COMPANY_ID), eq(settlementId), eq(request));
+    }
+
+    @Test
+    @DisplayName("정산 지급 완료를 처리한다")
+    void completeSettlement() throws Exception {
+        Long settlementId = 500L;
+        Long projectId = 100L;
+        LocalDate settlementDate =
+                LocalDate.of(2026, 7, 14);
+
+        CompanySettlementCompleteRequest request =
+                new CompanySettlementCompleteRequest(
+                        settlementDate
+                );
+
+        CompanySettlementCompleteResponse response =
+                new CompanySettlementCompleteResponse(
+                        settlementId,
+                        projectId,
+                        ProjectSettlementStatus.PAID,
+                        ProjectStatus.DONE,
+                        settlementDate
+                );
+
+        given(
+                companyWorkspaceService.completeSettlement(
+                        eq(COMPANY_ID),
+                        eq(settlementId),
+                        eq(request)
+                )
+        ).willReturn(response);
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/companies/me/settlements/{settlementId}/complete",
+                                settlementId
+                        )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                request
+                                        )
+                                )
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.status")
+                                .value("success")
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value("정산 지급 완료 처리에 성공했습니다.")
+                )
+                .andExpect(
+                        jsonPath("$.payload.settlementId")
+                                .value(500)
+                )
+                .andExpect(
+                        jsonPath("$.payload.projectId")
+                                .value(100)
+                )
+                .andExpect(
+                        jsonPath("$.payload.settlementStatus")
+                                .value("PAID")
+                )
+                .andExpect(
+                        jsonPath("$.payload.projectStatus")
+                                .value("DONE")
+                )
+                .andExpect(
+                        jsonPath("$.payload.settlementDate")
+                                .value("2026-07-14")
+                )
+                .andExpect(
+                        jsonPath("$.hasNotification")
+                                .value(false)
+                );
+
+        verify(companyWorkspaceService)
+                .completeSettlement(
+                        eq(COMPANY_ID),
+                        eq(settlementId),
+                        eq(request)
+                );
+    }
+
+    @Test
+    @DisplayName("정산 지급 완료 요청에 실제 지급일이 없으면 실패한다")
+    void cannotCompleteSettlementWithoutSettlementDate()
+            throws Exception {
+
+        Long settlementId = 500L;
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/companies/me/settlements/{settlementId}/complete",
+                                settlementId
+                        )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}")
+                )
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(
+                companyWorkspaceService,
+                never()
+        ).completeSettlement(
+                eq(COMPANY_ID),
+                eq(settlementId),
+                any(CompanySettlementCompleteRequest.class)
+        );
     }
 
     private CompanyProjectRequest createProjectRequest() {
