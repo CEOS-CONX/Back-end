@@ -8,7 +8,34 @@ import java.util.List;
 public record ProjectSubmitConditionDTO(
         List<String> conditions
 ) {
-    public static ProjectSubmitConditionDTO create(Project project){
-        return new ProjectSubmitConditionDTO(Arrays.asList(project.getRequirement().split(",")));
+
+    public static ProjectSubmitConditionDTO create(
+            Project project
+    ) {
+        String requirement =
+                project.getRequirement();
+
+        if (
+                requirement == null
+                        || requirement.isBlank()
+        ) {
+            return new ProjectSubmitConditionDTO(
+                    List.of()
+            );
+        }
+
+        List<String> conditions =
+                Arrays.stream(
+                                requirement.split(",")
+                        )
+                        .map(String::trim)
+                        .filter(value ->
+                                !value.isBlank()
+                        )
+                        .toList();
+
+        return new ProjectSubmitConditionDTO(
+                conditions
+        );
     }
 }

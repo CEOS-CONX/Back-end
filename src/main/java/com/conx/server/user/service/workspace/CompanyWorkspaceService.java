@@ -43,6 +43,12 @@ import com.conx.server.user.dto.company.response.CompanyProjectEvaluationRespons
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.project.domain.enums.CrewProjectTodoType;
 import com.conx.server.project.service.CrewProjectTodoService;
+import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -238,14 +244,21 @@ public class CompanyWorkspaceService {
         return CompanyPartnerCrewResponse.of(project, partnerCrew);
     }
 
+    /**
+     * 특정 결과물 수정 요청
+     */
     @Transactional
-    public CompanyProjectRevisionResponse requestProjectRevision(
+    public CompanyProjectRevisionResponse
+    requestProjectRevision(
             Long companyId,
             Long projectId,
+            Long submissionId,
             CompanyProjectRevisionRequest request
     ) {
         Company company =
-                userFinder.findActiveCompany(companyId);
+                userFinder.findActiveCompany(
+                        companyId
+                );
 
         Project project =
                 findCompanyProject(
@@ -253,17 +266,23 @@ public class CompanyWorkspaceService {
                         projectId
                 );
 
+        if (
+                project.getStatus()
+                        != ProjectStatus.INSPECTION
+        ) {
+            throw new CustomException(
+                    ErrorCode.INVALID_PROJECT_STATUS
+            );
+        }
+
         Crew partnerCrew =
                 findPartnerCrew(project);
 
         ProjectSubmission submission =
-                findLatestSubmission(project.getId());
-
-        if (!submission.isSubmitted()) {
-            throw new CustomException(
-                    ErrorCode.INVALID_SUBMISSION_STATUS
-            );
-        }
+                findProjectSubmissionForUpdate(
+                        project.getId(),
+                        submissionId
+                );
 
         submission.requestRevision(
                 request.revisionReason()
@@ -283,13 +302,19 @@ public class CompanyWorkspaceService {
         );
     }
 
+    /**
+     * 특정 결과물 승인
+     */
     @Transactional
     public CompanyProjectApprovalResponse approveProject(
             Long companyId,
-            Long projectId
+            Long projectId,
+            Long submissionId
     ) {
         Company company =
-                userFinder.findActiveCompany(companyId);
+                userFinder.findActiveCompany(
+                        companyId
+                );
 
         Project project =
                 findCompanyProject(
@@ -297,22 +322,31 @@ public class CompanyWorkspaceService {
                         projectId
                 );
 
+        if (
+                project.getStatus()
+                        != ProjectStatus.INSPECTION
+        ) {
+            throw new CustomException(
+                    ErrorCode.INVALID_PROJECT_STATUS
+            );
+        }
+
         Crew partnerCrew =
                 findPartnerCrew(project);
 
         ProjectSubmission submission =
-                findLatestSubmission(project.getId());
-
-        if (!submission.isSubmitted()) {
-            throw new CustomException(
-                    ErrorCode.INVALID_SUBMISSION_STATUS
-            );
-        }
+                findProjectSubmissionForUpdate(
+                        project.getId(),
+                        submissionId
+                );
 
         submission.approve();
+
         project.approveResult();
 
-        createSettlementIfNotExists(project);
+        createSettlementIfNotExists(
+                project
+        );
 
         crewProjectTodoService.createIfAbsent(
                 partnerCrew,
@@ -406,9 +440,21 @@ public class CompanyWorkspaceService {
         return project.getSelectedCrew();
     }
 
-    private ProjectSubmission findLatestSubmission(Long projectId) {
-        return projectSubmissionRepository.findTopByProjectIdOrderByIdDesc(projectId)
-                .orElseThrow(() -> new CustomException(ErrorCode.SUBMISSION_NOT_FOUND));
+    private ProjectSubmission
+    findProjectSubmissionForUpdate(
+            Long projectId,
+            Long submissionId
+    ) {
+        return projectSubmissionRepository
+                .findByIdAndProjectIdForUpdate(
+                        submissionId,
+                        projectId
+                )
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.SUBMISSION_NOT_FOUND
+                        )
+                );
     }
 
     private ProjectApplication findProjectApplication(Long projectId, Long applicationId) {
@@ -452,6 +498,92 @@ public class CompanyWorkspaceService {
         }
 
         return CompanyWorkspaceProjectDetailResponse.from(project);
+    }
+
+    /**
+     * 기업 프로젝트 결과물 공유 이력 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<CrewProjectSubmissionListItemResponse>
+    getProjectSubmissions(
+            Long companyId,
+            Long projectId,
+            int page,
+            int size
+    ) {
+        Company company =
+                userFinder.findActiveCompany(
+                        companyId
+                );
+
+        Project project =
+                findCompanyProject(
+                        company.getId(),
+                        projectId
+                );
+
+        Pageable pageable =
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.max(size, 1)
+                );
+
+        return projectSubmissionRepository
+                .findAllByProjectIdAndStatusNotOrderByIdDesc(
+                        project.getId(),
+                        ProjectSubmissionStatus.DRAFT,
+                        pageable
+                )
+                .map(
+                        CrewProjectSubmissionListItemResponse::from
+                );
+    }
+
+    /**
+     * 기업 프로젝트 결과물 상세 조회
+     */
+    @Transactional(readOnly = true)
+    public CrewProjectSubmissionDetailResponse
+    getProjectSubmissionDetail(
+            Long companyId,
+            Long projectId,
+            Long submissionId
+    ) {
+        Company company =
+                userFinder.findActiveCompany(
+                        companyId
+                );
+
+        Project project =
+                findCompanyProject(
+                        company.getId(),
+                        projectId
+                );
+
+        ProjectSubmission submission =
+                projectSubmissionRepository
+                        .findByIdAndProjectId(
+                                submissionId,
+                                project.getId()
+                        )
+                        .orElseThrow(
+                                () -> new CustomException(
+                                        ErrorCode.SUBMISSION_NOT_FOUND
+                                )
+                        );
+
+        if (
+                submission.getStatus()
+                        == ProjectSubmissionStatus.DRAFT
+        ) {
+            throw new CustomException(
+                    ErrorCode.SUBMISSION_NOT_FOUND
+            );
+        }
+
+        return CrewProjectSubmissionDetailResponse.from(
+                submission
+        );
     }
 
     @Transactional(readOnly = true)

@@ -29,6 +29,13 @@ import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
+import com.conx.server.user.dto.crew.CrewSubmissionReplyStatus;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +54,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -352,6 +360,210 @@ class CompanyWorkspaceControllerTest {
     }
 
     @Test
+    @DisplayName("기업이 프로젝트 결과물 공유 이력을 조회한다")
+    void getProjectSubmissions() throws Exception {
+        Long projectId = 100L;
+
+        CrewProjectSubmissionListItemResponse submission =
+                new CrewProjectSubmissionListItemResponse(
+                        400L,
+                        "1차 결과물",
+                        "테스트 크루",
+                        LocalDateTime.of(
+                                2026,
+                                7,
+                                15,
+                                14,
+                                30
+                        ),
+                        ProjectSubmissionStatus.SUBMITTED,
+                        CrewSubmissionReplyStatus.WAITING_FOR_REPLY
+                );
+
+        Page<CrewProjectSubmissionListItemResponse> response =
+                new PageImpl<>(
+                        List.of(submission),
+                        PageRequest.of(0, 10),
+                        1
+                );
+
+        given(
+                companyWorkspaceService
+                        .getProjectSubmissions(
+                                COMPANY_ID,
+                                projectId,
+                                0,
+                                10
+                        )
+        ).willReturn(response);
+
+        mockMvc.perform(
+                        get(
+                                "/api/v1/companies/me/projects/{projectId}/submissions",
+                                projectId
+                        )
+                                .param("page", "0")
+                                .param("size", "10")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.status")
+                                .value("success")
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "프로젝트 결과물 공유 이력 조회에 성공했습니다."
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.payload.content[0].submissionId")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.payload.content[0].title")
+                                .value("1차 결과물")
+                )
+                .andExpect(
+                        jsonPath("$.payload.content[0].authorName")
+                                .value("테스트 크루")
+                )
+                .andExpect(
+                        jsonPath("$.payload.content[0].submissionStatus")
+                                .value("SUBMITTED")
+                )
+                .andExpect(
+                        jsonPath("$.payload.content[0].replyStatus")
+                                .value("WAITING_FOR_REPLY")
+                )
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.hasNotification")
+                                .value(false)
+                );
+
+        verify(companyWorkspaceService)
+                .getProjectSubmissions(
+                        COMPANY_ID,
+                        projectId,
+                        0,
+                        10
+                );
+    }
+
+    @Test
+    @DisplayName("기업이 프로젝트 결과물 상세를 조회한다")
+    void getProjectSubmissionDetail() throws Exception {
+        Long projectId = 100L;
+        Long submissionId = 400L;
+
+        CrewProjectSubmissionDetailResponse response =
+                new CrewProjectSubmissionDetailResponse(
+                        submissionId,
+                        projectId,
+                        "1차 결과물",
+                        "테스트 크루",
+                        LocalDateTime.of(
+                                2026,
+                                7,
+                                15,
+                                14,
+                                30
+                        ),
+                        ProjectSubmissionStatus.SUBMITTED,
+                        CrewSubmissionReplyStatus.WAITING_FOR_REPLY,
+                        "결과물 설명입니다.",
+                        List.of(
+                                "https://example.com/result.pdf"
+                        ),
+                        List.of(
+                                "https://example.com/reference"
+                        ),
+                        null
+                );
+
+        given(
+                companyWorkspaceService
+                        .getProjectSubmissionDetail(
+                                COMPANY_ID,
+                                projectId,
+                                submissionId
+                        )
+        ).willReturn(response);
+
+        mockMvc.perform(
+                        get(
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}",
+                                projectId,
+                                submissionId
+                        )
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.status")
+                                .value("success")
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "프로젝트 결과물 상세 조회에 성공했습니다."
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.payload.submissionId")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.payload.projectId")
+                                .value(100)
+                )
+                .andExpect(
+                        jsonPath("$.payload.title")
+                                .value("1차 결과물")
+                )
+                .andExpect(
+                        jsonPath("$.payload.content")
+                                .value("결과물 설명입니다.")
+                )
+                .andExpect(
+                        jsonPath("$.payload.fileLinks[0]")
+                                .value(
+                                        "https://example.com/result.pdf"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.payload.referenceLinks[0]")
+                                .value(
+                                        "https://example.com/reference"
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.payload.submissionStatus")
+                                .value("SUBMITTED")
+                )
+                .andExpect(
+                        jsonPath("$.payload.replyStatus")
+                                .value("WAITING_FOR_REPLY")
+                )
+                .andExpect(
+                        jsonPath("$.hasNotification")
+                                .value(false)
+                );
+
+        verify(companyWorkspaceService)
+                .getProjectSubmissionDetail(
+                        COMPANY_ID,
+                        projectId,
+                        submissionId
+                );
+    }
+
+    @Test
     @DisplayName("프로젝트 지원서 목록을 조회한다")
     void getProjectApplications() throws Exception {
         Long projectId = 100L;
@@ -510,70 +722,152 @@ class CompanyWorkspaceControllerTest {
     }
 
     @Test
-    @DisplayName("프로젝트 결과물 수정 요청을 보낸다")
-    void requestProjectRevision() throws Exception {
+    @DisplayName("기업이 특정 결과물에 수정 요청을 보낸다")
+    void requestProjectSubmissionRevision() throws Exception {
         Long projectId = 100L;
+        Long submissionId = 400L;
 
         CompanyProjectRevisionRequest request =
-                new CompanyProjectRevisionRequest("수정이 필요합니다.");
+                new CompanyProjectRevisionRequest(
+                        "영상 마지막 부분을 수정해주세요."
+                );
 
         CompanyProjectRevisionResponse response =
                 new CompanyProjectRevisionResponse(
                         projectId,
-                        400L,
+                        submissionId,
                         null,
                         null,
-                        "수정이 필요합니다."
+                        "영상 마지막 부분을 수정해주세요."
                 );
 
-        given(companyWorkspaceService.requestProjectRevision(
-                eq(COMPANY_ID),
-                eq(projectId),
-                eq(request)
-        )).willReturn(response);
+        given(
+                companyWorkspaceService
+                        .requestProjectRevision(
+                                eq(COMPANY_ID),
+                                eq(projectId),
+                                eq(submissionId),
+                                eq(request)
+                        )
+        ).willReturn(response);
 
-        mockMvc.perform(post("/api/v1/companies/me/projects/{projectId}/revision-requests", projectId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(
+                        post(
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
+                                projectId,
+                                submissionId
+                        )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper
+                                                .writeValueAsString(
+                                                        request
+                                                )
+                                )
+                )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.message").value("프로젝트 결과물 수정 요청에 성공했습니다."))
-                .andExpect(jsonPath("$.payload.projectId").value(100))
-                .andExpect(jsonPath("$.payload.submissionId").value(400))
-                .andExpect(jsonPath("$.payload.revisionReason").value("수정이 필요합니다."))
-                .andExpect(jsonPath("$.hasNotification").value(false));
+                .andExpect(
+                        jsonPath("$.status")
+                                .value("success")
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "프로젝트 결과물 수정 요청에 성공했습니다."
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.payload.projectId")
+                                .value(100)
+                )
+                .andExpect(
+                        jsonPath("$.payload.submissionId")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.payload.revisionReason")
+                                .value(
+                                        "영상 마지막 부분을 수정해주세요."
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.hasNotification")
+                                .value(false)
+                );
 
         verify(companyWorkspaceService)
-                .requestProjectRevision(eq(COMPANY_ID), eq(projectId), eq(request));
+                .requestProjectRevision(
+                        eq(COMPANY_ID),
+                        eq(projectId),
+                        eq(submissionId),
+                        eq(request)
+                );
     }
 
     @Test
-    @DisplayName("프로젝트 결과물을 승인한다")
-    void approveProject() throws Exception {
+    @DisplayName("기업이 특정 결과물을 승인한다")
+    void approveProjectSubmission() throws Exception {
         Long projectId = 100L;
+        Long submissionId = 400L;
 
         CompanyProjectApprovalResponse response =
                 new CompanyProjectApprovalResponse(
                         projectId,
-                        400L,
+                        submissionId,
                         null,
                         null
                 );
 
-        given(companyWorkspaceService.approveProject(COMPANY_ID, projectId))
-                .willReturn(response);
+        given(
+                companyWorkspaceService
+                        .approveProject(
+                                COMPANY_ID,
+                                projectId,
+                                submissionId
+                        )
+        ).willReturn(response);
 
-        mockMvc.perform(post("/api/v1/companies/me/projects/{projectId}/approval", projectId))
+        mockMvc.perform(
+                        post(
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
+                                projectId,
+                                submissionId
+                        )
+                )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.message").value("프로젝트 결과물 승인에 성공했습니다."))
-                .andExpect(jsonPath("$.payload.projectId").value(100))
-                .andExpect(jsonPath("$.payload.submissionId").value(400))
-                .andExpect(jsonPath("$.hasNotification").value(false));
+                .andExpect(
+                        jsonPath("$.status")
+                                .value("success")
+                )
+                .andExpect(
+                        jsonPath("$.message")
+                                .value(
+                                        "프로젝트 결과물 승인에 성공했습니다."
+                                )
+                )
+                .andExpect(
+                        jsonPath("$.payload.projectId")
+                                .value(100)
+                )
+                .andExpect(
+                        jsonPath("$.payload.submissionId")
+                                .value(400)
+                )
+                .andExpect(
+                        jsonPath("$.hasNotification")
+                                .value(false)
+                );
 
-        verify(companyWorkspaceService).approveProject(COMPANY_ID, projectId);
+        verify(companyWorkspaceService)
+                .approveProject(
+                        COMPANY_ID,
+                        projectId,
+                        submissionId
+                );
     }
 
     @Test

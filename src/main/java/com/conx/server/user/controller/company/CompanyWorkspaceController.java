@@ -27,6 +27,9 @@ import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
+import org.springframework.data.domain.Page;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -171,6 +174,76 @@ public class CompanyWorkspaceController {
         return apiResponseFactory.success("검수할 프로젝트 상세 조회에 성공했습니다.", response, userDetails);
     }
 
+    /**
+     * 기업 프로젝트 결과물 공유 이력
+     */
+    @GetMapping(
+            "/projects/{projectId}/submissions"
+    )
+    public ApiResponse<
+            Page<CrewProjectSubmissionListItemResponse>
+            >
+    getProjectSubmissions(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @PathVariable
+            Long projectId,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+        Page<CrewProjectSubmissionListItemResponse> response =
+                companyWorkspaceService
+                        .getProjectSubmissions(
+                                userDetails.getId(),
+                                projectId,
+                                page,
+                                size
+                        );
+
+        return apiResponseFactory.success(
+                "프로젝트 결과물 공유 이력 조회에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    /**
+     * 기업 프로젝트 결과물 상세
+     */
+    @GetMapping(
+            "/projects/{projectId}/submissions/{submissionId}"
+    )
+    public ApiResponse<CrewProjectSubmissionDetailResponse>
+    getProjectSubmissionDetail(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @PathVariable
+            Long projectId,
+
+            @PathVariable
+            Long submissionId
+    ) {
+        CrewProjectSubmissionDetailResponse response =
+                companyWorkspaceService
+                        .getProjectSubmissionDetail(
+                                userDetails.getId(),
+                                projectId,
+                                submissionId
+                        );
+
+        return apiResponseFactory.success(
+                "프로젝트 결과물 상세 조회에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
     @GetMapping("/projects/{projectId}/applications")
     public ApiResponse<List<CompanyProjectApplicationResponse>> getProjectApplications(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -225,31 +298,73 @@ public class CompanyWorkspaceController {
         return apiResponseFactory.success("파트너 크루 조회에 성공했습니다.", response, userDetails);
     }
 
-    @PostMapping("/projects/{projectId}/revision-requests")
-    public ApiResponse<CompanyProjectRevisionResponse> requestProjectRevision(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId,
-            @Valid @RequestBody CompanyProjectRevisionRequest request
+    /**
+     * 특정 결과물 수정 요청
+     */
+    @PostMapping(
+            "/projects/{projectId}/submissions/{submissionId}/revision-requests"
+    )
+    public ApiResponse<CompanyProjectRevisionResponse>
+    requestProjectSubmissionRevision(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @PathVariable
+            Long projectId,
+
+            @PathVariable
+            Long submissionId,
+
+            @Valid
+            @RequestBody
+            CompanyProjectRevisionRequest request
     ) {
         CompanyProjectRevisionResponse response =
-                companyWorkspaceService.requestProjectRevision(
-                        userDetails.getId(),
-                        projectId,
-                        request
-                );
+                companyWorkspaceService
+                        .requestProjectRevision(
+                                userDetails.getId(),
+                                projectId,
+                                submissionId,
+                                request
+                        );
 
-        return apiResponseFactory.success("프로젝트 결과물 수정 요청에 성공했습니다.", response, userDetails);
+        return apiResponseFactory.success(
+                "프로젝트 결과물 수정 요청에 성공했습니다.",
+                response,
+                userDetails
+        );
     }
 
-    @PostMapping("/projects/{projectId}/approval")
-    public ApiResponse<CompanyProjectApprovalResponse> approveProject(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId
+    /**
+     * 특정 결과물 승인
+     */
+    @PostMapping(
+            "/projects/{projectId}/submissions/{submissionId}/approval"
+    )
+    public ApiResponse<CompanyProjectApprovalResponse>
+    approveProjectSubmission(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @PathVariable
+            Long projectId,
+
+            @PathVariable
+            Long submissionId
     ) {
         CompanyProjectApprovalResponse response =
-                companyWorkspaceService.approveProject(userDetails.getId(), projectId);
+                companyWorkspaceService
+                        .approveProject(
+                                userDetails.getId(),
+                                projectId,
+                                submissionId
+                        );
 
-        return apiResponseFactory.success("프로젝트 결과물 승인에 성공했습니다.", response, userDetails);
+        return apiResponseFactory.success(
+                "프로젝트 결과물 승인에 성공했습니다.",
+                response,
+                userDetails
+        );
     }
 
     @PostMapping("/projects/{projectId}/evaluation")

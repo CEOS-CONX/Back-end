@@ -2,6 +2,7 @@ package com.conx.server.user.dto.crew.response;
 
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectSettlement;
+import com.conx.server.project.domain.enums.CrewPaymentStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.company.Company;
@@ -22,8 +23,10 @@ public record CrewSettlementItemResponse(
         LocalDate projectDeadline,
         long amount,
         ProjectSettlementStatus settlementStatus,
+        CrewPaymentStatus crewPaymentStatus,
         LocalDate expectedPaymentDate,
         LocalDate settlementDate,
+        LocalDate crewPaymentConfirmedDate,
         LocalDateTime registeredAt
 ) {
 
@@ -48,8 +51,10 @@ public record CrewSettlementItemResponse(
                 project.getProjectDeadline(),
                 settlement.getAmount(),
                 settlement.getStatus(),
+                settlement.getResolvedCrewPaymentStatus(),
                 settlement.getExpectedPaymentDate(),
                 settlement.getSettlementDate(),
+                settlement.getCrewPaymentConfirmedDate(),
                 settlement.getCreatedAt()
         );
     }

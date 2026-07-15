@@ -21,9 +21,7 @@ import com.conx.server.user.repository.AdminRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
-import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
-import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.dto.crew.response.CrewSettlementSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -447,9 +445,17 @@ public class CrewWorkSpaceTest {
          * INSPECTION → ADJUSTING
          * WAITING 정산 생성
          */
+        long submissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
         mockMvc.perform(
                         post(
-                                "/api/v1/companies/me/projects/1/approval"
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
+                                1L,
+                                submissionId
                         )
                                 .header(
                                         "Authorization",
@@ -520,26 +526,56 @@ public class CrewWorkSpaceTest {
         return response.payload();
     }
 
-    private CrewSettlementSummaryResponse
-    getCrewSettlementSummary(
-            String crewToken
+    private long getLatestSubmissionId(
+            String companyToken,
+            long projectId
     ) throws Exception {
 
         MvcResult mvcResult =
                 mockMvc.perform(
                                 get(
-                                        "/api/v1/crews/settlements/summary"
+                                        "/api/v1/companies/me/projects/{projectId}/submissions",
+                                        projectId
                                 )
+                                        .header(
+                                                "Authorization",
+                                                companyToken
+                                        )
+                                        .param("page", "0")
+                                        .param("size", "1")
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        var responseBody =
+                objectMapper.readTree(
+                        mvcResult.getResponse()
+                                .getContentAsString()
+                );
+
+        return responseBody
+                .path("payload")
+                .path("content")
+                .get(0)
+                .path("submissionId")
+                .asLong();
+    }
+
+    private CrewSettlementSummaryResponse getCrewSettlementSummary(
+            String crewToken
+    ) throws Exception {
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                get("/api/v1/crews/settlements/summary")
                                         .header(
                                                 "Authorization",
                                                 crewToken
                                         )
                         )
-                        .andExpect(status().isOk())
                         .andReturn();
 
-        ApiResponse<CrewSettlementSummaryResponse>
-                response =
+        ApiResponse<CrewSettlementSummaryResponse> response =
                 objectMapper.readValue(
                         mvcResult.getResponse()
                                 .getContentAsString(),
@@ -949,9 +985,17 @@ public class CrewWorkSpaceTest {
                         "결과물을 수정해주세요."
                 );
 
+        long submissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
         mockMvc.perform(
                         post(
-                                "/api/v1/companies/me/projects/1/revision-requests"
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
+                                1L,
+                                submissionId
                         )
                                 .header(
                                         "Authorization",
@@ -1036,9 +1080,17 @@ public class CrewWorkSpaceTest {
          * 5. 기업 승인 후 ADJUSTING
          * 제출 완료 1
          */
+        long revisedSubmissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
         mockMvc.perform(
                         post(
-                                "/api/v1/companies/me/projects/1/approval"
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
+                                1L,
+                                revisedSubmissionId
                         )
                                 .header(
                                         "Authorization",
@@ -1441,11 +1493,34 @@ public class CrewWorkSpaceTest {
                 .andReturn();
 
         String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-        CompanyProjectRevisionRequest rivReq = new CompanyProjectRevisionRequest(revision);
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/revision-requests")
-                .header("Authorization", companyToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(rivReq)))
+        CompanyProjectRevisionRequest rivReq =
+                new CompanyProjectRevisionRequest(revision);
+
+        long firstSubmissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
+                                1L,
+                                firstSubmissionId
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                rivReq
+                                        )
+                                )
+                )
                 .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
@@ -1525,11 +1600,34 @@ public class CrewWorkSpaceTest {
 
         //결과물 수정요청
         String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-        CompanyProjectRevisionRequest rivReq = new CompanyProjectRevisionRequest(revision);
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/revision-requests")
-                        .header("Authorization", companyToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rivReq)))
+        CompanyProjectRevisionRequest rivReq =
+                new CompanyProjectRevisionRequest(revision);
+
+        long firstSubmissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
+                                1L,
+                                firstSubmissionId
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                rivReq
+                                        )
+                                )
+                )
                 .andExpect(status().isOk());
 
         //수정된 결과물 제출
@@ -1973,9 +2071,17 @@ public class CrewWorkSpaceTest {
                         "결과물을 수정해주세요."
                 );
 
+        long firstSubmissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
         mockMvc.perform(
                         post(
-                                "/api/v1/companies/me/projects/1/revision-requests"
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
+                                1L,
+                                firstSubmissionId
                         )
                                 .header(
                                         "Authorization",
@@ -2106,9 +2212,17 @@ public class CrewWorkSpaceTest {
          * 4. 기업 결과물 승인
          * SETTLEMENT_CONFIRMATION Todo 생성
          */
+        long revisedSubmissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
         mockMvc.perform(
                         post(
-                                "/api/v1/companies/me/projects/1/approval"
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
+                                1L,
+                                revisedSubmissionId
                         )
                                 .header(
                                         "Authorization",
@@ -2424,9 +2538,17 @@ public class CrewWorkSpaceTest {
          * INSPECTION → ADJUSTING
          * WAITING 정산 생성
          */
+        long submissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
         mockMvc.perform(
                         post(
-                                "/api/v1/companies/me/projects/1/approval"
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
+                                1L,
+                                submissionId
                         )
                                 .header(
                                         "Authorization",

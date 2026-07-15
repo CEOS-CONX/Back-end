@@ -20,6 +20,12 @@ import com.conx.server.user.dto.crew.response.CrewSettlementItemResponse;
 import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
 import com.conx.server.user.dto.crew.response.CrewTodoProjectResponse;
 import com.conx.server.user.dto.crew.response.CrewSettlementSummaryResponse;
+import com.conx.server.project.domain.enums.CrewPaymentStatus;
+import com.conx.server.user.dto.crew.request.CrewPaymentStatusUpdateRequest;
+import com.conx.server.user.dto.crew.response.CrewPaymentStatusUpdateResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectWorkspaceDetailResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -194,6 +200,101 @@ public class CrewWorkSpaceController {
     }
 
     /**
+     * 신규 프로젝트 작업 상세
+     */
+    @GetMapping(
+            "/projects/{projectId}/workspace"
+    )
+    public ApiResponse<CrewProjectWorkspaceDetailResponse>
+    getCrewProjectWorkspaceDetail(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @PathVariable
+            long projectId
+    ) {
+        CrewProjectWorkspaceDetailResponse result =
+                crewWorkSpaceService
+                        .getCrewProjectWorkspaceDetail(
+                                customUserDetails,
+                                projectId
+                        );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
+    }
+
+    /**
+     * 프로젝트 결과물 공유 이력
+     */
+    @GetMapping(
+            "/projects/{projectId}/submissions"
+    )
+    public ApiResponse<
+            Page<CrewProjectSubmissionListItemResponse>
+            >
+    getCrewProjectSubmissions(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @PathVariable
+            long projectId,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size
+    ) {
+        Page<CrewProjectSubmissionListItemResponse> result =
+                crewWorkSpaceService
+                        .getCrewProjectSubmissions(
+                                customUserDetails,
+                                projectId,
+                                page,
+                                size
+                        );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
+    }
+
+    /**
+     * 프로젝트 결과물 공유 상세
+     */
+    @GetMapping(
+            "/projects/{projectId}/submissions/{submissionId}"
+    )
+    public ApiResponse<CrewProjectSubmissionDetailResponse>
+    getCrewProjectSubmissionDetail(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @PathVariable
+            long projectId,
+
+            @PathVariable
+            long submissionId
+    ) {
+        CrewProjectSubmissionDetailResponse result =
+                crewWorkSpaceService
+                        .getCrewProjectSubmissionDetail(
+                                customUserDetails,
+                                projectId,
+                                submissionId
+                        );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
+    }
+
+    /**
      * 결과물 제출하기
      */
     @PostMapping("/projects/{projectId}/submissions")
@@ -256,16 +357,37 @@ public class CrewWorkSpaceController {
             ProjectSettlementStatus settlementStatus,
 
             @RequestParam(required = false)
+            CrewPaymentStatus paymentStatus,
+
+            @RequestParam(required = false)
             Industry category,
 
             @RequestParam(required = false)
             ProjectType projectType,
 
             @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
             LocalDate startDate,
 
             @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
             LocalDate endDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate settlementStartDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate settlementEndDate,
 
             @RequestParam(defaultValue = "RECENT")
             CrewWorkspaceSort sort,
@@ -281,14 +403,49 @@ public class CrewWorkSpaceController {
                         customUserDetails,
                         keyword,
                         settlementStatus,
+                        paymentStatus,
                         category,
                         projectType,
                         startDate,
                         endDate,
+                        settlementStartDate,
+                        settlementEndDate,
                         sort,
                         page,
                         size
                 );
+
+        return apiResponseFactory.success(
+                result,
+                customUserDetails
+        );
+    }
+
+    /**
+     * 크루 지급 확인 상태 변경
+     */
+    @PatchMapping(
+            "/settlements/{settlementId}/payment-status"
+    )
+    public ApiResponse<CrewPaymentStatusUpdateResponse>
+    updateCrewPaymentStatus(
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @PathVariable
+            Long settlementId,
+
+            @Valid
+            @RequestBody
+            CrewPaymentStatusUpdateRequest request
+    ) {
+        CrewPaymentStatusUpdateResponse result =
+                crewWorkSpaceService
+                        .updateCrewPaymentStatus(
+                                customUserDetails,
+                                settlementId,
+                                request
+                        );
 
         return apiResponseFactory.success(
                 result,
