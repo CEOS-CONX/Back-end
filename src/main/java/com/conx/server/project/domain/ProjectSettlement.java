@@ -41,11 +41,11 @@ public class ProjectSettlement extends BaseEntity {
     @JoinColumn(name = "crew_id")
     private Crew crew;
 
-    private long amount;
-
-    private Month month;
+    private long subsidy;
 
     private LocalDate expectedPaymentDate;
+    private LocalDate paymentDate;
+    //TODO:: CONX 어드민에서 CONX 지급완료 확정 후 payment 바꾸기
 
     @Enumerated(EnumType.STRING)
     private ProjectSettlementStatus status;
@@ -54,15 +54,13 @@ public class ProjectSettlement extends BaseEntity {
             Project project,
             Company company,
             Crew crew,
-            long amount,
-            LocalDate date
+            long subsidy
     ) {
         this.project = project;
         this.company = company;
         this.crew = crew;
-        this.amount = amount;
+        this.subsidy = subsidy;
         this.status = ProjectSettlementStatus.WAITING;
-        this.month = date.getMonth();
     }
 
     public static ProjectSettlement create(Project project) {
@@ -70,8 +68,7 @@ public class ProjectSettlement extends BaseEntity {
                 project,
                 project.getCompany(),
                 project.getSelectedCrew(),
-                project.getSubsidy(),
-                LocalDate.now()
+                project.getSubsidy()
         );
     }
 
@@ -79,7 +76,23 @@ public class ProjectSettlement extends BaseEntity {
         this.expectedPaymentDate = expectedPaymentDate;
     }
 
+    public boolean isWaiting(){
+        return this.status == ProjectSettlementStatus.WAITING;
+    }
+
+    public boolean isPaid(){
+        return this.status == ProjectSettlementStatus.PAID;
+    }
+
+    public boolean isInThisMonth(){
+        LocalDate now = LocalDate.now();
+
+        return now.getYear() == paymentDate.getYear()
+                && now.getMonthValue() == paymentDate.getMonthValue();
+    }
+
     public void markAsPaid() {
         this.status = ProjectSettlementStatus.PAID;
+        this.paymentDate = LocalDate.now();
     }
 }

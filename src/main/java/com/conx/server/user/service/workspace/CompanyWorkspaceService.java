@@ -8,6 +8,7 @@ import com.conx.server.domain.file.repository.FileRepository;
 import com.conx.server.domain.file.service.FileService;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
 import com.conx.server.project.domain.*;
 import com.conx.server.project.domain.enums.ProjectStatus;
@@ -71,7 +72,7 @@ public class CompanyWorkspaceService {
         LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 
         CompanyProjectStatusResponseDTO projectStatus = projectRepository.findCompanyStatusWithCompany(company);
-        CompanyExpenditureStatusResponseDTO expenditure = projectSettlementRepository.findCompanyStatusWithCompany(company);
+        CompanyExpenditureStatusResponseDTO expenditure = projectSettlementRepository.findCompanyStatusWithCompany(company, LocalDate.now().getYear());
         Page<Project> projectPage = projectRepository.findByCompanyWithFilters(
                 company, status, startDateTime, endDateTime, pageable
         );
@@ -154,7 +155,6 @@ public class CompanyWorkspaceService {
         Project project = Project.createRecruitingProject(company, request);
 
         saveFiles(request);
-
         Project savedProject = projectRepository.save(project);
         return CompanyProjectIdResponse.from(savedProject);
     }
@@ -262,9 +262,11 @@ public class CompanyWorkspaceService {
 
         project.selectCrew(selectedApplication.getCrew());
         selectedApplication.select();
+        ProjectSettlement settlement = ProjectSettlement.create(project);
         rejectOtherApplications(project.getId(), selectedApplication.getId());
 
         notificationFacadeService.saveNotificationAboutSelectedProject(project);
+        projectSettlementRepository.save(settlement);
 
         return CompanyProjectApplicationSelectResponse.of(project, selectedApplication);
     }
@@ -445,6 +447,29 @@ public class CompanyWorkspaceService {
 
         return CompanySettlementExpectedPaymentDateResponse.from(settlement);
     }
+
+    @Transactional
+    public SubsidyStatusResponse getCompanySubsidyStatus(
+            Long companyId,
+            ProjectSettlementStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    ) {
+        Company company = userFinder.findActiveCompany(companyId);
+
+        Page<ProjectSettlement> settlements = projectSettlementRepository.findByCompanyAndFilters(
+                company, status, startDate, endDate, pageable
+        );
+
+        SubsidyStatusWrapperDTO subsidyStatus = SubsidyStatusWrapperDTO.from(company, settlements);
+        List<AdjustmentWrapperDTO> adjustmentStatuses = settlements.stream()
+                .map(s -> AdjustmentWrapperDTO.from(s.getProject(), s))
+                .toList();
+
+        return new SubsidyStatusResponse(subsidyStatus, adjustmentStatuses);
+    }
+
 
     private ProjectSettlement findCompanySettlement(Long companyId, Long settlementId) {
         return projectSettlementRepository.findByIdAndCompanyId(settlementId, companyId)

@@ -26,7 +26,7 @@ public record CrewSettlementResponse(
                 project.getProjectName(),
                 project.getBrandName(),
                 project.getStatus(),
-                settlement.getAmount(),
+                settlement.getSubsidy(),
                 settlement.getStatus(),
                 settlement.getExpectedPaymentDate()
         );

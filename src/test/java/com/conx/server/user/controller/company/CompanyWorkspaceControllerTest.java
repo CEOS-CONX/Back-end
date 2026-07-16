@@ -9,6 +9,7 @@ import com.conx.server.project.domain.ProjectInspectionFeedback;
 import com.conx.server.project.domain.ProjectSubmission;
 import com.conx.server.project.domain.ResultForm;
 import com.conx.server.project.domain.ResultFormRequestDTO;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.crew.Crew;
@@ -302,6 +303,81 @@ class CompanyWorkspaceControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.payload.content.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("기본조건으로 기업 정산 현황 조회")
+    void getCompanySubsidyStatusWithDefault() throws Exception {
+        // given
+        SubsidyStatusResponse response = new SubsidyStatusResponse(
+                new SubsidyStatusWrapperDTO(0L, 0L, null, 0L),
+                List.of()
+        );
+
+        given(companyWorkspaceService.getCompanySubsidyStatus(
+                eq(COMPANY_ID), isNull(), isNull(), isNull(), any()
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/companies/me/adjustment"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.subsidyStatus.totalSubsidy").value(0))
+                .andExpect(jsonPath("$.payload.subsidyStatus.expectedSubsidy").value(0))
+                .andExpect(jsonPath("$.payload.subsidyStatus.nextExpectedSubsidy").isEmpty())
+                .andExpect(jsonPath("$.payload.subsidyStatus.thisMonthSubsidy").value(0))
+                .andExpect(jsonPath("$.payload.adjustmentList.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("status, 기간 조건으로 기업 정산 현황 조회")
+    void getCompanySubsidyStatusWithFilters() throws Exception {
+        // given
+        ProjectSettlementStatus status = ProjectSettlementStatus.WAITING;
+        LocalDate startDate = LocalDate.of(2026, 7, 1);
+        LocalDate endDate = LocalDate.of(2026, 7, 31);
+
+        SubsidyStatusResponse response = new SubsidyStatusResponse(
+                new SubsidyStatusWrapperDTO(1_000_000L, 500_000L, LocalDate.of(2026, 8, 1), 200_000L),
+                List.of()
+        );
+
+        given(companyWorkspaceService.getCompanySubsidyStatus(
+                eq(COMPANY_ID), eq(status), eq(startDate), eq(endDate), any()
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/companies/me/adjustment")
+                        .param("status", status.name())
+                        .param("startDate", startDate.toString())
+                        .param("endDate", endDate.toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.subsidyStatus.totalSubsidy").value(1_000_000))
+                .andExpect(jsonPath("$.payload.subsidyStatus.expectedSubsidy").value(500_000))
+                .andExpect(jsonPath("$.payload.subsidyStatus.nextExpectedSubsidy").value("2026-08-01"))
+                .andExpect(jsonPath("$.payload.subsidyStatus.thisMonthSubsidy").value(200_000));
+    }
+
+    @Test
+    @DisplayName("페이지네이션 파라미터를 적용해서 기업 정산 현황 조회")
+    void getCompanySubsidyStatusWithPaging() throws Exception {
+        // given
+        SubsidyStatusResponse response = new SubsidyStatusResponse(
+                new SubsidyStatusWrapperDTO(0L, 0L, null, 0L),
+                List.of()
+        );
+
+        given(companyWorkspaceService.getCompanySubsidyStatus(
+                eq(COMPANY_ID), isNull(), isNull(), isNull(), any()
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/companies/me/adjustment")
+                        .param("page", "1")
+                        .param("size", "5"))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
 /*

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,27 +39,47 @@ public interface ProjectSettlementRepository extends JpaRepository<ProjectSettle
 
     @Query("""
     select new com.conx.server.user.dto.company.response.CompanyExpenditureStatusResponseDTO(
-        count(case when s.month = java.time.Month.JANUARY then 1 end),
-        count(case when s.month = java.time.Month.FEBRUARY then 1 end),
-        count(case when s.month = java.time.Month.MARCH then 1 end),
-        count(case when s.month = java.time.Month.APRIL then 1 end),
-        count(case when s.month = java.time.Month.MAY then 1 end),
-        count(case when s.month = java.time.Month.JUNE then 1 end),
-        count(case when s.month = java.time.Month.JULY then 1 end),
-        count(case when s.month = java.time.Month.AUGUST then 1 end),
-        count(case when s.month = java.time.Month.SEPTEMBER then 1 end),
-        count(case when s.month = java.time.Month.OCTOBER then 1 end),
-        count(case when s.month = java.time.Month.NOVEMBER then 1 end),
-        count(case when s.month = java.time.Month.DECEMBER then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 1 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 2 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 3 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 4 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 5 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 6 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 7 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 8 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 9 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 10 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 11 then 1 end),
+        count(case when function('MONTH', s.paymentDate) = 12 then 1 end),
         c.totalExpenditure
     )
     from ProjectSettlement s
     join s.project p
     join p.company c
     where c = :company
+      and function('YEAR', s.paymentDate) = :year
     group by c.totalExpenditure
 """)
     CompanyExpenditureStatusResponseDTO findCompanyStatusWithCompany(
-            @Param("company") Company company
+            @Param("company") Company company,
+            @Param("year") int year
+    );
+
+
+    @Query("""
+    select s from ProjectSettlement s
+    join s.project p
+    join p.company c
+    where c = :company
+      and (:status is null or s.status = :status)
+      and (:startDate is null or s.paymentDate >= :startDate)
+      and (:endDate is null or s.paymentDate <= :endDate)
+""")
+    Page<ProjectSettlement> findByCompanyAndFilters(
+            @Param("company") Company company,
+            @Param("status") ProjectSettlementStatus status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 }

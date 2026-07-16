@@ -281,4 +281,24 @@ public class CompanyWorkspaceController {
 
         return apiResponseFactory.success("예상 지급 날짜 설정에 성공했습니다.", response, userDetails);
     }
+
+    /**
+     * 정산관리
+     */
+    @GetMapping("/adjustment")
+    public ApiResponse<SubsidyStatusResponse> getCompanySubsidyStatus(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam(required = false) ProjectSettlementStatus status,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        SubsidyStatusResponse response = companyWorkspaceService.getCompanySubsidyStatus(customUserDetails.getId(), status, startDate, endDate, pageable);
+
+        return apiResponseFactory.success(
+                "정산 현황 조회에 성공했습니다.", response, customUserDetails
+        );
+    }
 }
