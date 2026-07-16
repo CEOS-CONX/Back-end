@@ -38,9 +38,41 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "T005", "리프레시 토큰을 찾을 수 없습니다"),
 
     //Error for email verification
-    EMAIL_NOT_FOUND(HttpStatus.BAD_REQUEST, "V001", "이메일 인증요청을 보내지 않았거나, 인증번호가 만료되었습니다."),
-    CODE_UNMATCHED(HttpStatus.BAD_REQUEST, "V002", "인증번호가 일치하지 않습니다"),
-    USER_UNVERIFIED(HttpStatus.UNAUTHORIZED, "V003", "이메일 인증이 진행되지 않았습니다"),
+    EMAIL_NOT_FOUND(
+            HttpStatus.BAD_REQUEST,
+            "V001",
+            "이메일 인증요청을 보내지 않았거나, 인증번호가 만료되었습니다."
+    ),
+    CODE_UNMATCHED(
+            HttpStatus.BAD_REQUEST,
+            "V002",
+            "인증번호가 일치하지 않습니다"
+    ),
+    USER_UNVERIFIED(
+            HttpStatus.UNAUTHORIZED,
+            "V003",
+            "이메일 인증이 진행되지 않았습니다"
+    ),
+    EMAIL_ALREADY_IN_USE(
+            HttpStatus.CONFLICT,
+            "V004",
+            "이미 사용 중인 이메일입니다."
+    ),
+    EMAIL_SAME_AS_CURRENT(
+            HttpStatus.BAD_REQUEST,
+            "V005",
+            "현재 사용 중인 이메일과 동일합니다."
+    ),
+    EMAIL_CHANGE_VERIFICATION_INVALID(
+            HttpStatus.BAD_REQUEST,
+            "V006",
+            "이메일 변경 인증이 만료되었거나 유효하지 않습니다."
+    ),
+    PASSWORD_RESET_VERIFICATION_INVALID(
+            HttpStatus.BAD_REQUEST,
+            "V007",
+            "비밀번호 재설정 인증이 만료되었거나 유효하지 않습니다."
+    ),
 
     //Error for Signup
     USER_ALREADY_EXITS(HttpStatus.BAD_REQUEST, "S001", "이미 가입한 사용자입니다"),

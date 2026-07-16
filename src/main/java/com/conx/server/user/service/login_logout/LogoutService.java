@@ -12,9 +12,12 @@ public class LogoutService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    public void logout(CustomUserDetails customUserDetails){
+    public void logout(CustomUserDetails customUserDetails) {
         redisTemplate.delete(
-                "refreshToken:" + customUserDetails.getUserEmail()
+                "refreshToken:"
+                        + customUserDetails.getUserRole()
+                        + ":"
+                        + customUserDetails.getId()
         );
     }
 }
