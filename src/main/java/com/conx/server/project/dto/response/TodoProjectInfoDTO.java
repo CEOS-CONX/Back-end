@@ -11,7 +11,7 @@ public record TodoProjectInfoDTO(
         String projectName
 ) {
     public static TodoProjectInfoDTO create(Project project){
-        return new TodoProjectInfoDTO(project.getId(), project.getStatus(), project.getName());
+        return new TodoProjectInfoDTO(project.getId(), project.getStatus(), project.getProjectName());
     }
 
     public static List<TodoProjectInfoDTO> create(List<Project> projects){

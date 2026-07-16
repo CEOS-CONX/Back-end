@@ -1,46 +1,46 @@
 package com.conx.server.user.service.workspace;
 
-import static com.conx.server.global.common.GetOrDefault.getOrDefault;
+
+import com.conx.server.domain.file.domain.File;
+import com.conx.server.domain.file.dto.FileRequestDTO;
+import com.conx.server.domain.file.dto.FileResponseDTO;
+import com.conx.server.domain.file.repository.FileRepository;
+import com.conx.server.domain.file.service.FileService;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
-import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.*;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.company.Company;
-import com.conx.server.user.dto.company.request.CompanyProjectRequest;
-import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
-import com.conx.server.project.domain.ProjectApplication;
+import com.conx.server.user.domain.types.CrewType;
+import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.request.CompanyFeedbackRequestDTO;
+import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
+import com.conx.server.user.dto.company.response.*;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.repository.ProjectApplicationRepository;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationSelectResponse;
-import com.conx.server.project.domain.ProjectSubmission;
 import com.conx.server.project.repository.ProjectSubmissionRepository;
 import com.conx.server.user.domain.crew.Crew;
-import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
-import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApprovalResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectRevisionResponse;
-import com.conx.server.project.domain.enums.ProjectType;
-import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.repository.ProjectSettlementRepository;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
-import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,96 +52,137 @@ public class CompanyWorkspaceService {
     private final ProjectSettlementRepository projectSettlementRepository;
     private final NotificationFacadeService notificationFacadeService;
     private final UserFinder userFinder;
+    private final FileRepository fileRepository;
+    private final FileService fileService;
+    private final ProjectInspectionFeedbackRepository projectInspectionFeedbackRepository;
 
 
     @Transactional(readOnly = true)
-    public CompanyWorkspaceDashboardResponse getDashboard(Long companyId) {
+    public CompanyWorkspaceDashboardResponse getDashboard(
+            Long companyId,
+            ProjectStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    ) {
         Company company = userFinder.findActiveCompany(companyId);
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(23, 59, 59) : null;
 
-        long totalProjectCount = projectRepository.countByCompanyIdAndStatusNot(
-                company.getId(),
-                ProjectStatus.DRAFT
+        CompanyProjectStatusResponseDTO projectStatus = projectRepository.findCompanyStatusWithCompany(company);
+        CompanyExpenditureStatusResponseDTO expenditure = projectSettlementRepository.findCompanyStatusWithCompany(company, LocalDate.now().getYear());
+        Page<Project> projectPage = projectRepository.findByCompanyWithFilters(
+                company, status, startDateTime, endDateTime, pageable
         );
 
-        long recruitingProjectCount = projectRepository.countByCompanyIdAndStatus(
-                company.getId(),
-                ProjectStatus.RECRUITING
-        );
+        Page<TodoProjectWrapperDTO> todo = projectPage.map(TodoProjectWrapperDTO::from);
+
+
+        Map<ProjectStatus, List<TodoProjectWrapperDTO>> grouped = todo.getContent().stream()
+                .collect(Collectors.groupingBy(TodoProjectWrapperDTO::projectStatus));
+
+        List<CompanyTodoProjectResponseDTO> todoGroupedByStatus = Arrays.stream(ProjectStatus.values())
+                .map(s -> new CompanyTodoProjectResponseDTO(
+                        s,
+                        grouped.getOrDefault(s, List.of())
+                ))
+                .toList();
 
         return CompanyWorkspaceDashboardResponse.of(
-                totalProjectCount,
-                recruitingProjectCount
+                projectStatus, expenditure, todoGroupedByStatus
         );
     }
 
     @Transactional(readOnly = true)
-    public List<CompanyWorkspaceProjectResponse> getProjects(
+    public Page<CompanyWorkspaceProjectResponse> getProjects(
             Long companyId,
             String keyword,
-            ProjectType projectType,
+            Industry category,
+            CrewType crewType,
             LocalDate startDate,
-            LocalDate endDate
+            LocalDate endDate,
+            Pageable pageable
     ) {
         Company company = userFinder.findActiveCompany(companyId);
 
         return projectRepository.findCompanyProjectsByFilter(
                         company.getId(),
                         keyword,
-                        projectType,
+                        category,
+                        crewType,
                         startDate,
-                        endDate
+                        endDate,
+                        pageable
                 )
-                .stream()
-                .map(CompanyWorkspaceProjectResponse::from)
-                .toList();
+                .map(CompanyWorkspaceProjectResponse::from);
     }
 
     @Transactional(readOnly = true)
-    public CompanyWorkspaceProjectDetailResponse getProjectDetail(Long companyId, Long projectId) {
+    public CompanyWorkspaceProjectDetailResponse getProjectDetail(
+            Long companyId, Long projectId, int page, int size
+    ) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
-        return CompanyWorkspaceProjectDetailResponse.from(project);
+        CompanyProjectDetailResponse common = CompanyProjectDetailResponse.create(project);
+        CompanyWorkspaceProjectDetailResponse response;
+
+        if (project.isInProgress()) {
+            List<CompanyWorkSpaceForProjectApplicationDTO> applications =
+                    projectApplicationRepository.findAllByProject(project).stream().map(
+                            CompanyWorkSpaceForProjectApplicationDTO::from
+                    ).toList();
+
+            response = ProjectApplicationForCompanyWrapperDTO.from(common, applications);
+        } else {
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+            Page<InspectionInfoInOneLineDTO> inspections =
+                    projectSubmissionRepository.findByProject(project, pageable)
+                            .map(InspectionInfoInOneLineDTO::create);
+
+            response = ProjectStatusResponseDTO.create(common, inspections);
+        }
+
+        return response;
     }
 
     @Transactional
-    public CompanyProjectIdResponse createProject(Long companyId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse createProject(Long companyId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
-
         Project project = Project.createRecruitingProject(company, request);
 
+        saveFiles(request);
         Project savedProject = projectRepository.save(project);
         return CompanyProjectIdResponse.from(savedProject);
     }
 
     @Transactional
-    public CompanyProjectIdResponse createProjectDraft(Long companyId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse createProjectDraft(Long companyId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
+        Project project = Project.createDraft(company, request);
 
-        Project draft = Project.createDraft(company, request);
+        saveFiles(request);
 
-        Project savedDraft = projectRepository.save(draft);
+        Project savedDraft = projectRepository.save(project);
         return CompanyProjectIdResponse.from(savedDraft);
     }
 
     @Transactional
-    public CompanyProjectIdResponse updateProject(Long companyId, Long projectId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse updateProject(Long companyId, Long projectId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
-
-        if (project.getStatus() == ProjectStatus.DRAFT) {
-            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
-        }
+        saveUnexistFiles(request, project);
 
         project.modifyProject(request);
-
         return CompanyProjectIdResponse.from(project);
     }
 
     @Transactional
-    public CompanyProjectIdResponse updateProjectDraft(Long companyId, Long draftId, CompanyProjectRequest request) {
+    public CompanyProjectIdResponse updateProjectDraft(Long companyId, Long draftId, CompanyProjectRequestDTO request) {
         Company company = userFinder.findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);
+        saveUnexistFiles(request, draft);
 
         draft.modifyDraft(request);
 
@@ -153,7 +194,13 @@ public class CompanyWorkspaceService {
         Company company = userFinder.findActiveCompany(companyId);
         Project draft = findCompanyDraft(company.getId(), draftId);
 
-        return CompanyProjectDraftResponse.from(draft);
+        List<String> fileLinks = draft.getFileLinks();
+        List<File> files = fileRepository.findAllByUrlIn(fileLinks);
+        List<FileResponseDTO> fileResponseDTOS = files.stream().map(
+                FileResponseDTO::from
+        ).toList();
+
+        return CompanyProjectDraftResponse.from(draft, fileResponseDTOS);
     }
 
     @Transactional
@@ -161,6 +208,7 @@ public class CompanyWorkspaceService {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
 
+        fileRepository.deleteByUrlIn(project.getFileLinks());
         projectRepository.delete(project);
     }
 
@@ -212,9 +260,11 @@ public class CompanyWorkspaceService {
 
         project.selectCrew(selectedApplication.getCrew());
         selectedApplication.select();
+        ProjectSettlement settlement = ProjectSettlement.create(project);
         rejectOtherApplications(project.getId(), selectedApplication.getId());
 
         notificationFacadeService.saveNotificationAboutSelectedProject(project);
+        projectSettlementRepository.save(settlement);
 
         return CompanyProjectApplicationSelectResponse.of(project, selectedApplication);
     }
@@ -223,75 +273,13 @@ public class CompanyWorkspaceService {
     public CompanyPartnerCrewResponse getPartnerCrew(Long companyId, Long projectId) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
-        Crew partnerCrew = findPartnerCrew(project);
+        Crew partnerCrew = project.getSelectedCrew();
 
-        return CompanyPartnerCrewResponse.of(project, partnerCrew);
-    }
-
-    @Transactional
-    public CompanyProjectRevisionResponse requestProjectRevision(
-            Long companyId,
-            Long projectId,
-            CompanyProjectRevisionRequest request
-    ) {
-        Company company = userFinder.findActiveCompany(companyId);
-        Project project = findCompanyProject(company.getId(), projectId);
-        findPartnerCrew(project);
-
-        ProjectSubmission submission = findLatestSubmission(project.getId());
-
-        if (!submission.isSubmitted()) {
-            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
-        }
-
-        submission.requestRevision(request.revisionReason());
-        project.requestRevision();
-
-        return CompanyProjectRevisionResponse.of(project, submission);
-    }
-
-    @Transactional
-    public CompanyProjectApprovalResponse approveProject(
-            Long companyId,
-            Long projectId
-    ) {
-        Company company = userFinder.findActiveCompany(companyId);
-        Project project = findCompanyProject(company.getId(), projectId);
-        findPartnerCrew(project);
-
-        ProjectSubmission submission = findLatestSubmission(project.getId());
-
-        if (!submission.isSubmitted()) {
-            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
-        }
-
-        submission.approve();
-        project.approveResult();
-        createSettlementIfNotExists(project);
-
-        return CompanyProjectApprovalResponse.of(project, submission);
-    }
-
-    private void createSettlementIfNotExists(Project project) {
-        if (projectSettlementRepository.existsByProjectId(project.getId())) {
-            return;
-        }
-
-        ProjectSettlement settlement = ProjectSettlement.create(project);
-        projectSettlementRepository.save(settlement);
-    }
-
-    private Crew findPartnerCrew(Project project) {
-        if (project.getSelectedCrew() == null) {
+        if (partnerCrew == null) {
             throw new CustomException(ErrorCode.PARTNER_CREW_NOT_FOUND);
         }
 
-        return project.getSelectedCrew();
-    }
-
-    private ProjectSubmission findLatestSubmission(Long projectId) {
-        return projectSubmissionRepository.findTopByProjectIdOrderByIdDesc(projectId)
-                .orElseThrow(() -> new CustomException(ErrorCode.SUBMISSION_NOT_FOUND));
+        return CompanyPartnerCrewResponse.of(project, partnerCrew);
     }
 
     private ProjectApplication findProjectApplication(Long projectId, Long applicationId) {
@@ -326,15 +314,33 @@ public class CompanyWorkspaceService {
     }
 
     @Transactional(readOnly = true)
-    public CompanyWorkspaceProjectDetailResponse getProjectReviewDetail(Long companyId, Long projectId) {
+    public ProjectInspectionWrapperDTO getProjectReviewDetail(Long companyId, Long projectId, Long submissionId) {
         Company company = userFinder.findActiveCompany(companyId);
         Project project = findCompanyProject(company.getId(), projectId);
+        ProjectSubmission projectSubmission = projectSubmissionRepository.findById(submissionId).orElseThrow(
+                () -> new CustomException(ErrorCode.SUBMISSION_NOT_FOUND)
+        );
 
-        if (project.getStatus() != ProjectStatus.INSPECTION) {
-            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
+        if (!projectSubmission.isEditable()){
+            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
         }
 
-        return CompanyWorkspaceProjectDetailResponse.from(project);
+        CompanyProjectDetailResponse common = CompanyProjectDetailResponse.create(project);
+        List<FileResponseDTO> filesInSubmission = fileRepository.findByUrlIn(projectSubmission.getFileLinks()).stream().map(FileResponseDTO::from).toList();
+        List<AdditionalLinksWrapper> additionalLinksInSubmission = projectSubmission.getAdditionalLinks();
+        ProjectSubmissionWrapperDTO submission = ProjectSubmissionWrapperDTO.from(projectSubmission, filesInSubmission, additionalLinksInSubmission);
+
+        ProjectInspectionFeedback feedback = projectInspectionFeedbackRepository.findBySubmission(projectSubmission);
+
+        if (feedback == null){
+            return ProjectInspectionWrapperDTO.from(common, submission, null);
+        }
+
+        List<FileResponseDTO> filesInFeedback = fileRepository.findByUrlIn(feedback.getFileLinks()).stream().map(FileResponseDTO::from).toList();
+        List<AdditionalLinksWrapper> additionalLinksInFeedback = feedback.getAdditionalLinks();
+        ProjectFeedBackWrapperDTO feedBackWrapperDTO = ProjectFeedBackWrapperDTO.from(feedback, filesInFeedback, additionalLinksInFeedback);
+
+        return ProjectInspectionWrapperDTO.from(common, submission, feedBackWrapperDTO);
     }
 
     @Transactional(readOnly = true)
@@ -374,8 +380,106 @@ public class CompanyWorkspaceService {
         return CompanySettlementExpectedPaymentDateResponse.from(settlement);
     }
 
+    @Transactional
+    public SubsidyStatusResponse getCompanySubsidyStatus(
+            Long companyId,
+            ProjectSettlementStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable
+    ) {
+        Company company = userFinder.findActiveCompany(companyId);
+
+        Page<ProjectSettlement> settlements = projectSettlementRepository.findByCompanyAndFilters(
+                company, status, startDate, endDate, pageable
+        );
+
+        SubsidyStatusWrapperDTO subsidyStatus = SubsidyStatusWrapperDTO.from(company, settlements);
+        List<AdjustmentWrapperDTO> adjustmentStatuses = settlements.stream()
+                .map(s -> AdjustmentWrapperDTO.from(s.getProject(), s))
+                .toList();
+
+        return new SubsidyStatusResponse(subsidyStatus, adjustmentStatuses);
+    }
+
+    @Transactional
+    public ProjectInspectionWrapperDTO registerFeedBack(
+            Long companyId,
+            Long submissionId,
+            CompanyFeedbackRequestDTO req
+    ) {
+        Company company = userFinder.findActiveCompany(companyId);
+        ProjectSubmission submission = projectSubmissionRepository.findById(submissionId).orElseThrow(
+                () -> new CustomException(ErrorCode.SUBMISSION_NOT_FOUND)
+        );
+
+        if (submission.getProject().getCompany().equals(company)){
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        if (!submission.isEditable()){
+            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
+        }
+
+        ProjectInspectionFeedback feedback = ProjectInspectionFeedback.create(
+                submission, req
+        );
+        saveFiles(req);
+
+        projectInspectionFeedbackRepository.save(feedback);
+
+        CompanyProjectDetailResponse common = CompanyProjectDetailResponse.create(submission.getProject());
+        List<FileResponseDTO> filesInSubmission = fileRepository.findByUrlIn(submission.getFileLinks()).stream().map(FileResponseDTO::from).toList();
+        List<AdditionalLinksWrapper> additionalLinksInSubmission = submission.getAdditionalLinks();
+        ProjectSubmissionWrapperDTO submissionDTO = ProjectSubmissionWrapperDTO.from(submission, filesInSubmission, additionalLinksInSubmission);
+
+
+        List<FileResponseDTO> filesInFeedback = fileRepository.findByUrlIn(feedback.getFileLinks()).stream().map(FileResponseDTO::from).toList();
+        List<AdditionalLinksWrapper> additionalLinksInFeedback = feedback.getAdditionalLinks();
+        ProjectFeedBackWrapperDTO feedBackWrapperDTO = ProjectFeedBackWrapperDTO.from(feedback, filesInFeedback, additionalLinksInFeedback);
+
+        return ProjectInspectionWrapperDTO.from(common, submissionDTO, feedBackWrapperDTO);
+    }
+
+
     private ProjectSettlement findCompanySettlement(Long companyId, Long settlementId) {
         return projectSettlementRepository.findByIdAndCompanyId(settlementId, companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND));
+    }
+
+    private void saveFiles (CompanyProjectRequestDTO request){
+        List<File> files = request.fileLinks().stream().map(
+                f -> {
+                    HeadObjectResponse headObjectResponse = fileService.getHeadObject(f.fileLinks());
+                    return File.create(f.originalName(), headObjectResponse, f.fileLinks(), f.explanation());
+                }
+        ).toList();
+
+        fileRepository.saveAll(files);
+    }
+
+    private void saveFiles (CompanyFeedbackRequestDTO request){
+        List<File> files = request.files().stream().map(
+                f -> {
+                    HeadObjectResponse headObjectResponse = fileService.getHeadObject(f.fileLinks());
+                    return File.create(f.originalName(), headObjectResponse, f.fileLinks(), f.explanation());
+                }
+        ).toList();
+
+        fileRepository.saveAll(files);
+    }
+
+    private void saveUnexistFiles (CompanyProjectRequestDTO request, Project project){
+        if(!project.getFileLinks().equals(request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList())){
+            for (FileRequestDTO dto : request.fileLinks()) {
+                if (!fileRepository.existsByUrl(dto.fileLinks())){
+                    HeadObjectResponse head = fileService.getHeadObject(dto.fileLinks());
+
+                    fileRepository.save(
+                            File.create(dto.originalName(), head, dto.fileLinks(), dto.explanation())
+                    );
+                }
+            }
+        }
     }
 }

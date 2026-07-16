@@ -1,21 +1,17 @@
 package com.conx.server.project.domain;
 
+import com.conx.server.domain.file.domain.File;
+import com.conx.server.domain.file.dto.FileRequestDTO;
 import com.conx.server.global.BaseEntity;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.CrewType;
-import com.conx.server.user.dto.company.request.CompanyProjectRequest;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,92 +21,59 @@ import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Project extends BaseEntity {
-
-    public Project(Company company,
-                   String brandName, String managerName, String managerEmail, String managerPhone,
-                   String name, String objectives, ProjectType type, String requirement, String resultForm, String essentialSubmitPart,
-                   LocalDate recruitDeadLine, LocalDate projectStartDate, LocalDate projectDeadline, LocalDate submitDeadline,
-                   CrewType crewType, String competency, String preferenceCondition, long subsidy,
-                   boolean incentive, String incentiveCondition,
-                   List<String> additionalFileLinks, String referenceLink) {
+    private Project(
+            Company company,
+            Crew selectedCrew,
+            String brandName,
+            String managerName,
+            String managerEmail,
+            List<String> projectImage,
+            String projectName,
+            String projectExplanation,
+            Industry industry,
+            ProjectType projectType,
+            List<ResultForm> resultForm,
+            LocalDate recruitDeadLine,
+            LocalDate projectStartDate,
+            LocalDate projectDeadline,
+            LocalDate submitDeadline,
+            long subsidy,
+            boolean incentive,
+            String incentiveCondition,
+            CrewType crewType,
+            int peopleNumber,
+            String competency,
+            String preferenceCondition,
+            List<String> fileLinks,
+            List<AdditionalLinksWrapper> links,
+            ProjectStatus status,
+            int views
+    ) {
         this.company = company;
+        this.selectedCrew = selectedCrew;
         this.brandName = brandName;
         this.managerName = managerName;
         this.managerEmail = managerEmail;
-        this.managerPhone = managerPhone;
-        this.name = name;
-        this.objectives = objectives;
-        this.projectType = type;
-        this.requirement = requirement;
-        this.resultForm = resultForm;
-        this.essentialSubmitPart = essentialSubmitPart;
-        this.recruitDeadLine = recruitDeadLine;
-        this.projectStartDate = projectStartDate;
-        this.projectDeadline = projectDeadline;
-        this.submitDeadline = submitDeadline;
-        this.crewType = crewType;
-        this.competency = competency;
-        this.preferenceCondition = preferenceCondition;
-        this.subsidy = subsidy;
-        this.incentive = incentive;
-        this.incentiveCondition = incentiveCondition;
-        this.additionalFileLinks = additionalFileLinks;
-        this.referenceLink = referenceLink;
-        this.status = ProjectStatus.RECRUITING;
-    }
-
-    private Project(Company company,
-                    String projectImage,
-                    String brandName,
-                    String managerName,
-                    String managerEmail,
-                    String managerPhone,
-                    String name,
-                    String objectives,
-                    ProjectType projectType,
-                    String requirement,
-                    String projectExplanation,
-                    String resultForm,
-                    String essentialSubmitPart,
-                    LocalDate recruitDeadLine,
-                    LocalDate projectStartDate,
-                    LocalDate projectDeadline,
-                    LocalDate submitDeadline,
-                    CrewType crewType,
-                    String competency,
-                    String preferenceCondition,
-                    long subsidy,
-                    boolean incentive,
-                    String incentiveCondition,
-                    List<String> additionalFileLinks,
-                    String referenceLink,
-                    ProjectStatus status) {
-        this.company = company;
         this.projectImage = projectImage;
-        this.brandName = brandName;
-        this.managerName = managerName;
-        this.managerEmail = managerEmail;
-        this.managerPhone = managerPhone;
-        this.name = name;
-        this.objectives = objectives;
-        this.projectType = projectType;
-        this.requirement = requirement;
+        this.projectName = projectName;
         this.projectExplanation = projectExplanation;
+        this.industry = industry;
+        this.projectType = projectType;
         this.resultForm = resultForm;
-        this.essentialSubmitPart = essentialSubmitPart;
         this.recruitDeadLine = recruitDeadLine;
         this.projectStartDate = projectStartDate;
         this.projectDeadline = projectDeadline;
         this.submitDeadline = submitDeadline;
-        this.crewType = crewType;
-        this.competency = competency;
-        this.preferenceCondition = preferenceCondition;
         this.subsidy = subsidy;
         this.incentive = incentive;
         this.incentiveCondition = incentiveCondition;
-        this.additionalFileLinks = additionalFileLinks;
-        this.referenceLink = referenceLink;
+        this.crewType = crewType;
+        this.peopleNumber = peopleNumber;
+        this.competency = competency;
+        this.preferenceCondition = preferenceCondition;
+        this.fileLinks = fileLinks;
         this.status = status;
+        this.views = views;
     }
 
     @Id
@@ -125,147 +88,201 @@ public class Project extends BaseEntity {
     @JoinColumn(name = "selected_crew_id")
     private Crew selectedCrew;
 
-    private String managerName;
-
-    private String managerEmail;
-
-    private String managerPhone;
-
-    private String projectImage;
-
+    //브랜드 정보
+    //브랜드 이름
     private String brandName;
 
-    private String name;
+    //담당자명
+    private String managerName;
 
-    private String objectives;
+    //이메일
+    private String managerEmail;
 
-    private ProjectType projectType;
 
-    private String requirement;
+    //프로젝트 설명
+    //프로젝트 이미지(5개)
+    @ElementCollection
+    @CollectionTable(
+            name = "project_images",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
+    private List<String> projectImage;
 
+    //프로젝트명
+    private String projectName;
+
+    //프로젝트 소개
     private String projectExplanation;
 
-    private String resultForm;
+    //산업 분야
+    private Industry industry;
 
-    private String essentialSubmitPart;
+    //프로젝트 유형
+    private ProjectType projectType;
 
+    //결과물
+    @ElementCollection
+    @CollectionTable(
+            name = "project_result_form",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
+    private List<ResultForm> resultForm;
+
+    //일정
+    //크루 모집 마감일
     private LocalDate recruitDeadLine;
+    private LocalDate crewSelectedDate;
 
+    //프로젝트 시작일
     private LocalDate projectStartDate;
 
+    //프로젝트 마감일
     private LocalDate projectDeadline;
 
+    //결과물 제출일
     private LocalDate submitDeadline;
+    private LocalDate resultSubmittedDate;
 
-    private CrewType crewType;
+    private LocalDate projectEndedDate;
 
-    private String competency;
-
-    private String preferenceCondition;
-
+    //지원금
     private long subsidy;
 
+    //인센티브 지급여부
     private boolean incentive;
 
+    //인센티브 지급조건
     private String incentiveCondition;
 
-    private List<String> additionalFileLinks;
+    //모집 크루 조건
+    //크루유형
+    private CrewType crewType;
 
-    private String referenceLink;
+    //참여 인원수
+    private int peopleNumber;
+
+    //필수 역량
+    private String competency;
+
+    //우대 조건
+    private String preferenceCondition;
+
+    //참고자료
+    @ElementCollection
+    @CollectionTable(
+            name = "file_links",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
+    private List<String> fileLinks;
+
+    //링크
+    @ElementCollection
+    @CollectionTable(
+            name = "project_links",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
+    private List<AdditionalLinksWrapper> links;
 
     private ProjectStatus status;
 
     private int views;
 
-    private static Project createWithStatus(
+    public static Project createWithStatus(
             Company company,
-            CompanyProjectRequest request,
+            CompanyProjectRequestDTO request,
             ProjectStatus status
-    ){
+    ) {
         return new Project(
                 company,
-                request.projectImage(),
+                null,
                 request.brandName(),
                 request.managerName(),
                 request.managerEmail(),
-                request.managerPhone(),
-                request.name(),
-                request.objectives(),
-                request.projectType(),
-                request.requirement(),
+                request.projectImages(),
+                request.projectName(),
                 request.projectExplanation(),
-                request.resultForm(),
-                request.essentialSubmitPart(),
-                request.recruitDeadLine(),
+                request.industry(),
+                request.projectType(),
+                request.resultForm().stream().map(ResultForm::from).toList(),
+                request.recruitDeadline(),
                 request.projectStartDate(),
                 request.projectDeadline(),
                 request.submitDeadline(),
+                request.subsidy(),
+                request.incentive(),
+                request.incentiveCondition(),
                 request.crewType(),
+                request.peopleNumber(),
                 request.competency(),
                 request.preferenceCondition(),
-                getOrDefault(request.subsidy(), 0L),
-                getOrDefault(request.incentive(), false),
-                request.incentiveCondition(),
-                request.additionalFileLinks(),
-                request.referenceLink(),
-                status
+                request.fileLinks() == null ? null : request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList(),
+                request.additionalLinks() == null ? null : request.additionalLinks().stream().map(AdditionalLinksWrapper::from).toList(),
+                status,
+                0                         // 조회수 초기값
         );
     }
 
     public static Project createRecruitingProject(
             Company company,
-            CompanyProjectRequest request
+            CompanyProjectRequestDTO request
     ) {
         return createWithStatus(company, request, ProjectStatus.RECRUITING);
     }
 
     public static Project createDraft(
             Company company,
-            CompanyProjectRequest request
+            CompanyProjectRequestDTO request
     ) {
         return createWithStatus(company, request, ProjectStatus.DRAFT);
     }
 
-
-
-    private void modify(
-            CompanyProjectRequest request
-    )
-    {
-        this.projectImage = getOrDefault(request.projectImage(), this.getProjectImage());
+    private void modify(CompanyProjectRequestDTO request) {
         this.brandName = getOrDefault(request.brandName(), this.getBrandName());
         this.managerName = getOrDefault(request.managerName(), this.getManagerName());
         this.managerEmail = getOrDefault(request.managerEmail(), this.getManagerEmail());
-        this.managerPhone = getOrDefault(request.managerPhone(), this.getManagerPhone());
-        this.name = getOrDefault(request.name(), this.getName());
-        this.objectives = getOrDefault(request.objectives(), this.getObjectives());
-        this.projectType = getOrDefault(request.projectType(), this.getProjectType());
-        this.requirement = getOrDefault(request.requirement(), this.getRequirement());
+
+        this.projectImage = getOrDefault(request.projectImages(), this.getProjectImage());
+        this.projectName = getOrDefault(request.projectName(), this.getProjectName());
         this.projectExplanation = getOrDefault(request.projectExplanation(), this.getProjectExplanation());
-        this.resultForm = getOrDefault(request.resultForm(), this.getResultForm());
-        this.essentialSubmitPart = getOrDefault(request.essentialSubmitPart(), this.getEssentialSubmitPart());
-        this.recruitDeadLine = getOrDefault(request.recruitDeadLine(), this.getRecruitDeadLine());
+        this.industry = getOrDefault(request.industry(), this.getIndustry());
+        this.projectType = getOrDefault(request.projectType(), this.getProjectType());
+        this.resultForm = getOrDefault(request.resultForm().stream().map(ResultForm::from).toList(), this.getResultForm());
+
+        this.recruitDeadLine = getOrDefault(request.recruitDeadline(), this.getRecruitDeadLine());
         this.projectStartDate = getOrDefault(request.projectStartDate(), this.getProjectStartDate());
         this.projectDeadline = getOrDefault(request.projectDeadline(), this.getProjectDeadline());
         this.submitDeadline = getOrDefault(request.submitDeadline(), this.getSubmitDeadline());
-        this.crewType = getOrDefault(request.crewType(), this.getCrewType());
-        this.competency = getOrDefault(request.competency(), this.getCompetency());
-        this.preferenceCondition = getOrDefault(request.preferenceCondition(), this.getPreferenceCondition());
+
         this.subsidy = getOrDefault(request.subsidy(), this.getSubsidy());
         this.incentive = getOrDefault(request.incentive(), this.isIncentive());
         this.incentiveCondition = getOrDefault(request.incentiveCondition(), this.getIncentiveCondition());
-        this.additionalFileLinks = getOrDefault(request.additionalFileLinks(), this.getAdditionalFileLinks());
-        this.referenceLink = getOrDefault(request.referenceLink(), this.getReferenceLink());
+
+        this.crewType = getOrDefault(request.crewType(), this.getCrewType());
+        this.peopleNumber = getOrDefault(request.peopleNumber(), this.getPeopleNumber());
+        this.competency = getOrDefault(request.competency(), this.getCompetency());
+        this.preferenceCondition = getOrDefault(request.preferenceCondition(), this.getPreferenceCondition());
+
+        this.fileLinks = getOrDefault(request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList(), this.getFileLinks());
+
+        this.links = getOrDefault(request.additionalLinks().stream().map(AdditionalLinksWrapper::from).toList(), this.links);
+    }
+
+    public String getCompanyName(){
+        return company.getCompanyName();
+    }
+
+    public String getCrewName(){
+        return selectedCrew.getCrewName();
     }
 
     public void modifyDraft(
-            CompanyProjectRequest request
+            CompanyProjectRequestDTO request
     ) {
         modify(request);
     }
 
     public void modifyProject(
-            CompanyProjectRequest request
+            CompanyProjectRequestDTO request
     ) {
         modify(request);
     }
@@ -273,6 +290,12 @@ public class Project extends BaseEntity {
     public void selectCrew(Crew crew) {
         this.selectedCrew = crew;
         this.status = ProjectStatus.CONTRACT_PENDING;
+        this.crewSelectedDate = LocalDate.now();
+    }
+
+    public void end() {
+        this.projectEndedDate = LocalDate.now();
+        this.status = ProjectStatus.DONE;
     }
 
     public boolean isDone(){
@@ -290,6 +313,7 @@ public class Project extends BaseEntity {
 
     public void submitProjectResult() {
         this.status = ProjectStatus.INSPECTION;
+        this.resultSubmittedDate = LocalDate.now();
     }
 
     public void requestRevision() {
@@ -298,6 +322,15 @@ public class Project extends BaseEntity {
 
     public void afterProjectDeadline() {
         this.status = ProjectStatus.WAITING_RESULT;
+    }
+
+    public boolean isInProgress() {
+        return this.status == ProjectStatus.PROGRESS;
+    }
+
+    public boolean isAfterProgress() {
+        return this.status == ProjectStatus.PROGRESS || this.status == ProjectStatus.DONE || this.status == ProjectStatus.INSPECTION
+                || this.status == ProjectStatus.WAITING_RESULT;
     }
 
     public void approveResult() {
@@ -310,6 +343,7 @@ public class Project extends BaseEntity {
 
     public void expire(){
         this.status = ProjectStatus.EXPIRED;
+        this.projectEndedDate = LocalDate.now();
     }
 
     public void completeContract() {

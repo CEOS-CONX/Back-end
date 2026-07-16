@@ -299,7 +299,7 @@ class CompanyMyPageControllerTest {
                 .andExpect(jsonPath("$.payload[0].crewName").value("테스트 크루"))
                 .andExpect(jsonPath("$.payload[0].crewIntroduction").value("크루 소개입니다."))
                 .andExpect(jsonPath("$.payload[0].memberAmount").value(5))
-                .andExpect(jsonPath("$.payload[0].cumulative").value(300000))
+                .andExpect(jsonPath("$.payload[0].totalProject").value(300000))
                 .andExpect(jsonPath("$.hasNotification").value(false));
 
         verify(companyMyPageService).getBookmarkedCrews(COMPANY_ID);

@@ -90,7 +90,7 @@ public class AdminWorkSpaceTest {
         //프로젝트 크루 지원 및 선정
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용, no후회ㄱㄱㄱ");
 
         mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -145,7 +145,7 @@ public class AdminWorkSpaceTest {
         //계약서 작성 완료 후 계약서 작성 완료 상태변환 시 오류
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)

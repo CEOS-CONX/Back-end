@@ -27,11 +27,11 @@ public record CompanySettlementResponse(
         return new CompanySettlementResponse(
                 settlement.getId(),
                 project.getId(),
-                project.getName(),
+                project.getProjectName(),
                 project.getStatus(),
                 crew.getId(),
                 crew.getCrewName(),
-                settlement.getAmount(),
+                settlement.getSubsidy(),
                 settlement.getStatus(),
                 settlement.getExpectedPaymentDate()
         );

@@ -5,6 +5,7 @@ import com.conx.server.project.domain.ProjectSubmission;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 
+/*
 public record CompanyProjectRevisionResponse(
         Long projectId,
         Long submissionId,
@@ -26,3 +27,5 @@ public record CompanyProjectRevisionResponse(
         );
     }
 }
+
+ */

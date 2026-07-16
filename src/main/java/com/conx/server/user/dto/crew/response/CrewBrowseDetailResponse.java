@@ -22,7 +22,7 @@ public record CrewBrowseDetailResponse(
         String etcLink,
         String kakaotalkLink,
         double point,
-        int cumulative
+        int totalProject
 ) {
 
     public static CrewBrowseDetailResponse from(Crew crew, double point) {

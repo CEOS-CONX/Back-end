@@ -153,52 +153,11 @@ public class CrewWorkSpaceService {
             throw new CustomException(ErrorCode.PROJECT_CONTRACT_UNSIGNED);
         }
 
-        Optional<ProjectSubmission> submissionOptional = projectSubmissionRepository.findByProject(
-                project
-        );
-
-        if (submissionOptional.isPresent()){
-            ProjectSubmission submission = submissionOptional.get();
-
-            if (!submission.isEditable()){
-                throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
-            }
-
-            submission.update(req);
-            submission.activateSubmission();
-        } else {
-            ProjectSubmission submission = ProjectSubmission.create(project, req.content(), req.fileLinks());
-            projectSubmissionRepository.save(submission);
-        }
+        ProjectSubmission submission = ProjectSubmission.create(project,
+                req.subject(), req.content(), req.fileLinks(), req.links());
+        projectSubmissionRepository.save(submission);
 
         project.submitProjectResult();
         notificationFacadeService.saveNotificationAboutResultUploaded(project);
-    }
-
-    /**
-     * 결과물 임시 저장하기
-     */
-    @Transactional
-    public void draftProjectResult(CustomUserDetails customUserDetails, long projectId,
-                                   SubmitProjectResultRequestDTO req){
-        Crew crew = userFinder.findActiveCrew(customUserDetails.getId());
-        Project project = projectRepository.findBySelectedCrewAndId(crew, projectId).orElseThrow(
-                () -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
-        );
-
-        if (project.getStatus() != ProjectStatus.WAITING_RESULT){
-            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
-        }
-
-        Optional<ProjectSubmission> submissionOptional = projectSubmissionRepository.findByProject(
-                project
-        );
-
-        if (submissionOptional.isPresent()){
-            submissionOptional.get().update(req);
-        } else {
-            ProjectSubmission submission = ProjectSubmission.createDraft(project, req.content(), req.fileLinks());
-            projectSubmissionRepository.save(submission);
-        }
     }
 }

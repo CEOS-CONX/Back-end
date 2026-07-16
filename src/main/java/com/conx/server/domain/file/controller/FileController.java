@@ -7,6 +7,7 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

@@ -16,7 +16,7 @@ public record CrewProjectRewardResponse(
         return new CrewProjectRewardResponse(
                 settlement.getId(),
                 settlement.getProject().getId(),
-                settlement.getAmount(),
+                settlement.getSubsidy(),
                 settlement.getExpectedPaymentDate(),
                 settlement.getStatus()
         );

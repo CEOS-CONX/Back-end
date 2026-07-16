@@ -4,10 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record ProjectApplicationRequest(
 
-        @NotBlank(message = "자기소개를 입력해주세요.")
-        String introduction,
-
-        @NotBlank(message = "제안 내용을 입력해주세요.")
-        String proposal
+        @NotBlank(message = "지원 동기를 입력해주세요.")
+        String motivation
 ) {
 }

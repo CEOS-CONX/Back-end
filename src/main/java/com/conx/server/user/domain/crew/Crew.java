@@ -49,6 +49,11 @@ public class Crew extends User {
 
     private String crewIntroduction;
 
+    @ElementCollection
+    @CollectionTable(
+            name = "crew_advantages",
+            joinColumns = @JoinColumn(name = "project_id")
+    )
     private List<String> advantages;
 
     private String snsLink;
