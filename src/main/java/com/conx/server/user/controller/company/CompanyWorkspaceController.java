@@ -8,6 +8,7 @@ import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.request.CompanyFeedbackRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
@@ -160,42 +161,15 @@ public class CompanyWorkspaceController {
         return apiResponseFactory.success("임시저장 프로젝트 조회에 성공했습니다.", response, userDetails);
     }
 
-    @GetMapping("/projects/{projectId}/review/{submissionwId}")
+    @GetMapping("/projects/{projectId}/review/{submissionId}")
     public ApiResponse<ProjectInspectionWrapperDTO> getProjectReviewDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long projectId,
-            @PathVariable Long submissionwId) {
+            @PathVariable Long submissionId) {
         ProjectInspectionWrapperDTO response =
-                companyWorkspaceService.getProjectReviewDetail(userDetails.getId(), projectId, submissionwId);
+                companyWorkspaceService.getProjectReviewDetail(userDetails.getId(), projectId, submissionId);
 
-        return apiResponseFactory.success("검수할 프로젝트 상세 조회에 성공했습니다.", response, userDetails);
-    }
-
-    @GetMapping("/projects/{projectId}/applications")
-    public ApiResponse<List<CompanyProjectApplicationResponse>> getProjectApplications(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId
-    ) {
-        List<CompanyProjectApplicationResponse> response =
-                companyWorkspaceService.getProjectApplications(userDetails.getId(), projectId);
-
-        return apiResponseFactory.success("프로젝트 지원서 목록 조회에 성공했습니다.", response, userDetails);
-    }
-
-    @GetMapping("/projects/{projectId}/applications/{applicationId}")
-    public ApiResponse<CompanyProjectApplicationDetailResponse> getProjectApplicationDetail(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId,
-            @PathVariable Long applicationId
-    ) {
-        CompanyProjectApplicationDetailResponse response =
-                companyWorkspaceService.getProjectApplicationDetail(
-                        userDetails.getId(),
-                        projectId,
-                        applicationId
-                );
-
-        return apiResponseFactory.success("프로젝트 지원서 상세 조회에 성공했습니다.", response, userDetails);
+        return apiResponseFactory.success("상세 결과물 공유내역 조회에 성공했습니다.", response, userDetails);
     }
 
     @PostMapping("/projects/{projectId}/applications/{applicationId}/select")
@@ -225,36 +199,6 @@ public class CompanyWorkspaceController {
         return apiResponseFactory.success("파트너 크루 조회에 성공했습니다.", response, userDetails);
     }
 
-    /*
-    @PostMapping("/projects/{projectId}/revision-requests")
-    public ApiResponse<CompanyProjectRevisionResponse> requestProjectRevision(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId,
-            @Valid @RequestBody CompanyProjectRevisionRequest request
-    ) {
-        CompanyProjectRevisionResponse response =
-                companyWorkspaceService.requestProjectRevision(
-                        userDetails.getId(),
-                        projectId,
-                        request
-                );
-
-        return apiResponseFactory.success("프로젝트 결과물 수정 요청에 성공했습니다.", response, userDetails);
-    }
-
-    @PostMapping("/projects/{projectId}/approval")
-    public ApiResponse<CompanyProjectApprovalResponse> approveProject(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long projectId
-    ) {
-        CompanyProjectApprovalResponse response =
-                companyWorkspaceService.approveProject(userDetails.getId(), projectId);
-
-        return apiResponseFactory.success("프로젝트 결과물 승인에 성공했습니다.", response, userDetails);
-    }
-
-     */
-
     @GetMapping("/settlements")
     public ApiResponse<List<CompanySettlementResponse>> getSettlements(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -280,6 +224,21 @@ public class CompanyWorkspaceController {
                 );
 
         return apiResponseFactory.success("예상 지급 날짜 설정에 성공했습니다.", response, userDetails);
+    }
+
+    /**
+     * 피드백 달기
+     */
+    @GetMapping("//projects/{projectId}/review/{submissionId}/feedback")
+    public ApiResponse<ProjectInspectionWrapperDTO> registerFeedback(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody CompanyFeedbackRequestDTO req,
+            @PathVariable Long submissionId) {
+        ProjectInspectionWrapperDTO response = companyWorkspaceService.registerFeedBack(customUserDetails.getId(), submissionId, req);
+
+        return apiResponseFactory.success(
+                "피드백 등록에 성공했습니다.", response, customUserDetails
+        );
     }
 
     /**
