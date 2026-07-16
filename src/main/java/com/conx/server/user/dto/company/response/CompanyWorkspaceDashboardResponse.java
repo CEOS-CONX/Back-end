@@ -1,17 +1,20 @@
 package com.conx.server.user.dto.company.response;
 
+import java.util.List;
+
 public record CompanyWorkspaceDashboardResponse(
-        long totalProjectCount,
-        long recruitingProjectCount
+        CompanyProjectStatusResponseDTO projectStatus,
+        CompanyExpenditureStatusResponseDTO expenditureStatus,
+        List<CompanyTodoProjectResponseDTO> todoProjectsStatus
 ) {
 
     public static CompanyWorkspaceDashboardResponse of(
-            long totalProjectCount,
-            long recruitingProjectCount
+            CompanyProjectStatusResponseDTO projectStatus,
+            CompanyExpenditureStatusResponseDTO expenditureStatus,
+            List<CompanyTodoProjectResponseDTO> todoProjectsStatus
     ) {
         return new CompanyWorkspaceDashboardResponse(
-                totalProjectCount,
-                recruitingProjectCount
+                projectStatus, expenditureStatus, todoProjectsStatus
         );
     }
 }

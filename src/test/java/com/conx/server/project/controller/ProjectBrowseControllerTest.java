@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.data.domain.PageRequest;
@@ -60,9 +61,8 @@ class ProjectBrowseControllerTest {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(projectBrowseController)
-                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
+        mockMvc = MockMvcBuilders.standaloneSetup(projectBrowseController)
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .build();
     }
 
@@ -71,8 +71,10 @@ class ProjectBrowseControllerTest {
     void getProjects() throws Exception {
         // given
         ProjectBrowseResponse project = new ProjectBrowseResponse(
+                false,
+                false,
                 1L,
-                "project-image.png",
+                List.of("project-image.png"),
                 "테스트 프로젝트",
                 "테스트 기업",
                 null,
@@ -97,7 +99,8 @@ class ProjectBrowseControllerTest {
                 nullable(LocalDate.class),
                 nullable(ProjectBrowseSort.class),
                 anyInt(),
-                anyInt()
+                anyInt(),
+                isNull()
         )).willReturn(response);
 
         // when & then
@@ -119,7 +122,8 @@ class ProjectBrowseControllerTest {
                 isNull(),
                 isNull(),
                 eq(0),
-                eq(10)
+                eq(10),
+                isNull()
         );
     }
 
@@ -141,7 +145,8 @@ class ProjectBrowseControllerTest {
                 nullable(LocalDate.class),
                 nullable(ProjectBrowseSort.class),
                 anyInt(),
-                anyInt()
+                anyInt(),
+                isNull()
         )).willReturn(response);
 
         // when & then
@@ -164,7 +169,8 @@ class ProjectBrowseControllerTest {
                 eq(LocalDate.of(2026, 6, 30)),
                 eq(ProjectBrowseSort.RECENT),
                 eq(0),
-                eq(10)
+                eq(10),
+                isNull()
         );
     }
 
@@ -186,14 +192,12 @@ class ProjectBrowseControllerTest {
                 nullable(LocalDate.class),
                 nullable(ProjectBrowseSort.class),
                 anyInt(),
-                anyInt()
+                anyInt(),
+                isNull()
         )).willReturn(response);
 
         // when & then
-        mockMvc.perform(get("/api/v1/projects")
-                        .param("keyword", "브랜드")
-                        .param("page", "0")
-                        .param("size", "10"))
+        mockMvc.perform(get("/api/v1/projects?keyword=브랜드&page=0&size=10"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
@@ -207,7 +211,8 @@ class ProjectBrowseControllerTest {
                 isNull(),
                 isNull(),
                 eq(0),
-                eq(10)
+                eq(10),
+                isNull()
         );
     }
 }

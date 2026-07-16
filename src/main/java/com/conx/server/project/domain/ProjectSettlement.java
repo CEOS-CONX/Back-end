@@ -43,14 +43,20 @@ public class ProjectSettlement extends BaseEntity {
     @JoinColumn(name = "crew_id")
     private Crew crew;
 
-    private long amount;
+    /**
+     * 프로젝트 지원금 및 정산 금액
+     */
+    private long subsidy;
 
+    /**
+     * 기업이 입력한 정산 예정일
+     */
     private LocalDate expectedPaymentDate;
 
     /**
      * 실제 CONX 정산 완료일
      */
-    private LocalDate settlementDate;
+    private LocalDate paymentDate;
 
     /**
      * 실제 CONX 정산 상태
@@ -73,12 +79,12 @@ public class ProjectSettlement extends BaseEntity {
             Project project,
             Company company,
             Crew crew,
-            long amount
+            long subsidy
     ) {
         this.project = project;
         this.company = company;
         this.crew = crew;
-        this.amount = amount;
+        this.subsidy = subsidy;
         this.status = ProjectSettlementStatus.WAITING;
         this.crewPaymentStatus =
                 CrewPaymentStatus.BEFORE_PAYMENT;
@@ -106,18 +112,15 @@ public class ProjectSettlement extends BaseEntity {
      * 실제 정산 완료 처리
      */
     public void markAsPaid(
-            LocalDate settlementDate
+            LocalDate paymentDate
     ) {
-        if (
-                this.status
-                        == ProjectSettlementStatus.PAID
-        ) {
+        if (isPaid()) {
             throw new CustomException(
                     ErrorCode.SETTLEMENT_ALREADY_PAID
             );
         }
 
-        if (settlementDate == null) {
+        if (paymentDate == null) {
             throw new CustomException(
                     ErrorCode.INVALID_INPUT_VALUE
             );
@@ -126,15 +129,24 @@ public class ProjectSettlement extends BaseEntity {
         this.status =
                 ProjectSettlementStatus.PAID;
 
-        this.settlementDate =
-                settlementDate;
+        this.paymentDate =
+                paymentDate;
+    }
+
+    /**
+     * dev 코드 호환용
+     */
+    public void markAsPaid() {
+        markAsPaid(
+                LocalDate.now()
+        );
     }
 
     /**
      * 크루 지급 확인 상태 변경
      *
-     * 실제 정산 상태, 실제 정산일,
-     * 프로젝트 상태와는 독립적으로 변경한다.
+     * 실제 정산 상태 및 실제 정산일과는
+     * 독립적으로 변경한다.
      */
     public void changeCrewPaymentStatus(
             CrewPaymentStatus paymentStatus,
@@ -144,18 +156,6 @@ public class ProjectSettlement extends BaseEntity {
             throw new CustomException(
                     ErrorCode.INVALID_INPUT_VALUE
             );
-        }
-
-        CrewPaymentStatus currentStatus =
-                this.crewPaymentStatus == null
-                        ? CrewPaymentStatus.BEFORE_PAYMENT
-                        : this.crewPaymentStatus;
-
-        if (currentStatus == paymentStatus) {
-            this.crewPaymentStatus =
-                    paymentStatus;
-
-            return;
         }
 
         this.crewPaymentStatus =
@@ -184,10 +184,37 @@ public class ProjectSettlement extends BaseEntity {
     /**
      * 기존 데이터에 신규 컬럼 값이 없는 경우를 위한 응답용 상태
      */
-    public CrewPaymentStatus
-    getResolvedCrewPaymentStatus() {
+    public CrewPaymentStatus getResolvedCrewPaymentStatus() {
         return crewPaymentStatus == null
                 ? CrewPaymentStatus.BEFORE_PAYMENT
                 : crewPaymentStatus;
     }
+
+    public boolean isWaiting() {
+        return status
+                == ProjectSettlementStatus.WAITING;
+    }
+
+    public boolean isPaid() {
+        return status
+                == ProjectSettlementStatus.PAID;
+    }
+
+    /**
+     * 실제 정산일이 이번 달인지 확인
+     */
+    public boolean isInThisMonth() {
+        if (paymentDate == null) {
+            return false;
+        }
+
+        LocalDate now =
+                LocalDate.now();
+
+        return now.getYear()
+                == paymentDate.getYear()
+                && now.getMonthValue()
+                == paymentDate.getMonthValue();
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.conx.server.project.dto.response;
 
+import com.conx.server.domain.file.dto.FileResponseDTO;
+import com.conx.server.project.domain.AdditionalLinksWrapper;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
@@ -7,14 +9,17 @@ import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public record ProjectBrowseDetailResponse(
+        boolean isImminent,
+        int dayBeforeDeadline,
+
         Long projectId,
-        String projectImage,
+        List<String> projectImage,
         String projectName,
         String projectExplanation,
-        String objectives,
         String brandName,
 
         Long companyId,
@@ -31,29 +36,36 @@ public record ProjectBrowseDetailResponse(
         LocalDate submitDeadline,
 
         CrewType crewType,
+        int peopleNumber,
         String competency,
         String preferenceCondition,
 
-        String requirement,
-        String resultForm,
-        String essentialSubmitPart,
+        List<ResultFormResponse> resultForm,
 
         long subsidy,
         boolean incentive,
         String incentiveCondition,
 
-        List<String> additionalFileLinks,
-        String referenceLink,
+        List<FileResponseDTO> files,
+        List<AdditionalLinksWrapper> links,
+
         int views
 ) {
+    public static ProjectBrowseDetailResponse from(Project project,
+                                                   List<FileResponseDTO> files) {
+        int dayBeforeDeadline = (int) ChronoUnit.DAYS.between(
+                LocalDate.now(),
+                project.getRecruitDeadLine()
+        );
 
-    public static ProjectBrowseDetailResponse from(Project project) {
         return new ProjectBrowseDetailResponse(
+                dayBeforeDeadline >= 0 && dayBeforeDeadline <= 3,
+                dayBeforeDeadline,
+
                 project.getId(),
                 project.getProjectImage(),
-                project.getName(),
+                project.getProjectName(),
                 project.getProjectExplanation(),
-                project.getObjectives(),
                 project.getBrandName(),
 
                 project.getCompany().getId(),
@@ -70,19 +82,18 @@ public record ProjectBrowseDetailResponse(
                 project.getSubmitDeadline(),
 
                 project.getCrewType(),
+                project.getPeopleNumber(),
                 project.getCompetency(),
                 project.getPreferenceCondition(),
 
-                project.getRequirement(),
-                project.getResultForm(),
-                project.getEssentialSubmitPart(),
+                project.getResultForm().stream().map(ResultFormResponse::from).toList(),
 
                 project.getSubsidy(),
                 project.isIncentive(),
                 project.getIncentiveCondition(),
 
-                project.getAdditionalFileLinks(),
-                project.getReferenceLink(),
+                files,
+                project.getLinks(),
                 project.getViews()
         );
     }

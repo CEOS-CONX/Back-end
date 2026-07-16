@@ -42,18 +42,18 @@ public record CrewSettlementItemResponse(
         return new CrewSettlementItemResponse(
                 settlement.getId(),
                 project.getId(),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 company.getCompanyName(),
                 company.getIndustry(),
                 project.getProjectType(),
                 project.getProjectStartDate(),
                 project.getProjectDeadline(),
-                settlement.getAmount(),
+                settlement.getSubsidy(),
                 settlement.getStatus(),
                 settlement.getResolvedCrewPaymentStatus(),
                 settlement.getExpectedPaymentDate(),
-                settlement.getSettlementDate(),
+                settlement.getPaymentDate(),
                 settlement.getCrewPaymentConfirmedDate(),
                 settlement.getCreatedAt()
         );

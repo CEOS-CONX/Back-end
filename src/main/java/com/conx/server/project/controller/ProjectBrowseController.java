@@ -2,6 +2,7 @@ package com.conx.server.project.controller;
 
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.project.dto.ProjectBrowseSort;
 import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
@@ -9,6 +10,7 @@ import com.conx.server.project.dto.response.ProjectBrowseResponse;
 import com.conx.server.project.service.ProjectBrowseService;
 import com.conx.server.user.domain.types.Industry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,7 +47,8 @@ public class ProjectBrowseController {
             @RequestParam(name = "endDate", required = false) LocalDate endDate,
             @RequestParam(name = "sort", required = false) ProjectBrowseSort sort,
             @RequestParam(name = "page") int page,
-            @RequestParam(name = "size") int size
+            @RequestParam(name = "size") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Page<ProjectBrowseResponse> response = projectBrowseService.getProjects(
                 keyword,
@@ -55,7 +58,8 @@ public class ProjectBrowseController {
                 endDate,
                 sort,
                 page,
-                size
+                size,
+                userDetails
         );
 
         return apiResponseFactory.success("프로젝트 목록 조회에 성공했습니다.", response, null);

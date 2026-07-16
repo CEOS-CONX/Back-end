@@ -2,6 +2,7 @@ package com.conx.server.bookmark.repository;
 
 import com.conx.server.bookmark.domain.ProjectBookmark;
 import com.conx.server.project.domain.Project;
+import com.conx.server.user.domain.crew.Crew;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,4 +29,6 @@ public interface ProjectBookmarkRepository extends JpaRepository<ProjectBookmark
     List<ProjectBookmark> findAllAboutDeadline(
             @Param("deadlines") List<LocalDate> deadlines
     );
+
+    boolean existsByCrewAndProject(Crew crew, Project project);
 }

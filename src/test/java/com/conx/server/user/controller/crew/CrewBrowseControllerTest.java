@@ -241,14 +241,13 @@ class CrewBrowseControllerTest {
                         List.of(),
                         List.of(
                                 new CrewProjectHistoryResponse(
-                                        100L,
+                                        1L,
                                         ProjectStatus.DONE,
-                                        "SNS 콘텐츠 제작",
-                                        "CONX",
+                                        "프로젝트명",
+                                        "브랜드명",
                                         null,
-                                        "인스타그램",
-                                        "릴스 영상",
-                                        4.6,
+                                        List.of(),
+                                        4.5,
                                         null,
                                         null
                                 )
@@ -330,22 +329,22 @@ class CrewBrowseControllerTest {
                 .andExpect(
                         jsonPath(
                                 "$.payload.representativeProjects[0].projectName"
-                        ).value("SNS 콘텐츠 제작")
+                        ).value("프로젝트명")
                 )
                 .andExpect(
                         jsonPath(
-                                "$.payload.representativeProjects[0].platformName"
-                        ).value("인스타그램")
+                                "$.payload.representativeProjects[0].brandName"
+                        ).value("브랜드명")
                 )
                 .andExpect(
                         jsonPath(
-                                "$.payload.representativeProjects[0].contentType"
-                        ).value("릴스 영상")
+                                "$.payload.representativeProjects[0].resultForm"
+                        ).isEmpty()
                 )
                 .andExpect(
                         jsonPath(
                                 "$.payload.representativeProjects[0].point"
-                        ).value(4.6)
+                        ).value(4.5)
                 )
                 .andExpect(
                         jsonPath("$.payload.hasPublicDetail")
@@ -371,14 +370,13 @@ class CrewBrowseControllerTest {
     void getCrewProjects() throws Exception {
         CrewProjectHistoryResponse project =
                 new CrewProjectHistoryResponse(
-                        100L,
+                        1L,
                         ProjectStatus.DONE,
-                        "SNS 콘텐츠 제작",
-                        "CONX",
+                        "프로젝트명",
+                        "브랜드명",
                         null,
-                        "인스타그램",
-                        "릴스 영상",
-                        4.6,
+                        List.of(),
+                        4.5,
                         null,
                         null
                 );
@@ -417,7 +415,7 @@ class CrewBrowseControllerTest {
                 )
                 .andExpect(
                         jsonPath("$.payload.content[0].projectId")
-                                .value(100)
+                                .value(1)
                 )
                 .andExpect(
                         jsonPath("$.payload.content[0].status")
@@ -425,19 +423,19 @@ class CrewBrowseControllerTest {
                 )
                 .andExpect(
                         jsonPath("$.payload.content[0].projectName")
-                                .value("SNS 콘텐츠 제작")
+                                .value("프로젝트명")
                 )
                 .andExpect(
-                        jsonPath("$.payload.content[0].platformName")
-                                .value("인스타그램")
+                        jsonPath("$.payload.content[0].brandName")
+                                .value("브랜드명")
                 )
                 .andExpect(
-                        jsonPath("$.payload.content[0].contentType")
-                                .value("릴스 영상")
+                        jsonPath("$.payload.content[0].resultForm")
+                                .isEmpty()
                 )
                 .andExpect(
                         jsonPath("$.payload.content[0].point")
-                                .value(4.6)
+                                .value(4.5)
                 )
                 .andExpect(
                         jsonPath("$.payload.number")

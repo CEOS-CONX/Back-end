@@ -3,7 +3,9 @@ package com.conx.server.user.domain.company;
 import com.conx.server.user.domain.User;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.UserRole;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +15,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Company extends User {
 
-    private Company(String email, String password) {
+    private Company(
+            String email,
+            String password
+    ) {
         super(email, password);
     }
 
@@ -23,9 +28,8 @@ public class Company extends User {
 
     private String brandName;
 
-    /*
+    /**
      * customIndustry는 Industry가 ETC인 경우 사용한다.
-     * 프로필 응답에서는 제외하더라도 내부 데이터와 수정 요청에서는 유지한다.
      */
     @Enumerated(EnumType.STRING)
     private Industry industry;
@@ -42,22 +46,32 @@ public class Company extends User {
 
     private String additionalFileLink;
 
-    /*
-     * DB 필드명은 기존 호환성을 위해 homepageLink로 유지한다.
-     * API DTO에서는 website라는 이름으로 사용한다.
+    /**
+     * DB 필드명은 기존 호환성을 위해 homepageLink로 유지하고,
+     * API DTO에서는 website로 사용한다.
      */
     private String homepageLink;
 
-    /*
-     * 기업 공용 연락처.
-     * 로그인 이메일과 구분되는 대표 전화번호 및 대표 이메일이다.
+    /**
+     * 기업 공용 연락처
      */
     private String representativePhone;
 
     private String representativeEmail;
 
-    public static Company create(String email, String password) {
-        return new Company(email, password);
+    /**
+     * 기업의 누적 지출 금액
+     */
+    private int totalExpenditure;
+
+    public static Company create(
+            String email,
+            String password
+    ) {
+        return new Company(
+                email,
+                password
+        );
     }
 
     public void activateCompany(
@@ -72,7 +86,11 @@ public class Company extends User {
         this.customIndustry = customIndustry;
         this.managerName = managerName;
         this.job = job;
-        super.activate(UserRole.COMPANY);
+        this.totalExpenditure = 0;
+
+        super.activate(
+                UserRole.COMPANY
+        );
     }
 
     public void modifyProfile(
@@ -94,22 +112,59 @@ public class Company extends User {
         this.homepageLink = homepageLink;
         this.additionalFileLink = additionalFileLink;
         this.profileImage = profileImageLink;
-        this.businessRegistrationNumber = businessRegistrationNumber;
+        this.businessRegistrationNumber =
+                businessRegistrationNumber;
     }
 
-    public void changeManagerName(String managerName) {
+    /**
+     * 기존 dev 호출부 호환용
+     */
+    public void modifyProfile(
+            String companyName,
+            String brandName,
+            Industry industry,
+            String customIndustry,
+            String companyIntroduction,
+            String homepageLink,
+            String additionalFileLink,
+            String profileImageLink
+    ) {
+        modifyProfile(
+                companyName,
+                brandName,
+                industry,
+                customIndustry,
+                companyIntroduction,
+                homepageLink,
+                additionalFileLink,
+                profileImageLink,
+                this.businessRegistrationNumber
+        );
+    }
+
+    public void changeManagerName(
+            String managerName
+    ) {
         this.managerName = managerName;
     }
 
-    public void changeJob(String job) {
+    public void changeJob(
+            String job
+    ) {
         this.job = job;
     }
 
-    public void changeRepresentativePhone(String representativePhone) {
-        this.representativePhone = representativePhone;
+    public void changeRepresentativePhone(
+            String representativePhone
+    ) {
+        this.representativePhone =
+                representativePhone;
     }
 
-    public void changeRepresentativeEmail(String representativeEmail) {
-        this.representativeEmail = representativeEmail;
+    public void changeRepresentativeEmail(
+            String representativeEmail
+    ) {
+        this.representativeEmail =
+                representativeEmail;
     }
 }

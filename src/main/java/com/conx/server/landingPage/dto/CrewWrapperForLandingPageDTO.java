@@ -11,9 +11,13 @@ public record CrewWrapperForLandingPageDTO(
         Industry industry,
         CrewType crewType,
         double point,
-        int cumulative
+        int totalProject
 ) {
 
+    /**
+     * Evaluation이 없는 크루의 평점이 null로 조회되는 경우
+     * 0.0으로 변환하기 위한 생성자
+     */
     public CrewWrapperForLandingPageDTO(
             long crewId,
             String crewImageLink,
@@ -22,7 +26,7 @@ public record CrewWrapperForLandingPageDTO(
             Industry industry,
             CrewType crewType,
             Double point,
-            int cumulative
+            int totalProject
     ) {
         this(
                 crewId,
@@ -31,8 +35,17 @@ public record CrewWrapperForLandingPageDTO(
                 crewIntroduction,
                 industry,
                 crewType,
-                point == null ? 0.0 : point,
-                cumulative
+                point == null
+                        ? 0.0
+                        : point,
+                totalProject
         );
+    }
+
+    /**
+     * feature/2의 기존 cumulative() 호출부 호환용
+     */
+    public int cumulative() {
+        return totalProject;
     }
 }

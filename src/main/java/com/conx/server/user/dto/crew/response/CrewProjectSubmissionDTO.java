@@ -1,5 +1,6 @@
 package com.conx.server.user.dto.crew.response;
 
+import com.conx.server.project.domain.AdditionalLinksWrapper;
 import com.conx.server.project.domain.ProjectSubmission;
 import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 
@@ -10,7 +11,7 @@ public record CrewProjectSubmissionDTO(
         long submissionId,
         String title,
         List<String> fileLinks,
-        List<String> referenceLinks,
+        List<AdditionalLinksWrapper> referenceLinks,
         String content,
         String authorName,
         ProjectSubmissionStatus status,
@@ -34,27 +35,33 @@ public record CrewProjectSubmissionDTO(
         return new CrewProjectSubmissionDTO(
                 submission.getId(),
                 submission.getTitle(),
-                submission.getFileLinks(),
-                submission.getReferenceLinks(),
+                safeList(
+                        submission.getFileLinks()
+                ),
+                safeList(
+                        submission.getAdditionalLinks()
+                ),
                 submission.getContent(),
                 authorName,
                 submission.getStatus(),
-                submission.getCreatedAt(),
+                submission.getResolvedSubmittedAt(),
                 submission.isEditable()
         );
     }
 
-    /**
-     * 기존 응답 코드 호환용
-     */
     public List<String> textFileLinks() {
         return fileLinks;
     }
 
-    /**
-     * 기존 응답 코드 호환용
-     */
     public String crewReferenceInfo() {
         return content;
+    }
+
+    private static <T> List<T> safeList(
+            List<T> values
+    ) {
+        return values == null
+                ? List.of()
+                : List.copyOf(values);
     }
 }

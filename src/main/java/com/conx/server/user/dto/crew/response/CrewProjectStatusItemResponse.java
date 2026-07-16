@@ -46,8 +46,11 @@ public record CrewProjectStatusItemResponse(
                         project.getStatus()
                 ),
 
-                project.getProjectImage(),
-                project.getName(),
+                project.getProjectImage() == null
+                        || project.getProjectImage().isEmpty()
+                        ? null
+                        : project.getProjectImage().get(0),
+                project.getProjectName(),
                 project.getBrandName(),
                 project.getCompany().getCompanyName(),
 

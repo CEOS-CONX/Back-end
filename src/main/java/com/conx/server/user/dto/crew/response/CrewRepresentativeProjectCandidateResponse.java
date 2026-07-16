@@ -23,7 +23,7 @@ public record CrewRepresentativeProjectCandidateResponse(
     ) {
         return new CrewRepresentativeProjectCandidateResponse(
                 project.getId(),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 project.getStatus(),
                 project.getProjectType(),

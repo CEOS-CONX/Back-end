@@ -1,6 +1,7 @@
 package com.conx.server.global.common;
 
 import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.ResultFormRequestDTO;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.admin.Admin;
@@ -8,7 +9,7 @@ import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
-import com.conx.server.user.dto.company.request.CompanyProjectRequest;
+import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.repository.AdminRepository;
 import com.conx.server.user.repository.CompanyRepository;
 import com.conx.server.user.repository.CrewRepository;
@@ -157,79 +158,105 @@ public class SettingUserForTest {
 
     @Transactional
     protected void settingProject() {
-        CompanyProjectRequest request1 =
-                new CompanyProjectRequest(
-                        null,
+        CompanyProjectRequestDTO request1 =
+                new CompanyProjectRequestDTO(
                         "네이버",
                         "이수진",
                         "navernaver@gmail.com",
-                        null,
+
+                        List.of(),
+
                         "치지직 오픈베타기능 테스트 및 홍보 프로젝트",
-                        "숏폼 업로드 및 프로젝트 보고서 작성",
-                        ProjectType.APPTEST,
-                        "숏폼 2편 업로드, 프로젝트 보고서, 5만 회 이상의 조회수",
                         "치지직의 신기능을 테스트하고 홍보합니다. 신기능은 크루 선정 후 공개될 예정입니다.",
-                        "pdf파일",
-                        "숏폼, 보고서, 숏폼 인사이트 정보",
+                        Industry.IT,
+                        ProjectType.APPTEST,
+
+                        List.of(
+                                new ResultFormRequestDTO(
+                                        "치지직",
+                                        "숏폼",
+                                        2,
+                                        "프로젝트 보고서(PDF)"
+                                )
+                        ),
+
                         LocalDate.of(2026, 6, 30),
                         LocalDate.of(2026, 7, 1),
                         LocalDate.of(2026, 8, 1),
                         LocalDate.of(2026, 8, 15),
-                        CrewType.CLUB,
-                        null,
-                        "열정적으로 참여할 수 있는 분",
+
                         500000L,
                         true,
                         "숏폼 조회수 총합 100만회 달성",
-                        null,
-                        null
+
+                        CrewType.CLUB,
+                        5,
+                        "숏폼 제작 및 프로젝트 보고서 작성",
+                        "열정적으로 참여할 수 있는 분",
+
+                        List.of(),
+                        List.of()
                 );
 
-        Project project1 =
-                Project.createRecruitingProject(
-                        companyRepository
-                                .findByEmail(
-                                        "navernaver@gmail.com"
-                                )
-                                .orElseThrow(),
-                        request1
-                );
-
-        CompanyProjectRequest request2 =
-                new CompanyProjectRequest(
-                        null,
+        CompanyProjectRequestDTO request2 =
+                new CompanyProjectRequestDTO(
                         "코카콜라",
                         "정민영",
                         "kdhyun422@gmail.com",
-                        null,
+
+                        List.of(),
+
                         "코카콜라 신제품 홍보 및 협찬 프로젝트",
-                        "동아리 행사 등에 코카콜라 신제품을 협찬 및 홍보 목적의 프로젝트입니다.",
-                        ProjectType.APPTEST,
-                        "동아리 행사에 자사 음료 제공 및 동아리 인스타그램에 업로드",
                         "코카콜라 신제품 자몽소다맛 콜라를 협찬 및 홍보하는 프로젝트입니다.",
-                        "pdf파일",
-                        "보고서, 동아리 회원들의 리뷰",
+                        Industry.LIFESTYLE,
+                        ProjectType.APPTEST,
+
+                        List.of(
+                                new ResultFormRequestDTO(
+                                        "인스타그램",
+                                        "피드",
+                                        1,
+                                        "활동 결과 보고서"
+                                )
+                        ),
+
                         LocalDate.of(2026, 6, 15),
                         LocalDate.of(2026, 6, 20),
                         LocalDate.of(2026, 7, 14),
                         LocalDate.of(2026, 7, 20),
-                        CrewType.COUNCIL,
-                        null,
-                        "학생회 간식행사 우대",
+
                         250000L,
                         true,
                         "회원 리뷰 15개 이상",
-                        null,
-                        null
+
+                        CrewType.COUNCIL,
+                        10,
+                        "동아리 행사에 자사 음료 제공 및 인스타그램 업로드",
+                        "학생회 간식행사 우대",
+
+                        List.of(),
+                        List.of()
+                );
+
+        Company naver =
+                companyRepository
+                        .findByEmail("navernaver@gmail.com")
+                        .orElseThrow();
+
+        Company cocaCola =
+                companyRepository
+                        .findByEmail("kdhyun422@gmail.com")
+                        .orElseThrow();
+
+        Project project1 =
+                Project.createRecruitingProject(
+                        naver,
+                        request1
                 );
 
         Project project2 =
                 Project.createRecruitingProject(
-                        companyRepository
-                                .findByEmail(
-                                        "kdhyun422@gmail.com"
-                                )
-                                .orElseThrow(),
+                        cocaCola,
                         request2
                 );
 

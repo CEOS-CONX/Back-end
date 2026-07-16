@@ -24,7 +24,7 @@ public record CrewPaymentStatusUpdateResponse(
                 settlement.getResolvedCrewPaymentStatus(),
                 settlement.getCrewPaymentConfirmedDate(),
                 settlement.getStatus(),
-                settlement.getSettlementDate()
+                settlement.getPaymentDate()
         );
     }
 }

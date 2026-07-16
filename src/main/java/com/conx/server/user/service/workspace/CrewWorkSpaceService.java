@@ -4,56 +4,73 @@ import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
+import com.conx.server.project.domain.CrewProjectTodo;
 import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.ProjectSubmission;
+import com.conx.server.project.domain.enums.CrewPaymentStatus;
+import com.conx.server.project.domain.enums.CrewProjectTodoStatus;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
+import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.project.dto.ApplicationBrowseFilter;
-import com.conx.server.project.dto.response.ProjectApplicationWrapperDTO;
 import com.conx.server.project.dto.response.DetailedProjectWrapperForCrewWorkSpaceDTO;
+import com.conx.server.project.dto.response.ProjectApplicationWrapperDTO;
+import com.conx.server.project.repository.CrewProjectTodoRepository;
 import com.conx.server.project.repository.ProjectApplicationRepository;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.project.repository.ProjectSettlementRepository;
 import com.conx.server.project.repository.ProjectSubmissionRepository;
+import com.conx.server.project.service.CrewProjectTodoService;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceProjectStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceSort;
+import com.conx.server.user.dto.crew.request.CrewPaymentStatusUpdateRequest;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
-import com.conx.server.user.dto.crew.response.*;
+import com.conx.server.user.dto.crew.response.CrewApplicationStatusResponseDTO;
+import com.conx.server.user.dto.crew.response.CrewDashboardResultDTO;
+import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
+import com.conx.server.user.dto.crew.response.CrewPaymentStatusUpdateResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectInfoDTO;
+import com.conx.server.user.dto.crew.response.CrewProjectStatusItemResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDTO;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
+import com.conx.server.user.dto.crew.response.CrewProjectWorkSpaceDTO;
+import com.conx.server.user.dto.crew.response.CrewProjectWorkspaceDetailResponse;
+import com.conx.server.user.dto.crew.response.CrewSettlementItemResponse;
+import com.conx.server.user.dto.crew.response.CrewSettlementSummaryResponse;
+import com.conx.server.user.dto.crew.response.CrewTodoProjectResponse;
+import com.conx.server.user.dto.crew.response.CrewWorkSpaceResponseDTO;
+import com.conx.server.user.dto.crew.response.ProjectSubmitConditionDTO;
+import com.conx.server.user.dto.crew.response.ProjectWrapperForCrewWorkSpaceDTO;
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.service.common.UserFinder;
-import com.conx.server.project.service.CrewProjectTodoService;
-import com.conx.server.project.domain.CrewProjectTodo;
-import com.conx.server.project.repository.CrewProjectTodoRepository;
-import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
-import com.conx.server.project.domain.enums.CrewProjectTodoStatus;
-import com.conx.server.project.domain.ProjectSettlement;
-import com.conx.server.project.domain.enums.CrewPaymentStatus;
-import com.conx.server.user.dto.crew.request.CrewPaymentStatusUpdateRequest;
-import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class CrewWorkSpaceService {
 
     private static final int DASHBOARD_TODO_LIMIT = 3;
+
     private final ProjectRepository projectRepository;
     private final UserFinder userFinder;
     private final ProjectSubmissionRepository projectSubmissionRepository;
@@ -61,6 +78,8 @@ public class CrewWorkSpaceService {
     private final EvaluationRepository evaluationRepository;
     private final ProjectApplicationRepository projectApplicationRepository;
     private final ProjectSettlementRepository projectSettlementRepository;
+    private final CrewProjectTodoService crewProjectTodoService;
+    private final CrewProjectTodoRepository crewProjectTodoRepository;
 
     private CrewProjectInfoDTO getProjectDashboard(
             Crew crew
@@ -110,14 +129,8 @@ public class CrewWorkSpaceService {
         );
     }
 
-    private final CrewProjectTodoService
-            crewProjectTodoService;
-
-    private final CrewProjectTodoRepository
-            crewProjectTodoRepository;
-
     /**
-     * 크루 대시보드 가져오기
+     * 크루 대시보드 조회
      */
     @Transactional(readOnly = true)
     public CrewDashboardResultDTO getCrewDashboard(
@@ -135,10 +148,14 @@ public class CrewWorkSpaceService {
                 );
 
         CrewEvaluationWrapperDTO evaluation =
-                evaluationRepository.getEvaluationByCrew(crew);
+                evaluationRepository.getEvaluationByCrew(
+                        crew
+                );
 
         CrewProjectInfoDTO crewProjectInfo =
-                getProjectDashboard(crew);
+                getProjectDashboard(
+                        crew
+                );
 
         List<CrewTodoProjectResponse> todoProjects =
                 crewProjectTodoRepository
@@ -165,32 +182,45 @@ public class CrewWorkSpaceService {
     }
 
     /**
-     * 프로젝트 지원현황 가져오기
+     * 프로젝트 지원 현황 조회
      */
+    @Transactional(readOnly = true)
     public CrewApplicationStatusResponseDTO getCrewApplicationStatus(
             ApplicationBrowseFilter browseFilter,
             CustomUserDetails customUserDetails
-    ){
-        Crew crew = userFinder.findActiveCrew(customUserDetails.getId());
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(
+                        customUserDetails.getId()
+                );
 
         List<ProjectApplicationWrapperDTO> crewApplicationStatus;
-        if (browseFilter.equals(ApplicationBrowseFilter.ALL)){
-            crewApplicationStatus = projectApplicationRepository
-                    .findProjectApplicationByCrew(crew);
+
+        if (browseFilter == ApplicationBrowseFilter.ALL) {
+            crewApplicationStatus =
+                    projectApplicationRepository
+                            .findProjectApplicationByCrew(
+                                    crew
+                            );
         } else {
-            crewApplicationStatus = projectApplicationRepository
-                    .findProjectApplicationByCrewAndStatus(crew, browseFilter.toApplicationStatus());
+            crewApplicationStatus =
+                    projectApplicationRepository
+                            .findProjectApplicationByCrewAndStatus(
+                                    crew,
+                                    browseFilter.toApplicationStatus()
+                            );
         }
 
-        return new CrewApplicationStatusResponseDTO(crewApplicationStatus);
+        return new CrewApplicationStatusResponseDTO(
+                crewApplicationStatus
+        );
     }
 
     /**
      * 크루 프로젝트 현황 조회
      */
     @Transactional(readOnly = true)
-    public Page<CrewProjectStatusItemResponse>
-    getCrewProjects(
+    public Page<CrewProjectStatusItemResponse> getCrewProjects(
             CustomUserDetails customUserDetails,
             String keyword,
             CrewWorkspaceProjectStatus status,
@@ -208,7 +238,9 @@ public class CrewWorkSpaceService {
                 );
 
         String normalizedKeyword =
-                normalizeKeyword(keyword);
+                normalizeKeyword(
+                        keyword
+                );
 
         String workspaceStatus =
                 status == null
@@ -258,8 +290,7 @@ public class CrewWorkSpaceService {
      * 크루 Todo 프로젝트 목록 조회
      */
     @Transactional(readOnly = true)
-    public Page<CrewTodoProjectResponse>
-    getCrewTodoProjects(
+    public Page<CrewTodoProjectResponse> getCrewTodoProjects(
             CustomUserDetails customUserDetails,
             String keyword,
             CrewTodoProgressStatus progressStatus,
@@ -273,7 +304,9 @@ public class CrewWorkSpaceService {
                 );
 
         String normalizedKeyword =
-                normalizeKeyword(keyword);
+                normalizeKeyword(
+                        keyword
+                );
 
         CrewWorkspaceSort resolvedSort =
                 sort == null
@@ -328,8 +361,7 @@ public class CrewWorkSpaceService {
      * 크루 정산 요약 조회
      */
     @Transactional(readOnly = true)
-    public CrewSettlementSummaryResponse
-    getCrewSettlementSummary(
+    public CrewSettlementSummaryResponse getCrewSettlementSummary(
             CustomUserDetails customUserDetails
     ) {
         Crew crew =
@@ -342,26 +374,24 @@ public class CrewWorkSpaceService {
                         ZoneId.of("Asia/Seoul")
                 );
 
-        LocalDate monthStart =
-                currentMonth.atDay(1);
-
-        LocalDate monthEnd =
-                currentMonth.atEndOfMonth();
-
-        return projectSettlementRepository
+        CrewSettlementSummaryResponse summary =
+                projectSettlementRepository
                 .findCrewSettlementSummary(
                         crew.getId(),
-                        monthStart,
-                        monthEnd
+                        currentMonth.atDay(1),
+                        currentMonth.atEndOfMonth()
                 );
+
+        return summary == null
+                ? new CrewSettlementSummaryResponse(0, 0, 0, null)
+                : summary;
     }
 
     /**
      * 크루 정산 목록 조회
      */
     @Transactional(readOnly = true)
-    public Page<CrewSettlementItemResponse>
-    getCrewSettlements(
+    public Page<CrewSettlementItemResponse> getCrewSettlements(
             CustomUserDetails customUserDetails,
             String keyword,
             ProjectSettlementStatus settlementStatus,
@@ -382,7 +412,9 @@ public class CrewWorkSpaceService {
                 );
 
         String normalizedKeyword =
-                normalizeKeyword(keyword);
+                normalizeKeyword(
+                        keyword
+                );
 
         CrewWorkspaceSort resolvedSort =
                 sort == null
@@ -419,8 +451,7 @@ public class CrewWorkSpaceService {
      * 크루 지급 확인 상태 변경
      */
     @Transactional
-    public CrewPaymentStatusUpdateResponse
-    updateCrewPaymentStatus(
+    public CrewPaymentStatusUpdateResponse updateCrewPaymentStatus(
             CustomUserDetails customUserDetails,
             Long settlementId,
             CrewPaymentStatusUpdateRequest request
@@ -458,38 +489,62 @@ public class CrewWorkSpaceService {
     }
 
     /**
-     * 프로젝트 워크스페이스 가져오기
+     * 기존 크루 프로젝트 워크스페이스 목록 조회
      */
     @Transactional(readOnly = true)
-    public CrewWorkSpaceResponseDTO getCrewWorkSpace (CustomUserDetails customUserDetails){
-        Crew crew = userFinder.findActiveCrew(customUserDetails.getId());
+    public CrewWorkSpaceResponseDTO getCrewWorkSpace(
+            CustomUserDetails customUserDetails
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(
+                        customUserDetails.getId()
+                );
 
-        List<Project> projects = projectRepository.findAllBySelectedCrew(crew);
-        List<ProjectWrapperForCrewWorkSpaceDTO> projectDTOS = projects.stream().map(
-                ProjectWrapperForCrewWorkSpaceDTO::create
-        ).toList();
+        List<ProjectWrapperForCrewWorkSpaceDTO> projectDTOs =
+                projectRepository
+                        .findAllBySelectedCrew(
+                                crew
+                        )
+                        .stream()
+                        .map(
+                                ProjectWrapperForCrewWorkSpaceDTO::create
+                        )
+                        .toList();
 
-        return new CrewWorkSpaceResponseDTO(projectDTOS);
+        return new CrewWorkSpaceResponseDTO(
+                projectDTOs
+        );
     }
 
     /**
-     * 프로젝트 상세 워크플레이스 가져오기
-     * 이미 저장한 값이 있다면 그 정보를 가져옵니다.
+     * 기존 프로젝트 상세 워크스페이스 조회
      */
     @Transactional(readOnly = true)
-    public CrewProjectWorkSpaceDTO getDetailedCrewWorkSpace(CustomUserDetails customUserDetails, long projectId){
-        Crew crew = userFinder.findActiveCrew(customUserDetails.getId());
+    public CrewProjectWorkSpaceDTO getDetailedCrewWorkSpace(
+            CustomUserDetails customUserDetails,
+            long projectId
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(
+                        customUserDetails.getId()
+                );
 
-        Project project = projectRepository.findBySelectedCrewAndId(crew, projectId).orElseThrow(
-                () -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
-        );
+        Project project =
+                findCrewWorkspaceProject(
+                        crew,
+                        projectId
+                );
 
-        if (project.isDone()){
-            throw new CustomException(ErrorCode.PROJECT_ALREADY_END);
+        if (project.isDone()) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_ALREADY_END
+            );
         }
 
-        if (project.isBeforeSigningContract()){
-            throw new CustomException(ErrorCode.PROJECT_CONTRACT_UNSIGNED);
+        if (project.isBeforeSigningContract()) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_CONTRACT_UNSIGNED
+            );
         }
 
         ProjectSubmission submission =
@@ -498,23 +553,45 @@ public class CrewWorkSpaceService {
                                 project.getId()
                         )
                         .orElse(null);
-        CrewProjectSubmissionDTO submissionDTO = CrewProjectSubmissionDTO.create(submission);
-        DetailedProjectWrapperForCrewWorkSpaceDTO projectWrapper = DetailedProjectWrapperForCrewWorkSpaceDTO.create(project);
-        ProjectSubmitConditionDTO submitCondition = ProjectSubmitConditionDTO.create(project);
 
-        if (submission == null){
-            return new CrewProjectWorkSpaceDTO(false, projectWrapper, null, submitCondition);
-        } else {
-            return new CrewProjectWorkSpaceDTO(submission.isEditable(), projectWrapper, submissionDTO, submitCondition);
+        CrewProjectSubmissionDTO submissionDTO =
+                CrewProjectSubmissionDTO.create(
+                        submission
+                );
+
+        DetailedProjectWrapperForCrewWorkSpaceDTO projectWrapper =
+                DetailedProjectWrapperForCrewWorkSpaceDTO.create(
+                        project
+                );
+
+        ProjectSubmitConditionDTO submitCondition =
+                ProjectSubmitConditionDTO.create(
+                        project
+                );
+
+        if (submission == null) {
+            return new CrewProjectWorkSpaceDTO(
+                    false,
+                    projectWrapper,
+                    null,
+                    submitCondition
+            );
         }
+
+        return new CrewProjectWorkSpaceDTO(
+                submission.isEditable(),
+                projectWrapper,
+                submissionDTO,
+                submitCondition
+        );
     }
 
     /**
-     * 결과물 제출하기
+     * 결과물 제출
      *
-     * 제출 완료된 결과물은 수정하지 않는다.
-     * 기존 임시 저장이 있으면 임시 저장 행을 제출 완료로 바꾸고,
-     * 임시 저장이 없으면 새로운 제출 행을 생성한다.
+     * 기존 DRAFT가 있으면 해당 DRAFT를 제출 상태로 전환하고,
+     * DRAFT가 없으면 새 제출 이력을 생성한다.
+     * 이미 제출 완료된 결과물은 수정하지 않는다.
      */
     @Transactional
     public void submitProjectResult(
@@ -528,16 +605,10 @@ public class CrewWorkSpaceService {
                 );
 
         Project project =
-                projectRepository
-                        .findBySelectedCrewAndId(
-                                crew,
-                                projectId
-                        )
-                        .orElseThrow(
-                                () -> new CustomException(
-                                        ErrorCode.PROJECT_NOT_FOUND
-                                )
-                        );
+                findCrewWorkspaceProject(
+                        crew,
+                        projectId
+                );
 
         if (!project.isWaitingResult()) {
             throw new CustomException(
@@ -563,17 +634,23 @@ public class CrewWorkSpaceService {
             ProjectSubmission draft =
                     draftOptional.get();
 
-            draft.update(request);
+            draft.update(
+                    request.subject(),
+                    request.content(),
+                    request.fileLinks(),
+                    request.links()
+            );
+
             draft.activateSubmission();
         } else {
             ProjectSubmission submission =
                     ProjectSubmission.create(
                             project,
                             crew,
-                            request.title(),
+                            request.subject(),
                             request.content(),
                             request.fileLinks(),
-                            request.referenceLinks()
+                            request.links()
                     );
 
             projectSubmissionRepository.save(
@@ -595,10 +672,9 @@ public class CrewWorkSpaceService {
     }
 
     /**
-     * 결과물 임시 저장하기
+     * 결과물 임시 저장
      *
-     * 프로젝트별·크루별 최근 임시 저장 한 건만 수정한다.
-     * 이미 제출한 결과물은 수정하지 않는다.
+     * 프로젝트별·크루별 최근 DRAFT 한 건만 수정한다.
      */
     @Transactional
     public void draftProjectResult(
@@ -612,21 +688,12 @@ public class CrewWorkSpaceService {
                 );
 
         Project project =
-                projectRepository
-                        .findBySelectedCrewAndId(
-                                crew,
-                                projectId
-                        )
-                        .orElseThrow(
-                                () -> new CustomException(
-                                        ErrorCode.PROJECT_NOT_FOUND
-                                )
-                        );
+                findCrewWorkspaceProject(
+                        crew,
+                        projectId
+                );
 
-        if (
-                project.getStatus()
-                        != ProjectStatus.WAITING_RESULT
-        ) {
+        if (project.getStatus() != ProjectStatus.WAITING_RESULT) {
             throw new CustomException(
                     ErrorCode.INVALID_PROJECT_STATUS
             );
@@ -641,17 +708,23 @@ public class CrewWorkSpaceService {
                         );
 
         if (draftOptional.isPresent()) {
-            draftOptional.get()
-                    .update(request);
+            draftOptional
+                    .get()
+                    .update(
+                            request.subject(),
+                            request.content(),
+                            request.fileLinks(),
+                            request.links()
+                    );
         } else {
             ProjectSubmission draft =
                     ProjectSubmission.createDraft(
                             project,
                             crew,
-                            request.title(),
+                            request.subject(),
                             request.content(),
                             request.fileLinks(),
-                            request.referenceLinks()
+                            request.links()
                     );
 
             projectSubmissionRepository.save(
@@ -666,8 +739,7 @@ public class CrewWorkSpaceService {
      * 완료된 프로젝트도 조회할 수 있다.
      */
     @Transactional(readOnly = true)
-    public CrewProjectWorkspaceDetailResponse
-    getCrewProjectWorkspaceDetail(
+    public CrewProjectWorkspaceDetailResponse getCrewProjectWorkspaceDetail(
             CustomUserDetails customUserDetails,
             long projectId
     ) {
@@ -775,13 +847,7 @@ public class CrewWorkSpaceService {
                                 )
                         );
 
-        /*
-         * 임시 저장 결과물은 공유 이력에서 조회할 수 없다.
-         */
-        if (
-                submission.getStatus()
-                        == ProjectSubmissionStatus.DRAFT
-        ) {
+        if (submission.getStatus() == ProjectSubmissionStatus.DRAFT) {
             throw new CustomException(
                     ErrorCode.SUBMISSION_NOT_FOUND
             );
@@ -814,10 +880,7 @@ public class CrewWorkSpaceService {
     private String normalizeKeyword(
             String keyword
     ) {
-        if (
-                keyword == null
-                        || keyword.isBlank()
-        ) {
+        if (keyword == null || keyword.isBlank()) {
             return null;
         }
 

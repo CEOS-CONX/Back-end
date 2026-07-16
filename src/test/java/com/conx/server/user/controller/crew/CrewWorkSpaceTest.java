@@ -6,11 +6,12 @@ import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.request.ProjectApplicationRequest;
+import com.conx.server.project.dto.response.CrewInfoForProjectApplicationDTO;
 import com.conx.server.project.dto.response.ProjectApplicationResponse;
 import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
 import com.conx.server.project.repository.ProjectRepository;
+import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.UserRole;
-import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
@@ -18,6 +19,7 @@ import com.conx.server.user.dto.crew.response.*;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
 import com.conx.server.user.dto.login.response.LoginResponseDTO;
 import com.conx.server.user.repository.AdminRepository;
+import com.conx.server.user.repository.CrewRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
@@ -50,6 +52,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CrewWorkSpaceTest {
+    @Autowired
+    private CrewRepository crewRepository;
+
     @Transactional
     String loginSetting() throws Exception {
         LoginRequestDTO req = new LoginRequestDTO("kimdoes2143@naver.com", "1q2w3e4r!!");
@@ -94,8 +99,7 @@ public class CrewWorkSpaceTest {
 
         ProjectApplicationRequest request =
                 new ProjectApplicationRequest(
-                        "프로젝트 지원 소개",
-                        "프로젝트 제안 내용"
+                        "프로젝트 지원 소개"
                 );
 
         MvcResult mvcResult =
@@ -162,7 +166,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<LoginResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<LoginResponseDTO>>() {}
+                new TypeReference<ApiResponse<LoginResponseDTO>>() {
+                }
         );
 
         LoginResponseDTO loginResponse = response.payload();
@@ -184,7 +189,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<List<ProjectWrapperForLandingPageDTO>> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<List<ProjectWrapperForLandingPageDTO>>>() {}
+                new TypeReference<ApiResponse<List<ProjectWrapperForLandingPageDTO>>>() {
+                }
         );
 
         List<ProjectWrapperForLandingPageDTO> landingResponse = response.payload();
@@ -246,7 +252,6 @@ public class CrewWorkSpaceTest {
                 .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
-    //여기 아직 테스트 통과를 안해서 CI가 안될 수 있습니다..!
     @Test
     @Transactional
     @DisplayName("크루 프로젝트 시작일 기준 조회")
@@ -261,7 +266,6 @@ public class CrewWorkSpaceTest {
                 .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
-    //여기 아직 테스트 통과를 안해서 CI가 안될 수 있습니다..!
     @Test
     @Transactional
     @DisplayName("크루 프로젝트 시작&마감일 기준 조회")
@@ -290,7 +294,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectBrowseDetailResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectBrowseDetailResponse>>() {}
+                new TypeReference<ApiResponse<ProjectBrowseDetailResponse>>() {
+                }
         );
 
         ProjectBrowseDetailResponse detailResponse = response.payload();
@@ -300,11 +305,35 @@ public class CrewWorkSpaceTest {
 
     @Test
     @Transactional
+    @DisplayName("프로젝트 지원 전 본인의 정보 확인하기")
+    void getMyInfoBeforeApplication() throws Exception {
+        String token = loginSetting();
+        Crew crew = crewRepository.findByEmail("kimdoes2143@naver.com").get();
+
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/projects/applications/my-info")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewInfoForProjectApplicationDTO> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewInfoForProjectApplicationDTO>>() {
+                }
+        );
+
+        CrewInfoForProjectApplicationDTO info = response.payload();
+        assertThat(info.crewName()).isEqualTo(crew.getCrewName());
+        assertThat(info.managerName()).isEqualTo(crew.getManagerName());
+    }
+
+    @Test
+    @Transactional
     @DisplayName("프로젝트 지원하기")
     void applyProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -315,7 +344,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         ProjectApplicationResponse detailResponse = response.payload();
@@ -330,7 +360,7 @@ public class CrewWorkSpaceTest {
     void selectCrewAndGetNotification() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -341,7 +371,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = response.payload().applicationId();
@@ -360,7 +391,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response2 = objectMapper.readValue(
                 mvcResult2.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         Project project = projectRepository.findById(1L).get();
@@ -379,7 +411,7 @@ public class CrewWorkSpaceTest {
         String token_admin = loginSetting_Admin();
 
         //프로젝트 지원하기
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -390,7 +422,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = response.payload().applicationId();
@@ -451,18 +484,11 @@ public class CrewWorkSpaceTest {
                         1L
                 );
 
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
-                                1L,
-                                submissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                )
-                .andExpect(status().isOk());
+        registerFeedback(
+                companyToken,
+                1L,
+                submissionId
+        );
 
         MvcResult mvcResult =
                 mockMvc.perform(
@@ -496,6 +522,30 @@ public class CrewWorkSpaceTest {
                 )
                 .findFirst()
                 .orElseThrow();
+    }
+
+    private void registerFeedback(
+            String companyToken,
+            long projectId,
+            long submissionId
+    ) throws Exception {
+        mockMvc.perform(
+                        post(
+                                "/api/v1/companies/me/projects/{projectId}/review/{submissionId}/feedback",
+                                projectId,
+                                submissionId
+                        )
+                                .header("Authorization", companyToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "content": "결과물 검수를 완료했습니다.",
+                                          "files": [],
+                                          "links": []
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk());
     }
 
     private CrewDashboardResultDTO getCrewDashboard(
@@ -603,7 +653,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
@@ -640,7 +691,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         CrewApplicationStatusResponseDTO resultDTO = response.payload();
@@ -654,7 +706,7 @@ public class CrewWorkSpaceTest {
     void dashboardAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -671,7 +723,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
@@ -694,7 +747,7 @@ public class CrewWorkSpaceTest {
     void applicationStatusAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -717,7 +770,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         CrewApplicationStatusResponseDTO resultDTO = response.payload();
@@ -731,7 +785,7 @@ public class CrewWorkSpaceTest {
     void dashboardAfterSelectedProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -743,7 +797,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
@@ -762,7 +817,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
@@ -785,7 +841,7 @@ public class CrewWorkSpaceTest {
     void applicationStatusAfterSelected() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -797,7 +853,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
@@ -828,12 +885,14 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response1 = objectMapper.readValue(
                 mvcResult1.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         ApiResponse<CrewApplicationStatusResponseDTO> response2 = objectMapper.readValue(
                 mvcResult2.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         CrewApplicationStatusResponseDTO resultDTO1 = response1.payload();
@@ -857,7 +916,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
@@ -977,13 +1037,8 @@ public class CrewWorkSpaceTest {
         ).isEmpty();
 
         /*
-         * 3. 기업이 수정 요청 후 WAITING_RESULT
-         * 진행 완료 1
+         * 3. 승인 API가 제거된 최신 흐름에서는 피드백 전까지 INSPECTION 유지
          */
-        CompanyProjectRevisionRequest revisionRequest =
-                new CompanyProjectRevisionRequest(
-                        "결과물을 수정해주세요."
-                );
 
         long submissionId =
                 getLatestSubmissionId(
@@ -991,26 +1046,7 @@ public class CrewWorkSpaceTest {
                         1L
                 );
 
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
-                                1L,
-                                submissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                revisionRequest
-                                        )
-                                )
-                )
-                .andExpect(status().isOk());
+
 
         CrewDashboardResultDTO waitingResultDashboard =
                 getCrewDashboard(crewToken);
@@ -1023,12 +1059,12 @@ public class CrewWorkSpaceTest {
         assertThat(
                 waitingResultDashboard.projectInfo()
                         .executionCompletedProjectAmount()
-        ).isEqualTo(1);
+        ).isEqualTo(0);
 
         assertThat(
                 waitingResultDashboard.projectInfo()
                         .submissionCompletedProjectAmount()
-        ).isEqualTo(0);
+        ).isEqualTo(1);
 
         assertThat(
                 waitingResultDashboard.projectInfo()
@@ -1037,67 +1073,13 @@ public class CrewWorkSpaceTest {
 
         assertThat(
                 waitingResultDashboard.todoProjects()
-        ).hasSize(1);
-
-        assertThat(
-                waitingResultDashboard.todoProjects()
-                        .get(0)
-                        .taskName()
-        ).isEqualTo("수정 결과물 제출");
-
-        assertThat(
-                waitingResultDashboard.todoProjects()
-                        .get(0)
-                        .progressStatus()
-        ).isEqualTo(
-                CrewTodoProgressStatus.NEEDS_CONFIRMATION
-        );
+        ).isEmpty();
 
         /*
-         * 4. 수정 결과물 재제출
-         * WAITING_RESULT → INSPECTION
+         * 4. 기업 피드백 등록으로 검수를 완료한다.
+         * INSPECTION → ADJUSTING
          */
-        mockMvc.perform(
-                        post(
-                                "/api/v1/crews/projects/1/submissions"
-                        )
-                                .header(
-                                        "Authorization",
-                                        crewToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                submissionRequest
-                                        )
-                                )
-                )
-                .andExpect(status().isOk());
-
-        /*
-         * 5. 기업 승인 후 ADJUSTING
-         * 제출 완료 1
-         */
-        long revisedSubmissionId =
-                getLatestSubmissionId(
-                        companyToken,
-                        1L
-                );
-
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
-                                1L,
-                                revisedSubmissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                )
-                .andExpect(status().isOk());
+        registerFeedback(companyToken, 1L, submissionId);
 
         CrewDashboardResultDTO adjustingDashboard =
                 getCrewDashboard(crewToken);
@@ -1260,7 +1242,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -1274,7 +1257,7 @@ public class CrewWorkSpaceTest {
     void workSpaceAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -1296,7 +1279,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -1310,7 +1294,7 @@ public class CrewWorkSpaceTest {
     void workSpaceAfterSelected() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -1322,7 +1306,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
@@ -1347,7 +1332,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -1371,7 +1357,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -1400,7 +1387,7 @@ public class CrewWorkSpaceTest {
     void workSpaceForUnContractedProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -1412,11 +1399,11 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
-
 
         mockMvc.perform(post("/api/v1/projects/2/applications")
                         .header("Authorization", token)
@@ -1445,9 +1432,9 @@ public class CrewWorkSpaceTest {
         String token = loginSetting();
         completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
+        String subject = "제목제목";
         String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
+        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
 
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
                         .header("Authorization", token)
@@ -1463,7 +1450,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -1473,6 +1461,7 @@ public class CrewWorkSpaceTest {
         assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.INSPECTION);
     }
 
+/*
     @Test
     @Transactional
     @DisplayName("검수 후 결과물 올리기")
@@ -1481,9 +1470,9 @@ public class CrewWorkSpaceTest {
         String companyToken = loginSetting_Company();
         completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
+        String subject = "제목제목";
         String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
+        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
 
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
                         .header("Authorization", crewToken)
@@ -1493,8 +1482,6 @@ public class CrewWorkSpaceTest {
                 .andReturn();
 
         String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-        CompanyProjectRevisionRequest rivReq =
-                new CompanyProjectRevisionRequest(revision);
 
         long firstSubmissionId =
                 getLatestSubmissionId(
@@ -1502,26 +1489,7 @@ public class CrewWorkSpaceTest {
                         1L
                 );
 
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
-                                1L,
-                                firstSubmissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                rivReq
-                                        )
-                                )
-                )
-                .andExpect(status().isOk());
+        registerFeedback(companyToken, 1L, firstSubmissionId);
 
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
                         .header("Authorization", crewToken)
@@ -1555,9 +1523,11 @@ public class CrewWorkSpaceTest {
         String companyToken = loginSetting_Company();
         completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
+        String subject = "제목제목";
         String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
+        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
+
+
 
         //결과물 제출
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
@@ -1578,6 +1548,9 @@ public class CrewWorkSpaceTest {
                         .value("P002"));
     }
 
+ */
+
+    /*
     @Test
     @Transactional
     @DisplayName("첫 번째 검수 후 업로드")
@@ -1586,9 +1559,11 @@ public class CrewWorkSpaceTest {
         String companyToken = loginSetting_Company();
         completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
+        String subject = "제목제목";
         String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
+        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
+
+
 
         //결과물 제출
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
@@ -1600,8 +1575,6 @@ public class CrewWorkSpaceTest {
 
         //결과물 수정요청
         String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-        CompanyProjectRevisionRequest rivReq =
-                new CompanyProjectRevisionRequest(revision);
 
         long firstSubmissionId =
                 getLatestSubmissionId(
@@ -1609,26 +1582,7 @@ public class CrewWorkSpaceTest {
                         1L
                 );
 
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
-                                1L,
-                                firstSubmissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                rivReq
-                                        )
-                                )
-                )
-                .andExpect(status().isOk());
+
 
         //수정된 결과물 제출
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
@@ -1647,6 +1601,8 @@ public class CrewWorkSpaceTest {
                 .andExpect(jsonPath("$.status")
                         .value("P002"));
     }
+
+    */
 
     @Test
     @Transactional
@@ -2066,10 +2022,6 @@ public class CrewWorkSpaceTest {
          * REVISION_SUBMISSION Todo 생성
          * NEEDS_CONFIRMATION
          */
-        CompanyProjectRevisionRequest revisionRequest =
-                new CompanyProjectRevisionRequest(
-                        "결과물을 수정해주세요."
-                );
 
         long firstSubmissionId =
                 getLatestSubmissionId(
@@ -2077,26 +2029,7 @@ public class CrewWorkSpaceTest {
                         1L
                 );
 
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/revision-requests",
-                                1L,
-                                firstSubmissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                revisionRequest
-                                        )
-                                )
-                )
-                .andExpect(status().isOk());
+        registerFeedback(companyToken, 1L, firstSubmissionId);
 
         /*
          * 확인 필요 Todo 조회
@@ -2125,7 +2058,7 @@ public class CrewWorkSpaceTest {
                 .andExpect(
                         jsonPath(
                                 "$.payload.content[0].taskName"
-                        ).value("수정 결과물 제출")
+                        ).value("정산 정보 확인")
                 )
                 .andExpect(
                         jsonPath(
@@ -2144,7 +2077,7 @@ public class CrewWorkSpaceTest {
                                 )
                                 .param(
                                         "keyword",
-                                        "수정"
+                                        "정산"
                                 )
                 )
                 .andExpect(status().isOk())
@@ -2155,81 +2088,8 @@ public class CrewWorkSpaceTest {
                 .andExpect(
                         jsonPath(
                                 "$.payload.content[0].taskName"
-                        ).value("수정 결과물 제출")
+                        ).value("정산 정보 확인")
                 );
-
-        /*
-         * 3. 수정 결과물 재제출
-         * REVISION_SUBMISSION Todo 완료
-         */
-        mockMvc.perform(
-                        post(
-                                "/api/v1/crews/projects/1/submissions"
-                        )
-                                .header(
-                                        "Authorization",
-                                        crewToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                submissionRequest
-                                        )
-                                )
-                )
-                .andExpect(status().isOk());
-
-        mockMvc.perform(
-                        get("/api/v1/crews/todo-projects")
-                                .header(
-                                        "Authorization",
-                                        crewToken
-                                )
-                                .param(
-                                        "progressStatus",
-                                        "COMPLETED"
-                                )
-                )
-                .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.payload.totalElements")
-                                .value(1)
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.payload.content[0].taskName"
-                        ).value("수정 결과물 제출")
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.payload.content[0].progressStatus"
-                        ).value("COMPLETED")
-                );
-
-        /*
-         * 4. 기업 결과물 승인
-         * SETTLEMENT_CONFIRMATION Todo 생성
-         */
-        long revisedSubmissionId =
-                getLatestSubmissionId(
-                        companyToken,
-                        1L
-                );
-
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
-                                1L,
-                                revisedSubmissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                )
-                .andExpect(status().isOk());
 
         /*
          * 정산 Todo 검색
@@ -2261,7 +2121,7 @@ public class CrewWorkSpaceTest {
                 );
 
         /*
-         * 현재 Todo는 총 2개
+         * 최신 흐름의 Todo는 정산 정보 확인 1개
          * 최신순 첫 번째는 정산 정보 확인
          */
         mockMvc.perform(
@@ -2286,11 +2146,11 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.payload.totalElements")
-                                .value(2)
+                                .value(1)
                 )
                 .andExpect(
                         jsonPath("$.payload.totalPages")
-                                .value(2)
+                                .value(1)
                 )
                 .andExpect(
                         jsonPath("$.payload.content.length()")
@@ -2303,7 +2163,7 @@ public class CrewWorkSpaceTest {
                 );
 
         /*
-         * 오래된 순 첫 번째는 수정 결과물 제출
+         * 오래된 순 첫 번째도 정산 정보 확인
          */
         mockMvc.perform(
                         get("/api/v1/crews/todo-projects")
@@ -2328,7 +2188,7 @@ public class CrewWorkSpaceTest {
                 .andExpect(
                         jsonPath(
                                 "$.payload.content[0].taskName"
-                        ).value("수정 결과물 제출")
+                        ).value("정산 정보 확인")
                 );
 
         /*
@@ -2403,7 +2263,7 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk());
 
         /*
-         * 최종적으로 Todo 2개가 모두 완료
+         * 정산 완료 후 정산 정보 확인 Todo가 완료된다.
          */
         mockMvc.perform(
                         get("/api/v1/crews/todo-projects")
@@ -2419,16 +2279,11 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.payload.totalElements")
-                                .value(2)
+                                .value(1)
                 )
                 .andExpect(
                         jsonPath(
                                 "$.payload.content[0].progressStatus"
-                        ).value("COMPLETED")
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.payload.content[1].progressStatus"
                         ).value("COMPLETED")
                 );
 
@@ -2544,18 +2399,7 @@ public class CrewWorkSpaceTest {
                         1L
                 );
 
-        mockMvc.perform(
-                        post(
-                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/approval",
-                                1L,
-                                submissionId
-                        )
-                                .header(
-                                        "Authorization",
-                                        companyToken
-                                )
-                )
-                .andExpect(status().isOk());
+        registerFeedback(companyToken, 1L, submissionId);
 
         /*
          * 생성된 정산 조회

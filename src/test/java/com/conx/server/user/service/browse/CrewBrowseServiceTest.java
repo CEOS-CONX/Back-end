@@ -36,8 +36,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -324,17 +324,14 @@ class CrewBrowseServiceTest {
         given(project.getStatus())
                 .willReturn(ProjectStatus.DONE);
 
-        given(project.getName())
+        given(project.getProjectName())
                 .willReturn("SNS 콘텐츠 제작");
 
         given(project.getBrandName())
                 .willReturn("CONX");
 
-        given(project.getPlatformName())
-                .willReturn("인스타그램");
-
-        given(project.getContentType())
-                .willReturn("릴스 영상");
+        given(project.getResultForm())
+                .willReturn(List.of());
 
         given(project.getProjectStartDate())
                 .willReturn(
@@ -406,11 +403,8 @@ class CrewBrowseServiceTest {
         assertThat(projectResponse.point())
                 .isEqualTo(4.8);
 
-        assertThat(projectResponse.platformName())
-                .isEqualTo("인스타그램");
-
-        assertThat(projectResponse.contentType())
-                .isEqualTo("릴스 영상");
+        assertThat(projectResponse.resultForm())
+                .isEmpty();
 
         verify(
                 crewRepresentativeProjectRepository
@@ -456,7 +450,7 @@ class CrewBrowseServiceTest {
         given(project.getStatus())
                 .willReturn(ProjectStatus.ADJUSTING);
 
-        given(project.getName())
+        given(project.getProjectName())
                 .willReturn("평가 대기 프로젝트");
 
         given(project.getBrandName())

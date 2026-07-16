@@ -1,52 +1,67 @@
 package com.conx.server.user.dto.crew.request;
 
+import com.conx.server.project.domain.AdditionalLinksWrapper;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
 public record SubmitProjectResultRequestDTO(
 
+        List<String> fileLinks,
+
+        List<AdditionalLinksWrapper> links,
+
         @NotBlank(
                 message = "결과물 제목을 입력해주세요"
         )
-        String title,
-
-        List<String> fileLinks,
-
-        List<String> referenceLinks,
+        String subject,
 
         String content
 ) {
 
-        public SubmitProjectResultRequestDTO {
-                title =
-                        title == null
-                                ? null
-                                : title.trim();
+    public SubmitProjectResultRequestDTO {
+        fileLinks =
+                fileLinks == null
+                        ? List.of()
+                        : List.copyOf(fileLinks);
 
-                fileLinks =
-                        fileLinks == null
-                                ? List.of()
-                                : List.copyOf(fileLinks);
+        links =
+                links == null
+                        ? List.of()
+                        : List.copyOf(links);
 
-                referenceLinks =
-                        referenceLinks == null
-                                ? List.of()
-                                : List.copyOf(referenceLinks);
-        }
+        subject =
+                subject == null
+                        ? null
+                        : subject.trim();
+    }
 
-        /**
-         * 기존 테스트 및 기존 코드 호환용 생성자
-         */
-        public SubmitProjectResultRequestDTO(
-                List<String> fileLinks,
-                String content
-        ) {
-                this(
-                        "결과물 제출",
-                        fileLinks,
-                        List.of(),
-                        content
-                );
-        }
+    /**
+     * feature/2의 기존 title() 호출부 호환용
+     */
+    public String title() {
+        return subject;
+    }
+
+    /**
+     * feature/2의 기존 referenceLinks() 호출부 호환용
+     */
+    public List<AdditionalLinksWrapper> referenceLinks() {
+        return links;
+    }
+
+    /**
+     * 기존 테스트 및 코드 호환용 생성자
+     */
+    public SubmitProjectResultRequestDTO(
+            List<String> fileLinks,
+            String content
+    ) {
+        this(
+                fileLinks,
+                List.of(),
+                "결과물 제출",
+                content
+        );
+    }
 }

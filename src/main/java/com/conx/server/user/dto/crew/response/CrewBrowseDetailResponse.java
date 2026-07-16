@@ -32,7 +32,7 @@ public record CrewBrowseDetailResponse(
         boolean bookmarked,
 
         double point,
-        int cumulative
+        int totalProject
 ) {
 
     public static CrewBrowseDetailResponse from(

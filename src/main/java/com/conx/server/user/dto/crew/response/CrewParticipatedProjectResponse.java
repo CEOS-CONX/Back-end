@@ -17,7 +17,7 @@ public record CrewParticipatedProjectResponse(
     public static CrewParticipatedProjectResponse from(Project project) {
         return new CrewParticipatedProjectResponse(
                 project.getId(),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 project.getStatus(),
                 project.getProjectStartDate(),

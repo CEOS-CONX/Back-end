@@ -18,7 +18,7 @@ public class NotificationFacadeService {
         this.notificationRepository = notificationRepository;
     }
 
-    //프로젝트 진행 기간 전(1일 / 3일 / 7일 전) 프로젝트 알림
+    //프로젝트 마감 전(1일 / 3일 / 7일 전) 프로젝트 알림
     public void saveNotificationAboutCloseToProjectDeadline(List<Project> projects){
         List<Notification> notifications = projects.stream().map(NotificationFactory::closeToProjectDeadline).toList();
         notificationRepository.saveAll(notifications);

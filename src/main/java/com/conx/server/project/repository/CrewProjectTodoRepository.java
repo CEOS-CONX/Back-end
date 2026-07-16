@@ -54,7 +54,7 @@ public interface CrewProjectTodoRepository
                       and (
                             :keyword is null
                             or todo.taskName like concat('%', :keyword, '%')
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                       )
                     """,
@@ -66,7 +66,7 @@ public interface CrewProjectTodoRepository
                       and (
                             :keyword is null
                             or todo.taskName like concat('%', :keyword, '%')
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                       )
                     """
@@ -94,7 +94,7 @@ public interface CrewProjectTodoRepository
                       and (
                             :keyword is null
                             or todo.taskName like concat('%', :keyword, '%')
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                       )
                     """,
@@ -107,7 +107,7 @@ public interface CrewProjectTodoRepository
                       and (
                             :keyword is null
                             or todo.taskName like concat('%', :keyword, '%')
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                       )
                     """

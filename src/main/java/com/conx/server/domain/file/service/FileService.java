@@ -3,18 +3,19 @@ package com.conx.server.domain.file.service;
 import com.conx.server.domain.file.dto.PresignedUrlRequest;
 import com.conx.server.domain.file.dto.PresignedUrlResponse;
 import com.conx.server.global.config.S3Properties;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.time.Duration;
 import java.util.UUID;
@@ -22,6 +23,16 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class FileService {
+
+    @PostConstruct // 또는 테스트 코드에서
+    public void checkCredentials() {
+        try {
+            s3Client.listBuckets();
+            System.out.println("자격증명 OK - S3 접근 가능");
+        } catch (Exception e) {
+            System.out.println("자격증명 문제: " + e.getMessage());
+        }
+    }
 
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
@@ -66,8 +77,7 @@ public class FileService {
                 + fileKey;
     }
 
-    public InputStream download(String fileKey) {
-
+    public ResponseInputStream<GetObjectResponse> download(String fileKey) {
         GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(s3Properties.getBucket())
                 .key(fileKey)
@@ -104,5 +114,23 @@ public class FileService {
                         .build();
 
         s3Client.deleteObject(request);
+    }
+
+    //TODO: AWS 자격증명
+    public HeadObjectResponse getHeadObject(String presignedUrl){
+        String key = extractKey(presignedUrl);
+
+        return s3Client.headObject(
+                HeadObjectRequest.builder()
+                        .bucket(s3Properties.getBucket())
+                        .key(key)
+                        .build()
+        );
+    }
+
+    private String extractKey(String presignedUrl) {
+        URI uri = URI.create(presignedUrl);
+        String path = uri.getPath(); // 쿼리스트링(서명 등)은 자동으로 분리됨
+        return path.startsWith("/") ? path.substring(1) : path;
     }
 }

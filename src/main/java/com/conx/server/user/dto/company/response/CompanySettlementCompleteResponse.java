@@ -25,7 +25,7 @@ public record CompanySettlementCompleteResponse(
                 project.getId(),
                 settlement.getStatus(),
                 project.getStatus(),
-                settlement.getSettlementDate()
+                settlement.getPaymentDate()
         );
     }
 }

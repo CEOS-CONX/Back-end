@@ -4,8 +4,10 @@ import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.enums.CrewPaymentStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.response.CompanyExpenditureStatusResponseDTO;
 import com.conx.server.user.dto.crew.response.CrewSettlementSummaryResponse;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -22,15 +24,21 @@ import java.util.Optional;
 public interface ProjectSettlementRepository
         extends JpaRepository<ProjectSettlement, Long> {
 
-    boolean existsByProjectId(Long projectId);
+    boolean existsByProjectId(
+            Long projectId
+    );
 
     long countByCrewAndStatus(
             Crew crew,
             ProjectSettlementStatus status
     );
 
+    /**
+     * 메서드명은 기존 서비스 호환을 위해 유지하고,
+     * 실제 엔티티 필드인 subsidy를 합산한다.
+     */
     @Query("""
-            select coalesce(sum(settlement.amount), 0)
+            select coalesce(sum(settlement.subsidy), 0)
             from ProjectSettlement settlement
             where settlement.crew = :crew
               and settlement.status = :status
@@ -43,32 +51,32 @@ public interface ProjectSettlementRepository
             ProjectSettlementStatus status
     );
 
-    List<ProjectSettlement>
-    findAllByCompanyIdOrderByIdDesc(
+    List<ProjectSettlement> findAllByCompanyIdOrderByIdDesc(
             Long companyId
     );
 
-    List<ProjectSettlement>
-    findAllByCompanyIdAndStatusOrderByIdDesc(
+    List<ProjectSettlement> findAllByCompanyIdAndStatusOrderByIdDesc(
             Long companyId,
             ProjectSettlementStatus status
     );
 
-    Optional<ProjectSettlement>
-    findByIdAndCompanyId(
+    Optional<ProjectSettlement> findByIdAndCompanyId(
             Long settlementId,
             Long companyId
     );
 
+    /**
+     * 기업이 정산 상태를 변경할 때 사용하는 잠금 조회
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select settlement
             from ProjectSettlement settlement
+            join fetch settlement.project project
             where settlement.id = :settlementId
               and settlement.company.id = :companyId
             """)
-    Optional<ProjectSettlement>
-    findByIdAndCompanyIdForUpdate(
+    Optional<ProjectSettlement> findByIdAndCompanyIdForUpdate(
             @Param("settlementId")
             Long settlementId,
 
@@ -87,8 +95,7 @@ public interface ProjectSettlementRepository
             where settlement.id = :settlementId
               and settlement.crew.id = :crewId
             """)
-    Optional<ProjectSettlement>
-    findByIdAndCrewIdForUpdate(
+    Optional<ProjectSettlement> findByIdAndCrewIdForUpdate(
             @Param("settlementId")
             Long settlementId,
 
@@ -96,22 +103,93 @@ public interface ProjectSettlementRepository
             Long crewId
     );
 
-    Optional<ProjectSettlement>
-    findByProjectIdAndCrewId(
+    Optional<ProjectSettlement> findByProjectIdAndCrewId(
             Long projectId,
             Long crewId
     );
 
-    Page<ProjectSettlement>
-    findAllByCrewIdOrderByIdDesc(
+    Page<ProjectSettlement> findAllByCrewIdOrderByIdDesc(
             Long crewId,
             Pageable pageable
     );
 
-    Page<ProjectSettlement>
-    findAllByCrewIdAndStatusOrderByIdDesc(
+    Page<ProjectSettlement> findAllByCrewIdAndStatusOrderByIdDesc(
             Long crewId,
             ProjectSettlementStatus status,
+            Pageable pageable
+    );
+
+    /**
+     * 기업의 연도별 월간 정산 현황
+     *
+     * dev에서 추가된 기업 정산 관리 기능을 유지한다.
+     */
+    @Query("""
+            select new com.conx.server.user.dto.company.response.CompanyExpenditureStatusResponseDTO(
+                count(case when function('MONTH', settlement.paymentDate) = 1 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 2 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 3 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 4 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 5 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 6 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 7 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 8 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 9 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 10 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 11 then 1 end),
+                count(case when function('MONTH', settlement.paymentDate) = 12 then 1 end),
+                company.totalExpenditure
+            )
+            from ProjectSettlement settlement
+            join settlement.company company
+            where company = :company
+              and function('YEAR', settlement.paymentDate) = :year
+            group by company.totalExpenditure
+            """)
+    CompanyExpenditureStatusResponseDTO findCompanyStatusWithCompany(
+            @Param("company")
+            Company company,
+
+            @Param("year")
+            int year
+    );
+
+    /**
+     * 기업 정산 목록 필터 조회
+     */
+    @Query(
+            value = """
+                    select settlement
+                    from ProjectSettlement settlement
+                    join fetch settlement.project project
+                    where settlement.company = :company
+                      and (:status is null or settlement.status = :status)
+                      and (:startDate is null or settlement.paymentDate >= :startDate)
+                      and (:endDate is null or settlement.paymentDate <= :endDate)
+                    order by settlement.id desc
+                    """,
+            countQuery = """
+                    select count(settlement)
+                    from ProjectSettlement settlement
+                    where settlement.company = :company
+                      and (:status is null or settlement.status = :status)
+                      and (:startDate is null or settlement.paymentDate >= :startDate)
+                      and (:endDate is null or settlement.paymentDate <= :endDate)
+                    """
+    )
+    Page<ProjectSettlement> findByCompanyAndFilters(
+            @Param("company")
+            Company company,
+
+            @Param("status")
+            ProjectSettlementStatus status,
+
+            @Param("startDate")
+            LocalDate startDate,
+
+            @Param("endDate")
+            LocalDate endDate,
+
             Pageable pageable
     );
 
@@ -128,7 +206,7 @@ public interface ProjectSettlementRepository
                         case
                             when settlement.status =
                                 com.conx.server.project.domain.enums.ProjectSettlementStatus.PAID
-                            then settlement.amount
+                            then settlement.subsidy
                             else 0L
                         end
                     ),
@@ -139,7 +217,7 @@ public interface ProjectSettlementRepository
                         case
                             when settlement.status =
                                 com.conx.server.project.domain.enums.ProjectSettlementStatus.WAITING
-                            then settlement.amount
+                            then settlement.subsidy
                             else 0L
                         end
                     ),
@@ -150,9 +228,9 @@ public interface ProjectSettlementRepository
                         case
                             when settlement.status =
                                 com.conx.server.project.domain.enums.ProjectSettlementStatus.PAID
-                                and settlement.settlementDate >= :monthStart
-                                and settlement.settlementDate <= :monthEnd
-                            then settlement.amount
+                                and settlement.paymentDate >= :monthStart
+                                and settlement.paymentDate <= :monthEnd
+                            then settlement.subsidy
                             else 0L
                         end
                     ),
@@ -170,8 +248,7 @@ public interface ProjectSettlementRepository
             from ProjectSettlement settlement
             where settlement.crew.id = :crewId
             """)
-    CrewSettlementSummaryResponse
-    findCrewSettlementSummary(
+    CrewSettlementSummaryResponse findCrewSettlementSummary(
             @Param("crewId")
             Long crewId,
 
@@ -193,9 +270,6 @@ public interface ProjectSettlementRepository
      *
      * crewPaymentStatus:
      * 크루가 직접 선택한 지급 확인 상태
-     *
-     * 기존 데이터의 crewPaymentStatus가 null인 경우
-     * BEFORE_PAYMENT 상태로 조회한다.
      */
     @Query(
             value = """
@@ -206,7 +280,7 @@ public interface ProjectSettlementRepository
                     where settlement.crew.id = :crewId
                       and (
                             :keyword is null
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                             or company.companyName like concat('%', :keyword, '%')
                       )
@@ -225,7 +299,7 @@ public interface ProjectSettlementRepository
                       )
                       and (
                             :category is null
-                            or company.industry = :category
+                            or project.industry = :category
                       )
                       and (
                             :projectType is null
@@ -241,26 +315,26 @@ public interface ProjectSettlementRepository
                       )
                       and (
                             :settlementStartDate is null
-                            or settlement.settlementDate >= :settlementStartDate
+                            or settlement.paymentDate >= :settlementStartDate
                       )
                       and (
                             :settlementEndDate is null
-                            or settlement.settlementDate <= :settlementEndDate
+                            or settlement.paymentDate <= :settlementEndDate
                       )
                     order by
                       case
-                          when settlement.settlementDate is null
+                          when settlement.paymentDate is null
                           then 1
                           else 0
                       end asc,
                       case
                           when :sort = 'RECENT'
-                          then settlement.settlementDate
+                          then settlement.paymentDate
                           else null
                       end desc,
                       case
                           when :sort = 'OLDEST'
-                          then settlement.settlementDate
+                          then settlement.paymentDate
                           else null
                       end asc,
                       case
@@ -282,7 +356,7 @@ public interface ProjectSettlementRepository
                     where settlement.crew.id = :crewId
                       and (
                             :keyword is null
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                             or company.companyName like concat('%', :keyword, '%')
                       )
@@ -301,7 +375,7 @@ public interface ProjectSettlementRepository
                       )
                       and (
                             :category is null
-                            or company.industry = :category
+                            or project.industry = :category
                       )
                       and (
                             :projectType is null
@@ -317,16 +391,15 @@ public interface ProjectSettlementRepository
                       )
                       and (
                             :settlementStartDate is null
-                            or settlement.settlementDate >= :settlementStartDate
+                            or settlement.paymentDate >= :settlementStartDate
                       )
                       and (
                             :settlementEndDate is null
-                            or settlement.settlementDate <= :settlementEndDate
+                            or settlement.paymentDate <= :settlementEndDate
                       )
                     """
     )
-    Page<ProjectSettlement>
-    findCrewSettlements(
+    Page<ProjectSettlement> findCrewSettlements(
             @Param("crewId")
             Long crewId,
 

@@ -29,7 +29,7 @@ public record CrewTodoProjectResponse(
                 CrewTodoProgressStatus.from(
                         todo.getStatus()
                 ),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 todo.getCreatedAt()
         );

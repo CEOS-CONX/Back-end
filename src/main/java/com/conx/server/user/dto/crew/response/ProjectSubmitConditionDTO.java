@@ -1,37 +1,30 @@
 package com.conx.server.user.dto.crew.response;
 
 import com.conx.server.project.domain.Project;
+import com.conx.server.project.dto.response.ResultFormResponse;
 
-import java.util.Arrays;
 import java.util.List;
 
 public record ProjectSubmitConditionDTO(
-        List<String> conditions
+        List<ResultFormResponse> conditions
 ) {
 
     public static ProjectSubmitConditionDTO create(
             Project project
     ) {
-        String requirement =
-                project.getRequirement();
-
         if (
-                requirement == null
-                        || requirement.isBlank()
+                project.getResultForm() == null
+                        || project.getResultForm().isEmpty()
         ) {
             return new ProjectSubmitConditionDTO(
                     List.of()
             );
         }
 
-        List<String> conditions =
-                Arrays.stream(
-                                requirement.split(",")
-                        )
-                        .map(String::trim)
-                        .filter(value ->
-                                !value.isBlank()
-                        )
+        List<ResultFormResponse> conditions =
+                project.getResultForm()
+                        .stream()
+                        .map(ResultFormResponse::from)
                         .toList();
 
         return new ProjectSubmitConditionDTO(

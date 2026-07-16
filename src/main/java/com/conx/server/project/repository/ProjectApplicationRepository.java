@@ -1,5 +1,6 @@
 package com.conx.server.project.repository;
 
+import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectApplication;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.domain.enums.ProjectType;
@@ -21,6 +22,10 @@ public interface ProjectApplicationRepository
 
     List<ProjectApplication> findAllByProjectId(
             Long projectId
+    );
+
+    List<ProjectApplication> findAllByProject(
+            Project project
     );
 
     Optional<ProjectApplication> findByIdAndProjectId(
@@ -65,8 +70,7 @@ public interface ProjectApplicationRepository
             where application.crew = :crew
             order by application.createdAt
             """)
-    List<ProjectApplicationWrapperDTO>
-    findProjectApplicationByCrew(
+    List<ProjectApplicationWrapperDTO> findProjectApplicationByCrew(
             @Param("crew")
             Crew crew
     );
@@ -85,8 +89,7 @@ public interface ProjectApplicationRepository
               and application.status = :status
             order by application.createdAt
             """)
-    List<ProjectApplicationWrapperDTO>
-    findProjectApplicationByCrewAndStatus(
+    List<ProjectApplicationWrapperDTO> findProjectApplicationByCrewAndStatus(
             @Param("crew")
             Crew crew,
 
@@ -103,43 +106,35 @@ public interface ProjectApplicationRepository
                     where application.crew.id = :crewId
                       and application.status <>
                           com.conx.server.project.domain.enums.ProjectApplicationStatus.REJECTED
-
                       and (
                             :keyword is null
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                             or company.companyName like concat('%', :keyword, '%')
                       )
-
                       and (
                             :category is null
-                            or company.industry = :category
+                            or project.industry = :category
                       )
-
                       and (
                             :projectType is null
                             or project.projectType = :projectType
                       )
-
                       and (
                             :startDate is null
                             or project.projectStartDate >= :startDate
                       )
-
                       and (
                             :endDate is null
                             or project.projectDeadline <= :endDate
                       )
-
                       and (
                             :workspaceStatus is null
-
                             or (
                                 :workspaceStatus = 'APPLIED'
                                 and application.status =
                                     com.conx.server.project.domain.enums.ProjectApplicationStatus.PENDING
                             )
-
                             or (
                                 :workspaceStatus = 'IN_PROGRESS'
                                 and application.status =
@@ -149,7 +144,6 @@ public interface ProjectApplicationRepository
                                     com.conx.server.project.domain.enums.ProjectStatus.PROGRESS
                                 )
                             )
-
                             or (
                                 :workspaceStatus = 'EXECUTION_COMPLETED'
                                 and application.status =
@@ -157,7 +151,6 @@ public interface ProjectApplicationRepository
                                 and project.status =
                                     com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
                             )
-
                             or (
                                 :workspaceStatus = 'SUBMISSION_COMPLETED'
                                 and application.status =
@@ -167,7 +160,6 @@ public interface ProjectApplicationRepository
                                     com.conx.server.project.domain.enums.ProjectStatus.ADJUSTING
                                 )
                             )
-
                             or (
                                 :workspaceStatus = 'SETTLEMENT_COMPLETED'
                                 and application.status =
@@ -193,43 +185,35 @@ public interface ProjectApplicationRepository
                     where application.crew.id = :crewId
                       and application.status <>
                           com.conx.server.project.domain.enums.ProjectApplicationStatus.REJECTED
-
                       and (
                             :keyword is null
-                            or project.name like concat('%', :keyword, '%')
+                            or project.projectName like concat('%', :keyword, '%')
                             or project.brandName like concat('%', :keyword, '%')
                             or company.companyName like concat('%', :keyword, '%')
                       )
-
                       and (
                             :category is null
-                            or company.industry = :category
+                            or project.industry = :category
                       )
-
                       and (
                             :projectType is null
                             or project.projectType = :projectType
                       )
-
                       and (
                             :startDate is null
                             or project.projectStartDate >= :startDate
                       )
-
                       and (
                             :endDate is null
                             or project.projectDeadline <= :endDate
                       )
-
                       and (
                             :workspaceStatus is null
-
                             or (
                                 :workspaceStatus = 'APPLIED'
                                 and application.status =
                                     com.conx.server.project.domain.enums.ProjectApplicationStatus.PENDING
                             )
-
                             or (
                                 :workspaceStatus = 'IN_PROGRESS'
                                 and application.status =
@@ -239,7 +223,6 @@ public interface ProjectApplicationRepository
                                     com.conx.server.project.domain.enums.ProjectStatus.PROGRESS
                                 )
                             )
-
                             or (
                                 :workspaceStatus = 'EXECUTION_COMPLETED'
                                 and application.status =
@@ -247,7 +230,6 @@ public interface ProjectApplicationRepository
                                 and project.status =
                                     com.conx.server.project.domain.enums.ProjectStatus.WAITING_RESULT
                             )
-
                             or (
                                 :workspaceStatus = 'SUBMISSION_COMPLETED'
                                 and application.status =
@@ -257,7 +239,6 @@ public interface ProjectApplicationRepository
                                     com.conx.server.project.domain.enums.ProjectStatus.ADJUSTING
                                 )
                             )
-
                             or (
                                 :workspaceStatus = 'SETTLEMENT_COMPLETED'
                                 and application.status =

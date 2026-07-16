@@ -1,5 +1,6 @@
 package com.conx.server.user.dto.crew.response;
 
+import com.conx.server.project.domain.AdditionalLinksWrapper;
 import com.conx.server.project.domain.ProjectSubmission;
 import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 import com.conx.server.user.dto.crew.CrewSubmissionReplyStatus;
@@ -17,8 +18,7 @@ public record CrewProjectSubmissionDetailResponse(
         CrewSubmissionReplyStatus replyStatus,
         String content,
         List<String> fileLinks,
-        List<String> referenceLinks,
-        String revisionReason
+        List<AdditionalLinksWrapper> referenceLinks
 ) {
 
     public static CrewProjectSubmissionDetailResponse from(
@@ -45,14 +45,13 @@ public record CrewProjectSubmissionDetailResponse(
                         submission.getFileLinks()
                 ),
                 safeList(
-                        submission.getReferenceLinks()
-                ),
-                submission.getRevisionReason()
+                        submission.getAdditionalLinks()
+                )
         );
     }
 
-    private static List<String> safeList(
-            List<String> values
+    private static <T> List<T> safeList(
+            List<T> values
     ) {
         return values == null
                 ? List.of()

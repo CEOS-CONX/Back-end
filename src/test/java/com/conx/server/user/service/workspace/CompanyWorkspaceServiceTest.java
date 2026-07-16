@@ -393,7 +393,7 @@ class CompanyWorkspaceServiceTest {
         given(settlement.getId())
                 .willReturn(settlementId);
 
-        given(settlement.getSettlementDate())
+        given(settlement.getPaymentDate())
                 .willReturn(settlementDate);
 
         /*

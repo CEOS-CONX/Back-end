@@ -6,6 +6,7 @@ import com.conx.server.project.domain.ProjectSubmission;
 import com.conx.server.project.domain.enums.CrewPaymentStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
+import com.conx.server.project.dto.response.ResultFormResponse;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -67,7 +68,7 @@ public record CrewProjectWorkspaceDetailResponse(
 
     public record SubmitCondition(
             List<String> requirements,
-            String resultForm,
+            List<ResultFormResponse> resultForm,
             String essentialSubmitPart,
             LocalDate submitDeadline
     ) {
@@ -80,12 +81,12 @@ public record CrewProjectWorkspaceDetailResponse(
     ) {
         return new CrewProjectWorkspaceDetailResponse(
                 project.getId(),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 project.getCompany().getCompanyName(),
                 project.getManagerName(),
                 project.getManagerEmail(),
-                project.getManagerPhone(),
+                null,
                 project.getStatus(),
                 createProgressSteps(
                         project,
@@ -97,11 +98,11 @@ public record CrewProjectWorkspaceDetailResponse(
                         settlement
                 ),
                 new SubmitCondition(
-                        splitRequirements(
-                                project.getRequirement()
+                        List.of(),
+                        createResultFormResponses(
+                                project
                         ),
-                        project.getResultForm(),
-                        project.getEssentialSubmitPart(),
+                        null,
                         project.getSubmitDeadline()
                 )
         );
@@ -125,10 +126,10 @@ public record CrewProjectWorkspaceDetailResponse(
 
         return new SettlementInfo(
                 settlement.getId(),
-                settlement.getAmount(),
+                settlement.getSubsidy(),
                 settlement.getStatus(),
                 settlement.getExpectedPaymentDate(),
-                settlement.getSettlementDate(),
+                settlement.getPaymentDate(),
                 settlement.getResolvedCrewPaymentStatus(),
                 settlement.getCrewPaymentConfirmedDate()
         );
@@ -160,11 +161,11 @@ public record CrewProjectWorkspaceDetailResponse(
 
         if (
                 settlement != null
-                        && settlement.getSettlementDate()
+                        && settlement.getPaymentDate()
                         != null
         ) {
             settlementStepDate =
-                    settlement.getSettlementDate();
+                    settlement.getPaymentDate();
 
             settlementDateType =
                     ProgressDateType.ACTUAL;
@@ -250,6 +251,7 @@ public record CrewProjectWorkspaceDetailResponse(
             case INSPECTION, ADJUSTING -> 3;
             case DONE -> 4;
             case DRAFT, RECRUITING, EXPIRED -> 0;
+            default -> 0;
         };
     }
 
@@ -285,6 +287,23 @@ public record CrewProjectWorkspaceDetailResponse(
                 .filter(value ->
                         !value.isBlank()
                 )
+                .toList();
+    }
+
+    private static List<ResultFormResponse>
+    createResultFormResponses(
+            Project project
+    ) {
+        if (
+                project.getResultForm() == null
+                        || project.getResultForm().isEmpty()
+        ) {
+            return List.of();
+        }
+
+        return project.getResultForm()
+                .stream()
+                .map(ResultFormResponse::from)
                 .toList();
     }
 }

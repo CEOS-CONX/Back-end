@@ -5,9 +5,8 @@ import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
 import com.conx.server.user.domain.crew.Crew;
-import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
-import jakarta.persistence.Column;
 import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,10 +36,8 @@ public class ProjectSubmission extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private boolean isRevised;
-
     /**
-     * 한 프로젝트에 여러 제출물이 존재할 수 있다.
+     * 하나의 프로젝트에 여러 제출 이력이 존재할 수 있다.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
@@ -53,7 +50,15 @@ public class ProjectSubmission extends BaseEntity {
     @JoinColumn(name = "author_crew_id")
     private Crew authorCrew;
 
-    private String title;
+    /**
+     * 결과물 제목
+     */
+    private String subject;
+
+    /**
+     * 제출 당시 작성 크루명 스냅샷
+     */
+    private String writer;
 
     @Lob
     private String content;
@@ -73,56 +78,46 @@ public class ProjectSubmission extends BaseEntity {
             new ArrayList<>();
 
     /**
-     * 외부 참고 링크 목록
+     * 결과물 추가 링크 목록
      */
     @ElementCollection
     @CollectionTable(
-            name = "project_submission_reference_link",
+            name = "project_submission_additional_link",
             joinColumns = @JoinColumn(
                     name = "project_submission_id"
             )
     )
-    @Column(name = "reference_link")
-    private List<String> referenceLinks =
+    private List<AdditionalLinksWrapper> additionalLinks =
             new ArrayList<>();
-
-    private String revisionReason;
-
-    /**
-     * DRAFT만 수정 가능하다.
-     * 제출 완료된 결과물은 수정할 수 없다.
-     */
-    private boolean editable;
 
     @Enumerated(EnumType.STRING)
     private ProjectSubmissionStatus status;
 
+    /**
+     * 임시 저장 생성 시각과 실제 제출 시각을 구분한다.
+     */
+    private LocalDateTime submittedAt;
+
     private ProjectSubmission(
             Project project,
             Crew authorCrew,
-            String title,
+            String subject,
             String content,
             List<String> fileLinks,
-            List<String> referenceLinks
+            List<AdditionalLinksWrapper> additionalLinks
     ) {
         this.project = project;
         this.authorCrew = authorCrew;
-        this.title = title;
+        this.subject = subject;
+        this.writer = resolveWriter(
+                project,
+                authorCrew
+        );
         this.content = content;
-        this.fileLinks =
-                copyList(fileLinks);
-        this.referenceLinks =
-                copyList(referenceLinks);
-        this.isRevised = false;
+        this.fileLinks = copyList(fileLinks);
+        this.additionalLinks =
+                copyList(additionalLinks);
     }
-
-    /**
-     * 실제 결과물 제출 시각
-     *
-     * 임시 저장 생성 시각과 결과물 제출 시각을
-     * 구분하기 위해 별도로 저장한다.
-     */
-    private LocalDateTime submittedAt;
 
     /**
      * 제출 완료 결과물 생성
@@ -130,19 +125,19 @@ public class ProjectSubmission extends BaseEntity {
     public static ProjectSubmission create(
             Project project,
             Crew authorCrew,
-            String title,
+            String subject,
             String content,
             List<String> fileLinks,
-            List<String> referenceLinks
+            List<AdditionalLinksWrapper> additionalLinks
     ) {
         ProjectSubmission submission =
                 new ProjectSubmission(
                         project,
                         authorCrew,
-                        title,
+                        subject,
                         content,
                         fileLinks,
-                        referenceLinks
+                        additionalLinks
                 );
 
         submission.activateSubmission();
@@ -156,19 +151,19 @@ public class ProjectSubmission extends BaseEntity {
     public static ProjectSubmission createDraft(
             Project project,
             Crew authorCrew,
-            String title,
+            String subject,
             String content,
             List<String> fileLinks,
-            List<String> referenceLinks
+            List<AdditionalLinksWrapper> additionalLinks
     ) {
         ProjectSubmission submission =
                 new ProjectSubmission(
                         project,
                         authorCrew,
-                        title,
+                        subject,
                         content,
                         fileLinks,
-                        referenceLinks
+                        additionalLinks
                 );
 
         submission.draftSubmission();
@@ -177,7 +172,27 @@ public class ProjectSubmission extends BaseEntity {
     }
 
     /**
-     * 기존 코드 호환용
+     * dev 코드 호환용 제출 생성 메서드
+     */
+    public static ProjectSubmission create(
+            Project project,
+            String subject,
+            String content,
+            List<String> fileLinks,
+            List<AdditionalLinksWrapper> additionalLinks
+    ) {
+        return create(
+                project,
+                project.getSelectedCrew(),
+                subject,
+                content,
+                fileLinks,
+                additionalLinks
+        );
+    }
+
+    /**
+     * 기존 코드 호환용 제출 생성 메서드
      */
     public static ProjectSubmission create(
             Project project,
@@ -195,7 +210,7 @@ public class ProjectSubmission extends BaseEntity {
     }
 
     /**
-     * 기존 코드 호환용
+     * 기존 코드 호환용 임시 저장 생성 메서드
      */
     public static ProjectSubmission createDraft(
             Project project,
@@ -213,10 +228,13 @@ public class ProjectSubmission extends BaseEntity {
     }
 
     /**
-     * 임시 저장 상태의 제출물만 수정 가능
+     * DRAFT 상태의 결과물만 수정 가능하다.
      */
     public void update(
-            SubmitProjectResultRequestDTO request
+            String subject,
+            String content,
+            List<String> fileLinks,
+            List<AdditionalLinksWrapper> additionalLinks
     ) {
         if (!isDraft()) {
             throw new CustomException(
@@ -224,12 +242,51 @@ public class ProjectSubmission extends BaseEntity {
             );
         }
 
-        this.title = request.title();
-        this.content = request.content();
-        this.fileLinks =
-                copyList(request.fileLinks());
-        this.referenceLinks =
-                copyList(request.referenceLinks());
+        this.subject = subject;
+        this.content = content;
+        this.fileLinks = copyList(fileLinks);
+        this.additionalLinks =
+                copyList(additionalLinks);
+    }
+
+    /**
+     * DRAFT 또는 새 결과물을 제출 완료 상태로 변경한다.
+     */
+    public void activateSubmission() {
+        if (status != null && !isDraft()) {
+            throw new CustomException(
+                    ErrorCode.INVALID_SUBMISSION_STATUS
+            );
+        }
+
+        this.status =
+                ProjectSubmissionStatus.SUBMITTED;
+
+        this.submittedAt =
+                LocalDateTime.now(
+                        ZoneId.of("Asia/Seoul")
+                );
+    }
+
+    public void draftSubmission() {
+        this.status =
+                ProjectSubmissionStatus.DRAFT;
+
+        this.submittedAt = null;
+    }
+
+    /**
+     * 기업이 결과물에 피드백을 등록한다.
+     */
+    public void setFeedback() {
+        if (!isSubmitted()) {
+            throw new CustomException(
+                    ErrorCode.INVALID_SUBMISSION_STATUS
+            );
+        }
+
+        this.status =
+                ProjectSubmissionStatus.FEEDBACKED;
     }
 
     public Crew getCrew() {
@@ -241,24 +298,43 @@ public class ProjectSubmission extends BaseEntity {
     }
 
     /**
-     * 임시 저장 또는 신규 제출물을 제출 완료 상태로 변경한다.
+     * 기존 title 기반 응답 코드 호환용
      */
-    public void activateSubmission() {
-        this.status =
-                ProjectSubmissionStatus.SUBMITTED;
+    public String getTitle() {
+        return subject;
+    }
 
-        this.revisionReason = null;
-        this.editable = false;
+    public boolean isSubmitted() {
+        return status
+                == ProjectSubmissionStatus.SUBMITTED;
+    }
 
-        this.submittedAt =
-                LocalDateTime.now(
-                        ZoneId.of("Asia/Seoul")
-                );
+    public boolean isDraft() {
+        return status
+                == ProjectSubmissionStatus.DRAFT;
+    }
+
+    public boolean isFeedbacked() {
+        return status
+                == ProjectSubmissionStatus.FEEDBACKED;
     }
 
     /**
-     * 기존 데이터에는 submittedAt이 없을 수 있으므로
-     * 생성 시각을 대신 반환한다.
+     * 크루가 수정할 수 있는지 확인한다.
+     */
+    public boolean isEditable() {
+        return isDraft();
+    }
+
+    /**
+     * 기업이 피드백을 등록할 수 있는지 확인한다.
+     */
+    public boolean canRegisterFeedback() {
+        return isSubmitted();
+    }
+
+    /**
+     * 기존 데이터에 submittedAt이 없으면 생성 시각을 반환한다.
      */
     public LocalDateTime getResolvedSubmittedAt() {
         return submittedAt == null
@@ -266,57 +342,23 @@ public class ProjectSubmission extends BaseEntity {
                 : submittedAt;
     }
 
-    public void draftSubmission() {
-        this.status =
-                ProjectSubmissionStatus.DRAFT;
-
-        this.editable = true;
-    }
-
-    public void requestRevision(
-            String revisionReason
+    private static String resolveWriter(
+            Project project,
+            Crew authorCrew
     ) {
-        if (!isSubmitted()) {
-            throw new CustomException(
-                    ErrorCode.INVALID_SUBMISSION_STATUS
-            );
+        if (authorCrew != null) {
+            return authorCrew.getCrewName();
         }
 
-        this.revisionReason =
-                revisionReason;
+        Crew selectedCrew = project.getSelectedCrew();
 
-        this.status =
-                ProjectSubmissionStatus.REVISION_REQUESTED;
-
-        this.isRevised = true;
-        this.editable = false;
+        return selectedCrew == null
+                ? null
+                : selectedCrew.getCrewName();
     }
 
-    public void approve() {
-        if (!isSubmitted()) {
-            throw new CustomException(
-                    ErrorCode.INVALID_SUBMISSION_STATUS
-            );
-        }
-
-        this.status =
-                ProjectSubmissionStatus.APPROVED;
-
-        this.editable = false;
-    }
-
-    public boolean isSubmitted() {
-        return this.status
-                == ProjectSubmissionStatus.SUBMITTED;
-    }
-
-    public boolean isDraft() {
-        return this.status
-                == ProjectSubmissionStatus.DRAFT;
-    }
-
-    private static List<String> copyList(
-            List<String> values
+    private static <T> List<T> copyList(
+            List<T> values
     ) {
         if (values == null) {
             return new ArrayList<>();

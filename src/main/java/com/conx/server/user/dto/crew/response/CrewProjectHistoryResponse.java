@@ -3,8 +3,10 @@ package com.conx.server.user.dto.crew.response;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.project.dto.response.ResultFormResponse;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record CrewProjectHistoryResponse(
         Long projectId,
@@ -12,8 +14,7 @@ public record CrewProjectHistoryResponse(
         String projectName,
         String brandName,
         ProjectType projectType,
-        String platformName,
-        String contentType,
+        List<ResultFormResponse> resultForm,
         Double point,
         LocalDate projectStartDate,
         LocalDate projectDeadline
@@ -23,14 +24,21 @@ public record CrewProjectHistoryResponse(
             Project project,
             Double point
     ) {
+        List<ResultFormResponse> resultForm =
+                project.getResultForm() == null
+                        ? List.of()
+                        : project.getResultForm()
+                        .stream()
+                        .map(ResultFormResponse::from)
+                        .toList();
+
         return new CrewProjectHistoryResponse(
                 project.getId(),
                 project.getStatus(),
-                project.getName(),
+                project.getProjectName(),
                 project.getBrandName(),
                 project.getProjectType(),
-                project.getPlatformName(),
-                project.getContentType(),
+                resultForm,
                 point,
                 project.getProjectStartDate(),
                 project.getProjectDeadline()
