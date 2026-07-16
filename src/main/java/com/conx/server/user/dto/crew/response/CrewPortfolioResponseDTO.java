@@ -6,10 +6,9 @@ public record CrewPortfolioResponseDTO(
         long id,
         String imageLink,
         String name,
-        String description
+        String fileLink
 ) {
-    public static CrewPortfolioResponseDTO create(Portfolio p){
-        //return new CrewPortfolioResponseDTO(p.getId(), p.getImageLink(), p.getPortfolioName(), p.getDescription());
-        return null;
+    public static CrewPortfolioResponseDTO create(Portfolio p) {
+        return new CrewPortfolioResponseDTO(p.getId(), p.getImageLink(), p.getPortfolioName(), p.getFileLink());
     }
 }

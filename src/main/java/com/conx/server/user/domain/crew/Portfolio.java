@@ -14,11 +14,10 @@ import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Portfolio extends BaseEntity {
-    private Portfolio(String name, String description, String pdfLink, String thumbnailImageLink, Crew crew){
+    private Portfolio(String name, String fileLink, String imageLink, Crew crew){
         this.portfolioName = name;
-        this.description = description;
-        this.pdfLink = pdfLink;
-        this.thumbnailImageLink = thumbnailImageLink;
+        this.fileLink = fileLink;
+        this.imageLink = imageLink;
         this.crew = crew;
     }
 
@@ -28,27 +27,29 @@ public class Portfolio extends BaseEntity {
 
     private String portfolioName;
 
-    private String description;
+    private String fileLink;
 
-    private String pdfLink;
-
-    private String thumbnailImageLink;
+    private String imageLink;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "crew_id")
     private Crew crew;
 
-    public static Portfolio create(String name,
-                                   String description,
-                                   String pdfLink,
-                                   Crew crew,
-                                   String thumbnailImageLink){
-        return new Portfolio(name, description, pdfLink, thumbnailImageLink, crew);
+    public static Portfolio create(String portfolioName,
+                                   String fileLink,
+                                   String imageLink,
+                                   Crew crew){
+        return new Portfolio(portfolioName, fileLink, imageLink, crew);
+    }
+
+    public static Portfolio create(CrewPortfolioRequestDTO req,
+                                   Crew crew){
+        return new Portfolio(req.name(), req.fileLink(), req.imageLink(), crew);
     }
 
     public void modify(ModifyCrewPortfolioRequestDTO req){
         this.portfolioName = getOrDefault(req.name(), this.portfolioName);
-        this.description = getOrDefault(req.name(), this.description);
-        this.pdfLink = getOrDefault(req.imageLink(), this.pdfLink);
+        this.fileLink = getOrDefault(req.fileLink(), this.fileLink);
+        this.imageLink = getOrDefault(req.imageLink(), this.imageLink);
     }
 }

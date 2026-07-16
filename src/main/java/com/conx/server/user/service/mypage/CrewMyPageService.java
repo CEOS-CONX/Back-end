@@ -72,12 +72,10 @@ public class CrewMyPageService {
     public CrewPortfolioResponseDTO registerPortfolio(Long crewId, CrewPortfolioRequestDTO req){
         Crew crew = userFinder.findActiveCrew(crewId);
 
-        return null;
-        //TODO: PDF 업로드 후 썸네일 이미지 제작 후 업로드 (PDFBox)
-        //Portfolio portfolio = Portfolio.create(req, crew);
-        //Portfolio savedPortfolio = portfolioRepository.save(portfolio);
+        Portfolio portfolio = Portfolio.create(req, crew);
+        Portfolio savedPortfolio = portfolioRepository.save(portfolio);
 
-        //return CrewPortfolioResponseDTO.create(savedPortfolio);
+        return CrewPortfolioResponseDTO.create(savedPortfolio);
     }
 
     @Transactional
