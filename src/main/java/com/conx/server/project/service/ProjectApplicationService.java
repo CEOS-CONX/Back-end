@@ -2,9 +2,11 @@ package com.conx.server.project.service;
 
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectApplication;
 import com.conx.server.project.dto.request.ProjectApplicationRequest;
+import com.conx.server.project.dto.response.CrewInfoForProjectApplicationDTO;
 import com.conx.server.project.dto.response.ProjectApplicationResponse;
 import com.conx.server.project.repository.ProjectApplicationRepository;
 import com.conx.server.project.repository.ProjectRepository;
@@ -22,6 +24,23 @@ public class ProjectApplicationService {
     private final ProjectApplicationRepository projectApplicationRepository;
     private final UserFinder userFinder;
 
+    /**
+     * 지원 전 정보 가져오기
+     */
+    @Transactional
+    public CrewInfoForProjectApplicationDTO getInformationBeforeApplication(
+            CustomUserDetails userDetails
+    ){
+        Crew crew = userFinder.findActiveCrew(userDetails.getId());
+        return CrewInfoForProjectApplicationDTO.create(crew);
+    }
+
+    /**
+     * 지원하기
+     * @param projectId 프로젝트id
+     * @param crewId 크루id
+     * @param request 요청
+     */
     @Transactional
     public ProjectApplicationResponse applyProject(
             Long projectId,
@@ -40,12 +59,10 @@ public class ProjectApplicationService {
         ProjectApplication application = ProjectApplication.create(
                 project,
                 crew,
-                request.introduction(),
-                request.proposal()
+                request.motivation()
         );
 
         ProjectApplication savedApplication = projectApplicationRepository.save(application);
-
         return ProjectApplicationResponse.from(savedApplication);
     }
 

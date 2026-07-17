@@ -6,18 +6,28 @@ import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.request.ProjectApplicationRequest;
+import com.conx.server.project.dto.response.CrewInfoForProjectApplicationDTO;
 import com.conx.server.project.dto.response.ProjectApplicationResponse;
 import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
 import com.conx.server.project.repository.ProjectRepository;
+import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.UserRole;
-import com.conx.server.user.dto.company.request.CompanyProjectRevisionRequest;
+import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
+import com.conx.server.user.dto.company.response.CompanySettlementResponse;
+import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
+import com.conx.server.user.dto.company.response.ProjectApplicationForCompanyWrapperDTO;
+import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
 import com.conx.server.user.dto.crew.response.*;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
 import com.conx.server.user.dto.login.response.LoginResponseDTO;
 import com.conx.server.user.repository.AdminRepository;
+import com.conx.server.user.repository.CrewRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
+import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
+import com.conx.server.user.dto.crew.response.CrewSettlementSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +38,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -42,6 +55,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class CrewWorkSpaceTest {
+    @Autowired
+    private CrewRepository crewRepository;
+
     @Transactional
     String loginSetting() throws Exception {
         LoginRequestDTO req = new LoginRequestDTO("kimdoes2143@naver.com", "1q2w3e4r!!");
@@ -79,6 +95,53 @@ public class CrewWorkSpaceTest {
         return mvcResult.getResponse().getHeader("Authorization");
     }
 
+    @Transactional
+    protected long applyProjectAndGetApplicationId(
+            String crewToken,
+            long projectId
+    ) throws Exception {
+
+        ProjectApplicationRequest request =
+                new ProjectApplicationRequest(
+                        "프로젝트 지원 소개"
+                );
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                post(
+                                        "/api/v1/projects/{projectId}/applications",
+                                        projectId
+                                )
+                                        .header(
+                                                "Authorization",
+                                                crewToken
+                                        )
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        request
+                                                )
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<ProjectApplicationResponse> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<ProjectApplicationResponse>
+                                >() {
+                        }
+                );
+
+        return response.payload()
+                .applicationId();
+    }
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -107,7 +170,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<LoginResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<LoginResponseDTO>>() {}
+                new TypeReference<ApiResponse<LoginResponseDTO>>() {
+                }
         );
 
         LoginResponseDTO loginResponse = response.payload();
@@ -129,7 +193,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<List<ProjectWrapperForLandingPageDTO>> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<List<ProjectWrapperForLandingPageDTO>>>() {}
+                new TypeReference<ApiResponse<List<ProjectWrapperForLandingPageDTO>>>() {
+                }
         );
 
         List<ProjectWrapperForLandingPageDTO> landingResponse = response.payload();
@@ -191,7 +256,6 @@ public class CrewWorkSpaceTest {
                 .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
-    //여기 아직 테스트 통과를 안해서 CI가 안될 수 있습니다..!
     @Test
     @Transactional
     @DisplayName("크루 프로젝트 시작일 기준 조회")
@@ -206,7 +270,6 @@ public class CrewWorkSpaceTest {
                 .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
-    //여기 아직 테스트 통과를 안해서 CI가 안될 수 있습니다..!
     @Test
     @Transactional
     @DisplayName("크루 프로젝트 시작&마감일 기준 조회")
@@ -235,7 +298,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectBrowseDetailResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectBrowseDetailResponse>>() {}
+                new TypeReference<ApiResponse<ProjectBrowseDetailResponse>>() {
+                }
         );
 
         ProjectBrowseDetailResponse detailResponse = response.payload();
@@ -245,11 +309,35 @@ public class CrewWorkSpaceTest {
 
     @Test
     @Transactional
+    @DisplayName("프로젝트 지원 전 본인의 정보 확인하기")
+    void getMyInfoBeforeApplication() throws Exception {
+        String token = loginSetting();
+        Crew crew = crewRepository.findByEmail("kimdoes2143@naver.com").get();
+
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/projects/applications/my-info")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewInfoForProjectApplicationDTO> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewInfoForProjectApplicationDTO>>() {
+                }
+        );
+
+        CrewInfoForProjectApplicationDTO info = response.payload();
+        assertThat(info.crewName()).isEqualTo(crew.getCrewName());
+        assertThat(info.managerName()).isEqualTo(crew.getManagerName());
+    }
+
+    @Test
+    @Transactional
     @DisplayName("프로젝트 지원하기")
     void applyProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -260,7 +348,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         ProjectApplicationResponse detailResponse = response.payload();
@@ -275,7 +364,7 @@ public class CrewWorkSpaceTest {
     void selectCrewAndGetNotification() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -286,7 +375,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = response.payload().applicationId();
@@ -305,7 +395,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response2 = objectMapper.readValue(
                 mvcResult2.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         Project project = projectRepository.findById(1L).get();
@@ -324,7 +415,7 @@ public class CrewWorkSpaceTest {
         String token_admin = loginSetting_Admin();
 
         //프로젝트 지원하기
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
                         .header("Authorization", token)
@@ -335,7 +426,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = response.payload().applicationId();
@@ -351,6 +443,198 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk());
     }
 
+    @Transactional
+    protected CompanySettlementResponse createWaitingSettlement(
+            String crewToken,
+            String companyToken
+    ) throws Exception {
+
+        completeProjectApplicationToContract();
+
+        SubmitProjectResultRequestDTO submissionRequest =
+                new SubmitProjectResultRequestDTO(
+                        List.of("result-file"),
+                        "프로젝트 결과물입니다."
+                );
+
+        /*
+         * 결과물 제출
+         * PROGRESS → INSPECTION
+         */
+        mockMvc.perform(
+                        post("/api/v1/crews/projects/1/submissions")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                submissionRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        /*
+         * 기업 승인
+         * INSPECTION → ADJUSTING
+         * WAITING 정산 생성
+         */
+        long submissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
+        registerFeedback(
+                companyToken,
+                1L,
+                submissionId
+        );
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                get(
+                                        "/api/v1/companies/me/settlements"
+                                )
+                                        .header(
+                                                "Authorization",
+                                                companyToken
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<List<CompanySettlementResponse>> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<
+                                        List<CompanySettlementResponse>
+                                        >
+                                >() {
+                        }
+                );
+
+        return response.payload()
+                .stream()
+                .filter(settlement ->
+                        settlement.projectId() == 1L
+                )
+                .findFirst()
+                .orElseThrow();
+    }
+
+    @Transactional
+    protected void registerFeedback(
+            String companyToken,
+            long projectId,
+            long submissionId
+    ) throws Exception {
+        mockMvc.perform(
+                        post(
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/feedback",
+                                projectId,
+                                submissionId
+                        )
+                                .header("Authorization", companyToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "content": "결과물 검수를 완료했습니다.",
+                                          "files": [],
+                                          "links": []
+                                        }
+                                        """)
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Transactional
+    protected CrewDashboardResultDTO getCrewDashboard(
+            String token
+    ) throws Exception {
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                get("/api/v1/crews/dashboard")
+                                        .header(
+                                                "Authorization",
+                                                token
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<CrewDashboardResultDTO> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<CrewDashboardResultDTO>
+                                >() {
+                        }
+                );
+
+        return response.payload();
+    }
+
+    @Transactional
+    protected long getLatestSubmissionId(
+            String companyToken,
+            long projectId
+    ) throws Exception {
+
+        MvcResult mvcForCompanyProject1 = mockMvc.perform(get("/api/v1/companies/me/projects/" + projectId)
+                        .header("Authorization", companyToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CompanyWorkspaceProjectDetailResponse> resForCompanyProject1 = objectMapper.readValue(
+                mvcForCompanyProject1.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CompanyWorkspaceProjectDetailResponse>>() {
+                }
+        );
+
+        ProjectStatusResponseDTO resForCompanyProjectDTO = (ProjectStatusResponseDTO) resForCompanyProject1.payload();
+        return resForCompanyProjectDTO.inspections().get(resForCompanyProjectDTO.inspections().size() - 1).inspectionId();
+
+    }
+
+    @Transactional
+    protected CrewSettlementSummaryResponse getCrewSettlementSummary(
+            String crewToken
+    ) throws Exception {
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                get("/api/v1/crews/settlements/summary")
+                                        .header(
+                                                "Authorization",
+                                                crewToken
+                                        )
+                        )
+                        .andReturn();
+
+        ApiResponse<CrewSettlementSummaryResponse> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<
+                                        CrewSettlementSummaryResponse
+                                        >
+                                >() {
+                        }
+                );
+
+        return response.payload();
+    }
+
     @Test
     @Transactional
     @DisplayName("초기상태 대시보드")
@@ -364,16 +648,29 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
         CrewProjectInfoDTO projectInfoDTO = resultDTO.projectInfo();
 
+        assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
+
         assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(0);
         assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.doneProjectAmount()).isEqualTo(0);
-        assertThat(resultDTO.todoProjects().size()).isEqualTo(0);
+        assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
+
+        assertThat(resultDTO.evaluation().overall()).isEqualTo(0.0);
+        assertThat(resultDTO.evaluation().completeness()).isEqualTo(0.0);
+        assertThat(resultDTO.evaluation().ability()).isEqualTo(0.0);
+        assertThat(resultDTO.evaluation().communication()).isEqualTo(0.0);
+        assertThat(resultDTO.evaluation().schedule()).isEqualTo(0.0);
+        assertThat(resultDTO.evaluation().reCooperation()).isEqualTo(0.0);
+
+        assertThat(resultDTO.todoProjects()).isEmpty();
     }
 
     @Test
@@ -389,7 +686,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         CrewApplicationStatusResponseDTO resultDTO = response.payload();
@@ -403,7 +701,7 @@ public class CrewWorkSpaceTest {
     void dashboardAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -420,16 +718,22 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
         CrewProjectInfoDTO projectInfoDTO = resultDTO.projectInfo();
 
+        assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
+
         assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(1);
         assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.doneProjectAmount()).isEqualTo(0);
-        assertThat(resultDTO.todoProjects().size()).isEqualTo(0);
+        assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
+
+        assertThat(resultDTO.todoProjects()).isEmpty();
     }
 
     @Test
@@ -438,7 +742,7 @@ public class CrewWorkSpaceTest {
     void applicationStatusAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -461,7 +765,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         CrewApplicationStatusResponseDTO resultDTO = response.payload();
@@ -475,7 +780,7 @@ public class CrewWorkSpaceTest {
     void dashboardAfterSelectedProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -487,7 +792,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
@@ -506,16 +812,22 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
         CrewProjectInfoDTO projectInfoDTO = resultDTO.projectInfo();
 
-        assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(1);
+        assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
+
+        assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(0);
         assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(1);
-        assertThat(projectInfoDTO.doneProjectAmount()).isEqualTo(0);
-        assertThat(resultDTO.todoProjects().size()).isEqualTo(0);
+        assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
+
+        assertThat(resultDTO.todoProjects()).isEmpty();
     }
 
     @Test
@@ -524,7 +836,7 @@ public class CrewWorkSpaceTest {
     void applicationStatusAfterSelected() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -536,7 +848,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
@@ -567,12 +880,14 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewApplicationStatusResponseDTO> response1 = objectMapper.readValue(
                 mvcResult1.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         ApiResponse<CrewApplicationStatusResponseDTO> response2 = objectMapper.readValue(
                 mvcResult2.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {
+                }
         );
 
         CrewApplicationStatusResponseDTO resultDTO1 = response1.payload();
@@ -596,16 +911,317 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewDashboardResultDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {}
+                new TypeReference<ApiResponse<CrewDashboardResultDTO>>() {
+                }
         );
 
         CrewDashboardResultDTO resultDTO = response.payload();
         CrewProjectInfoDTO projectInfoDTO = resultDTO.projectInfo();
 
-        assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(1);
+        assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
+
+        assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(0);
         assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(1);
-        assertThat(projectInfoDTO.doneProjectAmount()).isEqualTo(0);
-        assertThat(resultDTO.todoProjects().size()).isEqualTo(0);
+        assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
+
+        assertThat(resultDTO.todoProjects()).isEmpty();
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("프로젝트 상태 전환에 따라 대시보드 집계와 누적 지원금이 변경된다")
+    void dashboardChangesByProjectStatusAndSettlement()
+            throws Exception {
+
+        String crewToken = loginSetting();
+        String companyToken = loginSetting_Company();
+
+        completeProjectApplicationToContract();
+
+        /*
+         * 1. 계약 완료 후 PROGRESS
+         * 진행 중 1
+         */
+        CrewDashboardResultDTO progressDashboard =
+                getCrewDashboard(crewToken);
+
+        assertThat(
+                progressDashboard.projectInfo()
+                        .appliedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                progressDashboard.projectInfo()
+                        .progressProjectAmount()
+        ).isEqualTo(1);
+
+        assertThat(
+                progressDashboard.projectInfo()
+                        .executionCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                progressDashboard.projectInfo()
+                        .submissionCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                progressDashboard.projectInfo()
+                        .settlementCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        /*
+         * 2. 결과물 제출 후 INSPECTION
+         * 제출 완료 1
+         */
+        SubmitProjectResultRequestDTO submissionRequest =
+                new SubmitProjectResultRequestDTO(
+                        List.of(
+                                "result-file-1",
+                                "result-file-2"
+                        ),
+                        "프로젝트 결과물입니다."
+                );
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/crews/projects/1/submissions"
+                        )
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                submissionRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        CrewDashboardResultDTO inspectionDashboard =
+                getCrewDashboard(crewToken);
+
+        assertThat(
+                inspectionDashboard.projectInfo()
+                        .progressProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                inspectionDashboard.projectInfo()
+                        .executionCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                inspectionDashboard.projectInfo()
+                        .submissionCompletedProjectAmount()
+        ).isEqualTo(1);
+
+        assertThat(
+                inspectionDashboard.projectInfo()
+                        .settlementCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                inspectionDashboard.todoProjects()
+        ).isEmpty();
+
+        /*
+         * 3. 승인 API가 제거된 최신 흐름에서는 피드백 전까지 INSPECTION 유지
+         */
+
+        long submissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
+
+
+        CrewDashboardResultDTO waitingResultDashboard =
+                getCrewDashboard(crewToken);
+
+        assertThat(
+                waitingResultDashboard.projectInfo()
+                        .progressProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                waitingResultDashboard.projectInfo()
+                        .executionCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                waitingResultDashboard.projectInfo()
+                        .submissionCompletedProjectAmount()
+        ).isEqualTo(1);
+
+        assertThat(
+                waitingResultDashboard.projectInfo()
+                        .settlementCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                waitingResultDashboard.todoProjects()
+        ).isEmpty();
+
+        /*
+         * 4. 기업 피드백 등록으로 검수를 완료한다.
+         * INSPECTION → ADJUSTING
+         */
+        registerFeedback(companyToken, 1L, submissionId);
+
+        CrewDashboardResultDTO adjustingDashboard =
+                getCrewDashboard(crewToken);
+
+        assertThat(
+                adjustingDashboard.projectInfo()
+                        .executionCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                adjustingDashboard.projectInfo()
+                        .submissionCompletedProjectAmount()
+        ).isEqualTo(1);
+
+        assertThat(
+                adjustingDashboard.projectInfo()
+                        .settlementCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                adjustingDashboard.totalSubsidy()
+        ).isEqualTo(0);
+
+        assertThat(
+                adjustingDashboard.todoProjects()
+        ).hasSize(1);
+
+        assertThat(
+                adjustingDashboard.todoProjects()
+                        .get(0)
+                        .taskName()
+        ).isEqualTo("정산 정보 확인");
+
+        assertThat(
+                adjustingDashboard.todoProjects()
+                        .get(0)
+                        .progressStatus()
+        ).isEqualTo(
+                CrewTodoProgressStatus.NEEDS_CONFIRMATION
+        );
+
+        /*
+         * 6. 생성된 정산 정보 조회
+         */
+        MvcResult settlementMvcResult =
+                mockMvc.perform(
+                                get(
+                                        "/api/v1/companies/me/settlements"
+                                )
+                                        .header(
+                                                "Authorization",
+                                                companyToken
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<List<CompanySettlementResponse>>
+                settlementResponse =
+                objectMapper.readValue(
+                        settlementMvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<
+                                        List<CompanySettlementResponse>
+                                        >
+                                >() {
+                        }
+                );
+
+        CompanySettlementResponse settlement =
+                settlementResponse.payload()
+                        .stream()
+                        .filter(response ->
+                                response.projectId() == 1L
+                        )
+                        .findFirst()
+                        .orElseThrow();
+
+        /*
+         * 7. 정산 지급 완료
+         * ProjectSettlement PAID
+         * Project DONE
+         */
+        CompanySettlementCompleteRequest completeRequest =
+                new CompanySettlementCompleteRequest(
+                        LocalDate.of(2026, 7, 14)
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/companies/me/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                completeRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        /*
+         * 8. 정산 완료 후 최종 대시보드
+         */
+        CrewDashboardResultDTO paidDashboard =
+                getCrewDashboard(crewToken);
+
+        assertThat(
+                paidDashboard.projectInfo()
+                        .appliedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                paidDashboard.projectInfo()
+                        .progressProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                paidDashboard.projectInfo()
+                        .executionCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                paidDashboard.projectInfo()
+                        .submissionCompletedProjectAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                paidDashboard.projectInfo()
+                        .settlementCompletedProjectAmount()
+        ).isEqualTo(1);
+
+        assertThat(
+                paidDashboard.totalSubsidy()
+        ).isEqualTo(settlement.amount());
+
+        assertThat(
+                paidDashboard.todoProjects()
+        ).isEmpty();
     }
 
     @Test
@@ -621,7 +1237,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -635,7 +1252,7 @@ public class CrewWorkSpaceTest {
     void workSpaceAfterApplication() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -657,7 +1274,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -671,7 +1289,7 @@ public class CrewWorkSpaceTest {
     void workSpaceAfterSelected() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -683,7 +1301,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
@@ -708,7 +1327,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -732,7 +1352,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -761,7 +1382,7 @@ public class CrewWorkSpaceTest {
     void workSpaceForUnContractedProject() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용", "no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
         //프로젝트 지원하기
         MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
@@ -773,11 +1394,11 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
                 applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
+                }
         );
 
         long applicationId = applicationResponse.payload().applicationId();
-
 
         mockMvc.perform(post("/api/v1/projects/2/applications")
                         .header("Authorization", token)
@@ -806,9 +1427,9 @@ public class CrewWorkSpaceTest {
         String token = loginSetting();
         completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
+        String subject = "제목제목";
         String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
+        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
 
         mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
                         .header("Authorization", token)
@@ -824,7 +1445,8 @@ public class CrewWorkSpaceTest {
 
         ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {
+                }
         );
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
@@ -836,131 +1458,1371 @@ public class CrewWorkSpaceTest {
 
     @Test
     @Transactional
-    @DisplayName("검수 후 결과물 올리기")
-    void uploadProjectResultAfterInspection() throws Exception {
+    @DisplayName("초기 크루 프로젝트 현황은 비어 있다")
+    void initialCrewProjectStatus() throws Exception {
         String crewToken = loginSetting();
-        String companyToken = loginSetting_Company();
-        completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
-        String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
-
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                )
                 .andExpect(status().isOk())
-                .andReturn();
+                .andExpect(
+                        jsonPath("$.payload.content.length()")
+                                .value(0)
+                )
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(0)
+                )
+                .andExpect(
+                        jsonPath("$.payload.number")
+                                .value(0)
+                );
+    }
 
-        String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-        CompanyProjectRevisionRequest rivReq = new CompanyProjectRevisionRequest(revision);
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/revision-requests")
-                .header("Authorization", companyToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(rivReq)))
+    @Test
+    @Transactional
+    @DisplayName("크루 프로젝트 현황을 지원일 기준으로 정렬하고 페이지 조회한다")
+    void getCrewProjectsWithPagingAndSort()
+            throws Exception {
+
+        String crewToken = loginSetting();
+
+        long firstApplicationId =
+                applyProjectAndGetApplicationId(
+                        crewToken,
+                        1L
+                );
+
+        long secondApplicationId =
+                applyProjectAndGetApplicationId(
+                        crewToken,
+                        2L
+                );
+
+        /*
+         * 최근 지원순: 두 번째 지원이 먼저 조회
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "status",
+                                        "APPLIED"
+                                )
+                                .param(
+                                        "sort",
+                                        "RECENT"
+                                )
+                                .param(
+                                        "page",
+                                        "0"
+                                )
+                                .param(
+                                        "size",
+                                        "1"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.content.length()")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(2)
+                )
+                .andExpect(
+                        jsonPath("$.payload.totalPages")
+                                .value(2)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].applicationId"
+                        ).value(secondApplicationId)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].status"
+                        ).value("APPLIED")
+                );
+
+        /*
+         * 오래된 지원순: 첫 번째 지원이 먼저 조회
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "status",
+                                        "APPLIED"
+                                )
+                                .param(
+                                        "sort",
+                                        "OLDEST"
+                                )
+                                .param(
+                                        "page",
+                                        "0"
+                                )
+                                .param(
+                                        "size",
+                                        "1"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].applicationId"
+                        ).value(firstApplicationId)
+                );
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("프로젝트에 선정되면 지원 상태에서 진행 중 상태로 이동한다")
+    void crewProjectStatusChangesAfterSelection()
+            throws Exception {
+
+        String crewToken = loginSetting();
+
+        long applicationId =
+                applyProjectAndGetApplicationId(
+                        crewToken,
+                        1L
+                );
+
+        String companyToken =
+                loginSetting_Company();
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/companies/me/projects/1/applications/{applicationId}/select",
+                                applicationId
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                )
                 .andExpect(status().isOk());
 
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+        /*
+         * PENDING 지원이 아니므로 APPLIED 목록에서는 제외
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "status",
+                                        "APPLIED"
+                                )
+                )
                 .andExpect(status().isOk())
-                .andReturn();
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(0)
+                );
 
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/workSpace")
-                        .header("Authorization", crewToken))
+        /*
+         * CONTRACT_PENDING 상태이므로 IN_PROGRESS
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "status",
+                                        "IN_PROGRESS"
+                                )
+                )
                 .andExpect(status().isOk())
-                .andReturn();
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].applicationId"
+                        ).value(applicationId)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].projectId"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].status"
+                        ).value("IN_PROGRESS")
+                );
+    }
 
-        ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
+    @Test
+    @Transactional
+    @DisplayName("크루 프로젝트 현황을 검색어와 조건으로 필터링한다")
+    void filterCrewProjects() throws Exception {
+        String crewToken = loginSetting();
+
+        applyProjectAndGetApplicationId(
+                crewToken,
+                1L
         );
 
-        CrewWorkSpaceResponseDTO responseDTO = response.payload();
+        applyProjectAndGetApplicationId(
+                crewToken,
+                2L
+        );
 
-        assertThat(responseDTO.projects().size()).isEqualTo(1);
-        assertThat(responseDTO.projects().get(0).projectId()).isEqualTo(1L);
-        assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.INSPECTION);
+        /*
+         * 검색어 필터
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "keyword",
+                                        "코카콜라"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                );
+
+        /*
+         * 기업 카테고리 필터
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "category",
+                                        "IT"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                );
+
+        /*
+         * 프로젝트 유형 필터
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "projectType",
+                                        "APPTEST"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(2)
+                );
+
+        /*
+         * 매우 넓은 프로젝트 기간
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "startDate",
+                                        "2000-01-01"
+                                )
+                                .param(
+                                        "endDate",
+                                        "2100-12-31"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(2)
+                );
+
+        /*
+         * 프로젝트 시작일이 2100년 이후인 데이터는 없음
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "startDate",
+                                        "2100-01-01"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(0)
+                );
     }
 
     @Test
     @Transactional
-    @DisplayName("수정사항이 도착하지 않았는데 결과물 재업로드")
-    void uploadProjectResultBeforeInspection() throws Exception {
+    @DisplayName("초기 크루 Todo 목록은 비어 있다")
+    void initialCrewTodoProjects() throws Exception {
         String crewToken = loginSetting();
-        String companyToken = loginSetting_Company();
-        completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
-        String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
-
-        //결과물 제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                )
                 .andExpect(status().isOk())
-                .andReturn();
-
-
-        //수정된 결과물 재제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status")
-                        .value("P002"));
+                .andExpect(
+                        jsonPath("$.payload.content.length()")
+                                .value(0)
+                )
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(0)
+                )
+                .andExpect(
+                        jsonPath("$.payload.number")
+                                .value(0)
+                );
     }
 
     @Test
     @Transactional
-    @DisplayName("첫 번째 검수 후 업로드")
-    void uploadProjectResultAfterInspectionAndUpload() throws Exception {
+    @DisplayName("Todo의 생성과 완료 상태를 검색, 필터, 정렬하여 조회한다")
+    void getCrewTodoProjectsWithFilterAndPaging()
+            throws Exception {
+
         String crewToken = loginSetting();
         String companyToken = loginSetting_Company();
+
+        /*
+         * 프로젝트 지원 → 크루 선정 → 계약 완료
+         * 프로젝트 상태: PROGRESS
+         */
         completeProjectApplicationToContract();
 
-        List<String> fileLinks = List.of("###", "%%%", "!!!");
-        String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(fileLinks, content);
+        SubmitProjectResultRequestDTO submissionRequest =
+                new SubmitProjectResultRequestDTO(
+                        List.of(
+                                "result-file-1",
+                                "result-file-2"
+                        ),
+                        "프로젝트 결과물입니다."
+                );
 
-        //결과물 제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        //결과물 수정요청
-        String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-        CompanyProjectRevisionRequest rivReq = new CompanyProjectRevisionRequest(revision);
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/revision-requests")
-                        .header("Authorization", companyToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(rivReq)))
+        /*
+         * 1. 최초 결과물 제출
+         * PROGRESS → INSPECTION
+         */
+        mockMvc.perform(
+                        post(
+                                "/api/v1/crews/projects/1/submissions"
+                        )
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                submissionRequest
+                                        )
+                                )
+                )
                 .andExpect(status().isOk());
 
-        //수정된 결과물 제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
+        /*
+         * 2. 기업 수정 요청
+         * REVISION_SUBMISSION Todo 생성
+         * NEEDS_CONFIRMATION
+         */
 
-        //수정된 결과물 재제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status")
-                        .value("P002"));
+        long firstSubmissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
+        registerFeedback(companyToken, 1L, firstSubmissionId);
+
+        /*
+         * 확인 필요 Todo 조회
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "progressStatus",
+                                        "NEEDS_CONFIRMATION"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].projectId"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].taskName"
+                        ).value("정산 정보 확인")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].progressStatus"
+                        ).value("NEEDS_CONFIRMATION")
+                );
+
+        /*
+         * 작업명 검색
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "keyword",
+                                        "정산"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].taskName"
+                        ).value("정산 정보 확인")
+                );
+
+        /*
+         * 정산 Todo 검색
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "keyword",
+                                        "정산"
+                                )
+                                .param(
+                                        "progressStatus",
+                                        "NEEDS_CONFIRMATION"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].taskName"
+                        ).value("정산 정보 확인")
+                );
+
+        /*
+         * 최신 흐름의 Todo는 정산 정보 확인 1개
+         * 최신순 첫 번째는 정산 정보 확인
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "sort",
+                                        "RECENT"
+                                )
+                                .param(
+                                        "page",
+                                        "0"
+                                )
+                                .param(
+                                        "size",
+                                        "1"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.payload.totalPages")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath("$.payload.content.length()")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].taskName"
+                        ).value("정산 정보 확인")
+                );
+
+        /*
+         * 오래된 순 첫 번째도 정산 정보 확인
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "sort",
+                                        "OLDEST"
+                                )
+                                .param(
+                                        "page",
+                                        "0"
+                                )
+                                .param(
+                                        "size",
+                                        "1"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].taskName"
+                        ).value("정산 정보 확인")
+                );
+
+        /*
+         * 5. 생성된 정산 정보 조회
+         */
+        MvcResult settlementMvcResult =
+                mockMvc.perform(
+                                get(
+                                        "/api/v1/companies/me/settlements"
+                                )
+                                        .header(
+                                                "Authorization",
+                                                companyToken
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<List<CompanySettlementResponse>>
+                settlementResponse =
+                objectMapper.readValue(
+                        settlementMvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<
+                                        List<CompanySettlementResponse>
+                                        >
+                                >() {
+                        }
+                );
+
+        CompanySettlementResponse settlement =
+                settlementResponse.payload()
+                        .stream()
+                        .filter(response ->
+                                response.projectId() == 1L
+                        )
+                        .findFirst()
+                        .orElseThrow();
+
+        /*
+         * 6. 정산 완료
+         * SETTLEMENT_CONFIRMATION Todo 완료
+         */
+        CompanySettlementCompleteRequest completeRequest =
+                new CompanySettlementCompleteRequest(
+                        LocalDate.of(
+                                2026,
+                                7,
+                                15
+                        )
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/companies/me/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                completeRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        /*
+         * 정산 완료 후 정산 정보 확인 Todo가 완료된다.
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "progressStatus",
+                                        "COMPLETED"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].progressStatus"
+                        ).value("COMPLETED")
+                );
+
+        /*
+         * 확인 필요 Todo는 더 이상 없음
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/todo-projects")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "progressStatus",
+                                        "NEEDS_CONFIRMATION"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.payload.totalElements")
+                                .value(0)
+                );
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("초기 크루 정산 요약은 모두 0이다")
+    void initialCrewSettlementSummary()
+            throws Exception {
+
+        String crewToken =
+                loginSetting();
+
+        CrewSettlementSummaryResponse summary =
+                getCrewSettlementSummary(
+                        crewToken
+                );
+
+        assertThat(
+                summary.totalPaidAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                summary.waitingAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                summary.monthlyPaidAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                summary.nextExpectedPaymentDate()
+        ).isNull();
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("정산 생성과 지급 완료에 따라 크루 정산 요약이 변경된다")
+    void crewSettlementSummaryChangesAfterPayment()
+            throws Exception {
+
+        String crewToken =
+                loginSetting();
+
+        String companyToken =
+                loginSetting_Company();
+
+        /*
+         * 프로젝트 지원 → 선정 → 계약 완료
+         * ProjectStatus.PROGRESS
+         */
+        completeProjectApplicationToContract();
+
+        SubmitProjectResultRequestDTO submissionRequest =
+                new SubmitProjectResultRequestDTO(
+                        List.of(
+                                "result-file"
+                        ),
+                        "프로젝트 결과물입니다."
+                );
+
+        /*
+         * 크루 결과물 제출
+         * PROGRESS → INSPECTION
+         */
+        mockMvc.perform(
+                        post(
+                                "/api/v1/crews/projects/1/submissions"
+                        )
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                submissionRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        /*
+         * 기업 결과물 승인
+         * INSPECTION → ADJUSTING
+         * WAITING 정산 생성
+         */
+        long submissionId =
+                getLatestSubmissionId(
+                        companyToken,
+                        1L
+                );
+
+        registerFeedback(companyToken, 1L, submissionId);
+
+        /*
+         * 생성된 정산 조회
+         */
+        MvcResult settlementMvcResult =
+                mockMvc.perform(
+                                get(
+                                        "/api/v1/companies/me/settlements"
+                                )
+                                        .header(
+                                                "Authorization",
+                                                companyToken
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<List<CompanySettlementResponse>>
+                settlementResponse =
+                objectMapper.readValue(
+                        settlementMvcResult
+                                .getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<
+                                        List<CompanySettlementResponse>
+                                        >
+                                >() {
+                        }
+                );
+
+        CompanySettlementResponse settlement =
+                settlementResponse.payload()
+                        .stream()
+                        .filter(response ->
+                                response.projectId() == 1L
+                        )
+                        .findFirst()
+                        .orElseThrow();
+
+        LocalDate expectedPaymentDate =
+                LocalDate.now(
+                        ZoneId.of("Asia/Seoul")
+                ).plusDays(7);
+
+        CompanySettlementExpectedPaymentDateRequest
+                expectedPaymentDateRequest =
+                new CompanySettlementExpectedPaymentDateRequest(
+                        expectedPaymentDate
+                );
+
+        /*
+         * 예상 지급일 설정
+         */
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/companies/me/settlements/{settlementId}/expected-payment-date",
+                                settlement.settlementId()
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                expectedPaymentDateRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        /*
+         * 지급 대기 상태 요약
+         */
+        CrewSettlementSummaryResponse waitingSummary =
+                getCrewSettlementSummary(
+                        crewToken
+                );
+
+        assertThat(
+                waitingSummary.totalPaidAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                waitingSummary.waitingAmount()
+        ).isEqualTo(
+                settlement.amount()
+        );
+
+        assertThat(
+                waitingSummary.monthlyPaidAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                waitingSummary.nextExpectedPaymentDate()
+        ).isEqualTo(
+                expectedPaymentDate
+        );
+
+        LocalDate settlementDate =
+                LocalDate.now(
+                        ZoneId.of("Asia/Seoul")
+                );
+
+        CompanySettlementCompleteRequest completeRequest =
+                new CompanySettlementCompleteRequest(
+                        settlementDate
+                );
+
+        /*
+         * 정산 지급 완료
+         * WAITING → PAID
+         */
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/companies/me/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                completeRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        /*
+         * 지급 완료 상태 요약
+         */
+        CrewSettlementSummaryResponse paidSummary =
+                getCrewSettlementSummary(
+                        crewToken
+                );
+
+        assertThat(
+                paidSummary.totalPaidAmount()
+        ).isEqualTo(
+                settlement.amount()
+        );
+
+        assertThat(
+                paidSummary.waitingAmount()
+        ).isEqualTo(0);
+
+        assertThat(
+                paidSummary.monthlyPaidAmount()
+        ).isEqualTo(
+                settlement.amount()
+        );
+
+        assertThat(
+                paidSummary.nextExpectedPaymentDate()
+        ).isNull();
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("초기 크루 정산 목록은 비어 있다")
+    void initialCrewSettlements()
+            throws Exception {
+
+        String crewToken =
+                loginSetting();
+
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content.length()"
+                        ).value(0)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(0)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.number"
+                        ).value(0)
+                );
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루 정산 목록을 검색하고 조건별로 필터링한다")
+    void filterCrewSettlements()
+            throws Exception {
+
+        String crewToken =
+                loginSetting();
+
+        String companyToken =
+                loginSetting_Company();
+
+        CompanySettlementResponse settlement =
+                createWaitingSettlement(
+                        crewToken,
+                        companyToken
+                );
+
+        /*
+         * 전체 목록
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].settlementId"
+                        ).value(
+                                settlement.settlementId()
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].projectId"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].brandName"
+                        ).value("네이버")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].settlementStatus"
+                        ).value("WAITING")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].amount"
+                        ).value(
+                                settlement.amount()
+                        )
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].settlementDate"
+                        ).doesNotExist()
+                );
+
+        /*
+         * 브랜드명 검색
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "keyword",
+                                        "네이버"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                );
+
+        /*
+         * 존재하지 않는 검색어
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "keyword",
+                                        "존재하지않는검색어"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(0)
+                );
+
+        /*
+         * 지급 대기 상태
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "settlementStatus",
+                                        "WAITING"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                );
+
+        /*
+         * 아직 지급 완료 정산은 없음
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "settlementStatus",
+                                        "PAID"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(0)
+                );
+
+        /*
+         * 기업 산업 분야
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "category",
+                                        "IT"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                );
+
+        /*
+         * 프로젝트 유형
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "projectType",
+                                        "APPTEST"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                );
+
+        /*
+         * 프로젝트 수행 기간과 겹치는 넓은 기간
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "startDate",
+                                        "2000-01-01"
+                                )
+                                .param(
+                                        "endDate",
+                                        "2100-12-31"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                );
+
+        /*
+         * 프로젝트 기간과 겹치지 않는 미래 기간
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "startDate",
+                                        "2100-01-01"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(0)
+                );
+
+        /*
+         * 페이지 정보
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "page",
+                                        "0"
+                                )
+                                .param(
+                                        "size",
+                                        "1"
+                                )
+                                .param(
+                                        "sort",
+                                        "RECENT"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalPages"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content.length()"
+                        ).value(1)
+                );
+
+        /*
+         * 기업이 정산 지급 완료
+         */
+        LocalDate settlementDate =
+                LocalDate.of(
+                        2026,
+                        7,
+                        15
+                );
+
+        CompanySettlementCompleteRequest completeRequest =
+                new CompanySettlementCompleteRequest(
+                        settlementDate
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/companies/me/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header(
+                                        "Authorization",
+                                        companyToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                completeRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        /*
+         * 지급 완료 상태 조회
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "settlementStatus",
+                                        "PAID"
+                                )
+                                .param(
+                                        "sort",
+                                        "OLDEST"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].settlementStatus"
+                        ).value("PAID")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].settlementDate"
+                        ).value(
+                                settlementDate.toString()
+                        )
+                );
+
+        /*
+         * 지급 대기 상태에서는 제외
+         */
+        mockMvc.perform(
+                        get("/api/v1/crews/settlements")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .param(
+                                        "settlementStatus",
+                                        "WAITING"
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath(
+                                "$.payload.totalElements"
+                        ).value(0)
+                );
     }
 }
 

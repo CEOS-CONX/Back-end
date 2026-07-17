@@ -4,7 +4,10 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.crew.request.CrewPortfolioRequestDTO;
 import com.conx.server.user.dto.crew.request.CrewProfileUpdateRequest;
+import com.conx.server.user.dto.crew.request.ModifyCrewPortfolioRequestDTO;
+import com.conx.server.user.dto.crew.response.CrewPortfolioResponseDTO;
 import com.conx.server.user.dto.crew.response.CrewProfileResponse;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,6 +23,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -94,7 +100,7 @@ public class CrewProfileTest {
 
         assertThat(responseDTO.crewId()).isEqualTo(1);
         assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
-        assertThat(responseDTO.crewSchool()).isEqualTo(null);
+        assertThat(responseDTO.schools()).isEqualTo(Collections.emptyList());
     }
 
     @Test
@@ -103,9 +109,26 @@ public class CrewProfileTest {
     void modifyCrewPersonalInformation() throws Exception {
         String crewToken = loginSetting();
         CrewProfileUpdateRequest req = new CrewProfileUpdateRequest(
-                "$$$", "크루이름", CrewType.CLUB, null, "오정민",
-                "회장", "홍익대학교", 12, "저희는 재밌게 만들어가는 동아리입니다!",
-                null, null, Industry.CAREER, null, null, null
+                "$$$",
+                "크루이름",
+                CrewType.CLUB,
+                null,
+                "오정민",
+                "회장",
+
+                null,                    // activityField
+                Industry.CAREER,         // interestingIndustry
+
+                12,
+                "저희는 재밌게 만들어가는 동아리입니다!",
+                null,                    // crewIntroduction
+
+                List.of("홍익대학교"),
+                null,                    // advantages
+                null,                    // specialties
+
+                null,                    // links
+                null                     // files
         );
 
         mockMvc.perform(patch("/api/v1/crews/me")
@@ -130,7 +153,7 @@ public class CrewProfileTest {
 
         assertThat(responseDTO.crewId()).isEqualTo(1);
         assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
-        assertThat(responseDTO.crewSchool()).isEqualTo("홍익대학교");
+        assertThat(responseDTO.schools()).isEqualTo(List.of("홍익대학교"));
     }
 
     @Test
@@ -156,5 +179,119 @@ public class CrewProfileTest {
 
         assertThat(content.size()).isEqualTo(1);
         assertThat(content.get(0).path("projectId").asLong()).isEqualTo(2);
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루 포트폴리오 등록하기")
+    void registerPortfolio() throws Exception {
+        String crewToken = loginSetting();
+
+        CrewPortfolioRequestDTO mock1 = new CrewPortfolioRequestDTO(
+                "https://cdn.example.com/portfolio/img1.png",
+                "브랜드 아이덴티티 디자인",
+                "https://cdn.example.com/portfolio/file1.pdf"
+        );
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/crews/me/portfolio")
+                        .header("Authorization", crewToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mock1)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewPortfolioResponseDTO> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewPortfolioResponseDTO>>() {
+                }
+        );
+
+        CrewPortfolioResponseDTO responseDTO = response.payload();
+        assertThat(responseDTO.name()).isEqualTo(mock1.name());
+        assertThat(responseDTO.imageLink()).isEqualTo(mock1.imageLink());
+        assertThat(responseDTO.fileLink()).isEqualTo(mock1.fileLink());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루 포트폴리오 수정하기")
+    void modifyPortfolio() throws Exception {
+        String crewToken = loginSetting();
+
+        CrewPortfolioRequestDTO mock1 = new CrewPortfolioRequestDTO(
+                "https://cdn.example.com/portfolio/img1.png",
+                "브랜드 아이덴티티 디자인",
+                "https://cdn.example.com/portfolio/file1.pdf"
+        );
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/crews/me/portfolio")
+                        .header("Authorization", crewToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mock1)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewPortfolioResponseDTO> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewPortfolioResponseDTO>>() {
+                }
+        );
+
+        ModifyCrewPortfolioRequestDTO mock2 = new ModifyCrewPortfolioRequestDTO(
+                "https://cdn.example.com/portfolio/img2.png",
+                "웹사이트 리뉴얼 프로젝트",
+                "https://cdn.example.com/portfolio/file2.pdf"
+        );
+
+        MvcResult mvcResult2 = mockMvc.perform(patch("/api/v1/crews/me/portfolio/" + response.payload().id())
+                        .header("Authorization", crewToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mock2)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewPortfolioResponseDTO> portfolioResponseDTO = objectMapper.readValue(
+                mvcResult2.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewPortfolioResponseDTO>>() {
+                }
+        );
+
+        CrewPortfolioResponseDTO responseDTO = portfolioResponseDTO.payload();
+        assertThat(responseDTO.name()).isEqualTo(mock2.name());
+        assertThat(responseDTO.imageLink()).isEqualTo(mock2.imageLink());
+        assertThat(responseDTO.fileLink()).isEqualTo(mock2.fileLink());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루 포트폴리오 삭제하기")
+    void deletePortfolio() throws Exception {
+        String crewToken = loginSetting();
+
+        CrewPortfolioRequestDTO mock1 = new CrewPortfolioRequestDTO(
+                "https://cdn.example.com/portfolio/img1.png",
+                "브랜드 아이덴티티 디자인",
+                "https://cdn.example.com/portfolio/file1.pdf"
+        );
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/crews/me/portfolio")
+                        .header("Authorization", crewToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mock1)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewPortfolioResponseDTO> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CrewPortfolioResponseDTO>>() {
+                }
+        );
+
+        mockMvc.perform(delete("/api/v1/crews/me/portfolio/" + response.payload().id())
+                        .header("Authorization", crewToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mock1)))
+                .andExpect(status().isOk())
+                .andReturn();
     }
 }

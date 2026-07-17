@@ -31,7 +31,7 @@ public record CompanyPartnerCrewResponse(
     public static CompanyPartnerCrewResponse of(Project project, Crew crew) {
         return new CompanyPartnerCrewResponse(
                 project.getId(),
-                project.getName(),
+                project.getProjectName(),
                 project.getStatus(),
                 crew.getId(),
                 crew.getCrewName(),

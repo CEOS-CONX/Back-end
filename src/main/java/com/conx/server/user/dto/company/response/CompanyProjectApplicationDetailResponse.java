@@ -24,8 +24,7 @@ public record CompanyProjectApplicationDetailResponse(
         String snsLink,
         String etcLink,
         String kakaotalkLink,
-        String introduction,
-        String proposal,
+        String motivation,
         ProjectApplicationStatus status
 ) {
 
@@ -48,8 +47,7 @@ public record CompanyProjectApplicationDetailResponse(
                 crew.getSnsLink(),
                 crew.getEtcLink(),
                 crew.getKakaotalkLink(),
-                application.getIntroduction(),
-                application.getProposal(),
+                application.getMotivation(),
                 application.getStatus()
         );
     }

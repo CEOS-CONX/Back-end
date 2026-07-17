@@ -1,8 +1,8 @@
 package com.conx.server.user.domain;
 
 import com.conx.server.global.BaseEntity;
-import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.domain.types.UserStatus;
+import com.conx.server.user.dto.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class User extends BaseEntity {
-    protected User(String email, String password){
+
+    protected User(String email, String password) {
         this.email = email;
         this.password = password;
         this.role = UserRole.TEMPORAL;
@@ -33,12 +34,20 @@ public abstract class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    protected void activate(UserRole role){
+    protected void activate(UserRole role) {
         this.status = UserStatus.ACTIVE;
         this.role = role;
     }
 
-    public void withdrawUser(){
+    public void changeEmail(String email) {
+        this.email = email;
+    }
+
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    public void withdrawUser() {
         this.status = UserStatus.WITHDRAW;
     }
 }

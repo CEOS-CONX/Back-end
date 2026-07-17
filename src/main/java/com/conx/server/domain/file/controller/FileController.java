@@ -7,6 +7,7 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,7 +19,7 @@ public class FileController {
     private final ApiResponseFactory apiResponseFactory;
 
     /**
-     * 파일을 업로드합니다
+     * 파일을 업로드용 PresignedUrl을 발급합니다.
      * @param request 파일명 + 파일타입 정보
      */
     @PostMapping("/presigned-url")

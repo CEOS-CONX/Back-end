@@ -8,9 +8,9 @@ public record CrewWrapperForLandingPageDTO(
         String crewImageLink,
         String crewName,
         String crewIntroduction,
-
         Industry industry,
         CrewType crewType,
         double point,
-        int cumulative
-) {}
+        int totalProject
+) {
+}

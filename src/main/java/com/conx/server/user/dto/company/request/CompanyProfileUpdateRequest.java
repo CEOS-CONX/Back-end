@@ -1,6 +1,7 @@
 package com.conx.server.user.dto.company.request;
 
 import com.conx.server.user.domain.types.Industry;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 public record CompanyProfileUpdateRequest(
         String companyName,
@@ -10,6 +11,10 @@ public record CompanyProfileUpdateRequest(
         String customIndustry,
         String profileImage,
         String additionalFileLink,
-        String homepageLink
+
+        @JsonAlias("homepageLink")
+        String website,
+
+        String businessRegistrationNumber
 ) {
 }

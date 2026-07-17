@@ -8,10 +8,10 @@ public record CompanyProfileResponse(
         String companyIntroduction,
         String brandName,
         Industry industry,
-        String customIndustry,
+        String businessRegistrationNumber,
         String profileImage,
         String additionalFileLink,
-        String homepageLink
+        String website
 ) {
 
     public static CompanyProfileResponse from(Company company) {
@@ -20,7 +20,7 @@ public record CompanyProfileResponse(
                 company.getCompanyIntroduction(),
                 company.getBrandName(),
                 company.getIndustry(),
-                company.getCustomIndustry(),
+                company.getBusinessRegistrationNumber(),
                 company.getProfileImage(),
                 company.getAdditionalFileLink(),
                 company.getHomepageLink()

@@ -7,11 +7,12 @@ import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.Industry;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record CrewBookmarkedProjectResponse(
         Long bookmarkId,
         Long projectId,
-        String projectImage,
+        List<String> projectImage,
         String projectName,
         String companyName,
         Industry industry,
@@ -30,7 +31,7 @@ public record CrewBookmarkedProjectResponse(
                 bookmark.getId(),
                 project.getId(),
                 project.getProjectImage(),
-                project.getName(),
+                project.getProjectName(),
                 project.getCompany().getCompanyName(),
                 project.getCompany().getIndustry(),
                 project.getProjectType(),

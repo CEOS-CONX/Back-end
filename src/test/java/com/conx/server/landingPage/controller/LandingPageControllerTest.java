@@ -75,7 +75,7 @@ class LandingPageControllerTest {
         // given
         ProjectWrapperForLandingPageDTO project = new ProjectWrapperForLandingPageDTO(
                 1L,
-                "project-image.png",
+                List.of("project-image.png"),
                 "테스트 프로젝트",
                 "테스트 기업",
                 null,
@@ -114,7 +114,7 @@ class LandingPageControllerTest {
                 .andExpect(jsonPath("$.payload.crews[0].crewId").value(1))
                 .andExpect(jsonPath("$.payload.crews[0].crewName").value("테스트 크루"))
                 .andExpect(jsonPath("$.payload.crews[0].point").value(4.5))
-                .andExpect(jsonPath("$.payload.crews[0].cumulative").value(3));
+                .andExpect(jsonPath("$.payload.crews[0].totalProject").value(3));
 
         verify(anonymousLandingPageService).landing();
     }
