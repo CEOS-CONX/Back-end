@@ -87,47 +87,71 @@ public class AdminWorkSpaceTest {
     @Transactional
     @DisplayName("어드민_검수하기")
     void completeContractInAdmin() throws Exception {
-        //프로젝트 크루 지원 및 선정
-        String token = loginSetting();
+        // 크루 로그인
+        String crewToken = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용, no후회ㄱㄱㄱ");
+        // 프로젝트 지원
+        ProjectApplicationRequest req =
+                new ProjectApplicationRequest("안녕하세용, no후회ㄱㄱㄱ");
 
-        mockMvc.perform(post("/api/v1/projects/1/applications")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
-
-        String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/1/select")
-                        .header("Authorization", tokenCompany))
-                .andExpect(status().isOk());
-
-        //어드민 검수 시작
-        String token_admin = loginSetting_Admin();
-
-        mockMvc.perform(patch("/api/v1/admin/projects/1/contract-complete")
-                        .header("Authorization", token_admin))
-                .andExpect(status().isOk());
-
-        //재확인
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/applications?status=ALL")
-                        .header("Authorization", token))
+        MvcResult applicationResult = mockMvc.perform(
+                        post("/api/v1/projects/1/applications")
+                                .header("Authorization", crewToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ApiResponse<CrewApplicationStatusResponseDTO> response = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
-        );
+        ApiResponse<ProjectApplicationResponse> applicationResponse =
+                objectMapper.readValue(
+                        applicationResult.getResponse().getContentAsString(),
+                        new TypeReference<ApiResponse<ProjectApplicationResponse>>() {}
+                );
 
-        Project project = projectRepository.findById(1L).get();
+        long applicationId = applicationResponse.payload().applicationId();
 
-        CrewApplicationStatusResponseDTO applicationResponse = response.payload();
-        assertThat(applicationResponse.applications().get(0).applicationId()).isEqualTo(1);
-        assertThat(applicationResponse.applications().get(0).status()).isEqualTo(ProjectApplicationStatus.SELECTED);
+        // 기업 로그인 후 지원자 선정
+        String companyToken = loginSetting_Company();
+
+        mockMvc.perform(
+                        post("/api/v1/companies/me/projects/1/applications/{applicationId}/select",
+                                applicationId)
+                                .header("Authorization", companyToken))
+                .andExpect(status().isOk());
+
+        // 관리자 로그인 후 계약 완료
+        String adminToken = loginSetting_Admin();
+
+        mockMvc.perform(
+                        patch("/api/v1/admin/projects/1/contract-complete")
+                                .header("Authorization", adminToken))
+                .andExpect(status().isOk());
+
+        // 결과 확인
+        MvcResult result = mockMvc.perform(
+                        get("/api/v1/crews/applications")
+                                .param("status", "ALL")
+                                .header("Authorization", crewToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<CrewApplicationStatusResponseDTO> response =
+                objectMapper.readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<ApiResponse<CrewApplicationStatusResponseDTO>>() {}
+                );
+
+        Project project = projectRepository.findById(1L)
+                .orElseThrow();
+
+        CrewApplicationStatusResponseDTO dto = response.payload();
+
+        assertThat(dto.applications()).hasSize(1);
+        assertThat(dto.applications().get(0).applicationId()).isEqualTo(applicationId);
+        assertThat(dto.applications().get(0).status()).isEqualTo(ProjectApplicationStatus.SELECTED);
+
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.PROGRESS);
-        assertThat(response.hasNotification()).isEqualTo(true);
+        assertThat(response.hasNotification()).isTrue();
     }
 
     @Test
