@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -99,7 +100,7 @@ public class CrewProfileTest {
 
         assertThat(responseDTO.crewId()).isEqualTo(1);
         assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
-        assertThat(responseDTO.schools()).isEqualTo(null);
+        assertThat(responseDTO.schools()).isEqualTo(Collections.emptyList());
     }
 
     @Test
