@@ -1,8 +1,9 @@
 package com.conx.server.project.domain;
 
-import com.conx.server.domain.file.domain.File;
 import com.conx.server.domain.file.dto.FileRequestDTO;
 import com.conx.server.global.BaseEntity;
+import com.conx.server.global.exception.CustomException;
+import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.company.Company;
@@ -10,17 +11,29 @@ import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+
 import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Project extends BaseEntity {
+
     private Project(
             Company company,
             Crew selectedCrew,
@@ -54,12 +67,12 @@ public class Project extends BaseEntity {
         this.brandName = brandName;
         this.managerName = managerName;
         this.managerEmail = managerEmail;
-        this.projectImage = projectImage;
+        this.projectImage = copyList(projectImage);
         this.projectName = projectName;
         this.projectExplanation = projectExplanation;
         this.industry = industry;
         this.projectType = projectType;
-        this.resultForm = resultForm;
+        this.resultForm = copyList(resultForm);
         this.recruitDeadLine = recruitDeadLine;
         this.projectStartDate = projectStartDate;
         this.projectDeadline = projectDeadline;
@@ -71,7 +84,8 @@ public class Project extends BaseEntity {
         this.peopleNumber = peopleNumber;
         this.competency = competency;
         this.preferenceCondition = preferenceCondition;
-        this.fileLinks = fileLinks;
+        this.fileLinks = copyList(fileLinks);
+        this.links = copyList(links);
         this.status = status;
         this.views = views;
     }
@@ -88,100 +102,100 @@ public class Project extends BaseEntity {
     @JoinColumn(name = "selected_crew_id")
     private Crew selectedCrew;
 
-    //브랜드 정보
-    //브랜드 이름
+    /*
+     * 브랜드 정보
+     */
     private String brandName;
 
-    //담당자명
     private String managerName;
 
-    //이메일
     private String managerEmail;
 
-
-    //프로젝트 설명
-    //프로젝트 이미지(5개)
+    /*
+     * 프로젝트 이미지: 최대 개수 검증은 요청 DTO 또는 Service에서 처리한다.
+     */
     @ElementCollection
     @CollectionTable(
             name = "project_images",
             joinColumns = @JoinColumn(name = "project_id")
     )
-    private List<String> projectImage;
+    private List<String> projectImage =
+            new ArrayList<>();
 
-    //프로젝트명
     private String projectName;
 
-    //프로젝트 소개
     private String projectExplanation;
 
-    //산업 분야
     private Industry industry;
 
-    //프로젝트 유형
     private ProjectType projectType;
 
-    //결과물
     @ElementCollection
     @CollectionTable(
             name = "project_result_form",
             joinColumns = @JoinColumn(name = "project_id")
     )
-    private List<ResultForm> resultForm;
+    private List<ResultForm> resultForm =
+            new ArrayList<>();
 
-    //일정
-    //크루 모집 마감일
+    /*
+     * 프로젝트 일정
+     */
     private LocalDate recruitDeadLine;
+
     private LocalDate crewSelectedDate;
 
-    //프로젝트 시작일
     private LocalDate projectStartDate;
 
-    //프로젝트 마감일
     private LocalDate projectDeadline;
 
-    //결과물 제출일
     private LocalDate submitDeadline;
+
     private LocalDate resultSubmittedDate;
 
     private LocalDate projectEndedDate;
 
-    //지원금
+    /*
+     * 지원금 및 인센티브
+     */
     private long subsidy;
 
-    //인센티브 지급여부
     private boolean incentive;
 
-    //인센티브 지급조건
     private String incentiveCondition;
 
-    //모집 크루 조건
-    //크루유형
+    /*
+     * 모집 크루 조건
+     */
     private CrewType crewType;
 
-    //참여 인원수
     private int peopleNumber;
 
-    //필수 역량
     private String competency;
 
-    //우대 조건
     private String preferenceCondition;
 
-    //참고자료
+    /*
+     * 프로젝트 참고 파일 URL
+     */
     @ElementCollection
     @CollectionTable(
             name = "file_links",
             joinColumns = @JoinColumn(name = "project_id")
     )
-    private List<String> fileLinks;
+    private List<String> fileLinks =
+            new ArrayList<>();
 
-    //링크
+    /*
+     * 프로젝트 추가 링크
+     */
     @ElementCollection
     @CollectionTable(
             name = "project_links",
             joinColumns = @JoinColumn(name = "project_id")
     )
-    private List<AdditionalLinksWrapper> links;
+    private List<AdditionalLinksWrapper> links =
+            new ArrayList<>();
 
     private ProjectStatus status;
 
@@ -192,6 +206,30 @@ public class Project extends BaseEntity {
             CompanyProjectRequestDTO request,
             ProjectStatus status
     ) {
+        List<ResultForm> resultForms =
+                request.resultForm() == null
+                        ? List.of()
+                        : request.resultForm()
+                        .stream()
+                        .map(ResultForm::from)
+                        .toList();
+
+        List<String> fileLinks =
+                request.fileLinks() == null
+                        ? List.of()
+                        : request.fileLinks()
+                        .stream()
+                        .map(FileRequestDTO::fileLinks)
+                        .toList();
+
+        List<AdditionalLinksWrapper> additionalLinks =
+                request.additionalLinks() == null
+                        ? List.of()
+                        : request.additionalLinks()
+                        .stream()
+                        .map(AdditionalLinksWrapper::from)
+                        .toList();
+
         return new Project(
                 company,
                 null,
@@ -203,7 +241,7 @@ public class Project extends BaseEntity {
                 request.projectExplanation(),
                 request.industry(),
                 request.projectType(),
-                request.resultForm().stream().map(ResultForm::from).toList(),
+                resultForms,
                 request.recruitDeadline(),
                 request.projectStartDate(),
                 request.projectDeadline(),
@@ -215,10 +253,10 @@ public class Project extends BaseEntity {
                 request.peopleNumber(),
                 request.competency(),
                 request.preferenceCondition(),
-                request.fileLinks() == null ? null : request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList(),
-                request.additionalLinks() == null ? null : request.additionalLinks().stream().map(AdditionalLinksWrapper::from).toList(),
+                fileLinks,
+                additionalLinks,
                 status,
-                0                         // 조회수 초기값
+                0
         );
     }
 
@@ -226,53 +264,166 @@ public class Project extends BaseEntity {
             Company company,
             CompanyProjectRequestDTO request
     ) {
-        return createWithStatus(company, request, ProjectStatus.RECRUITING);
+        return createWithStatus(
+                company,
+                request,
+                ProjectStatus.RECRUITING
+        );
     }
 
     public static Project createDraft(
             Company company,
             CompanyProjectRequestDTO request
     ) {
-        return createWithStatus(company, request, ProjectStatus.DRAFT);
+        return createWithStatus(
+                company,
+                request,
+                ProjectStatus.DRAFT
+        );
     }
 
-    private void modify(CompanyProjectRequestDTO request) {
-        this.brandName = getOrDefault(request.brandName(), this.getBrandName());
-        this.managerName = getOrDefault(request.managerName(), this.getManagerName());
-        this.managerEmail = getOrDefault(request.managerEmail(), this.getManagerEmail());
+    private void modify(
+            CompanyProjectRequestDTO request
+    ) {
+        this.brandName =
+                getOrDefault(
+                        request.brandName(),
+                        this.brandName
+                );
 
-        this.projectImage = getOrDefault(request.projectImages(), this.getProjectImage());
-        this.projectName = getOrDefault(request.projectName(), this.getProjectName());
-        this.projectExplanation = getOrDefault(request.projectExplanation(), this.getProjectExplanation());
-        this.industry = getOrDefault(request.industry(), this.getIndustry());
-        this.projectType = getOrDefault(request.projectType(), this.getProjectType());
-        this.resultForm = getOrDefault(request.resultForm().stream().map(ResultForm::from).toList(), this.getResultForm());
+        this.managerName =
+                getOrDefault(
+                        request.managerName(),
+                        this.managerName
+                );
 
-        this.recruitDeadLine = getOrDefault(request.recruitDeadline(), this.getRecruitDeadLine());
-        this.projectStartDate = getOrDefault(request.projectStartDate(), this.getProjectStartDate());
-        this.projectDeadline = getOrDefault(request.projectDeadline(), this.getProjectDeadline());
-        this.submitDeadline = getOrDefault(request.submitDeadline(), this.getSubmitDeadline());
+        this.managerEmail =
+                getOrDefault(
+                        request.managerEmail(),
+                        this.managerEmail
+                );
 
-        this.subsidy = getOrDefault(request.subsidy(), this.getSubsidy());
-        this.incentive = getOrDefault(request.incentive(), this.isIncentive());
-        this.incentiveCondition = getOrDefault(request.incentiveCondition(), this.getIncentiveCondition());
+        this.projectImage =
+                copyList(
+                        getOrDefault(
+                                request.projectImages(),
+                                this.projectImage
+                        )
+                );
 
-        this.crewType = getOrDefault(request.crewType(), this.getCrewType());
-        this.peopleNumber = getOrDefault(request.peopleNumber(), this.getPeopleNumber());
-        this.competency = getOrDefault(request.competency(), this.getCompetency());
-        this.preferenceCondition = getOrDefault(request.preferenceCondition(), this.getPreferenceCondition());
+        this.projectName =
+                getOrDefault(
+                        request.projectName(),
+                        this.projectName
+                );
 
-        this.fileLinks = getOrDefault(request.fileLinks().stream().map(FileRequestDTO::fileLinks).toList(), this.getFileLinks());
+        this.projectExplanation =
+                getOrDefault(
+                        request.projectExplanation(),
+                        this.projectExplanation
+                );
 
-        this.links = getOrDefault(request.additionalLinks().stream().map(AdditionalLinksWrapper::from).toList(), this.links);
-    }
+        this.industry =
+                getOrDefault(
+                        request.industry(),
+                        this.industry
+                );
 
-    public String getCompanyName(){
-        return company.getCompanyName();
-    }
+        this.projectType =
+                getOrDefault(
+                        request.projectType(),
+                        this.projectType
+                );
 
-    public String getCrewName(){
-        return selectedCrew.getCrewName();
+        if (request.resultForm() != null) {
+            this.resultForm =
+                    request.resultForm()
+                            .stream()
+                            .map(ResultForm::from)
+                            .toList();
+        }
+
+        this.recruitDeadLine =
+                getOrDefault(
+                        request.recruitDeadline(),
+                        this.recruitDeadLine
+                );
+
+        this.projectStartDate =
+                getOrDefault(
+                        request.projectStartDate(),
+                        this.projectStartDate
+                );
+
+        this.projectDeadline =
+                getOrDefault(
+                        request.projectDeadline(),
+                        this.projectDeadline
+                );
+
+        this.submitDeadline =
+                getOrDefault(
+                        request.submitDeadline(),
+                        this.submitDeadline
+                );
+
+        this.subsidy =
+                getOrDefault(
+                        request.subsidy(),
+                        this.subsidy
+                );
+
+        this.incentive =
+                getOrDefault(
+                        request.incentive(),
+                        this.incentive
+                );
+
+        this.incentiveCondition =
+                getOrDefault(
+                        request.incentiveCondition(),
+                        this.incentiveCondition
+                );
+
+        this.crewType =
+                getOrDefault(
+                        request.crewType(),
+                        this.crewType
+                );
+
+        this.peopleNumber =
+                getOrDefault(
+                        request.peopleNumber(),
+                        this.peopleNumber
+                );
+
+        this.competency =
+                getOrDefault(
+                        request.competency(),
+                        this.competency
+                );
+
+        this.preferenceCondition =
+                getOrDefault(
+                        request.preferenceCondition(),
+                        this.preferenceCondition
+                );
+
+        if (request.fileLinks() != null) {
+            this.fileLinks =
+                    request.fileLinks()
+                            .stream()
+                            .map(FileRequestDTO::fileLinks)
+                            .toList();
+        }
+
+        if (request.additionalLinks() != null) {
+            this.links =
+                    request.additionalLinks()
+                            .stream()
+                            .map(AdditionalLinksWrapper::from)
+                            .toList();
+        }
     }
 
     public void modifyDraft(
@@ -287,66 +438,126 @@ public class Project extends BaseEntity {
         modify(request);
     }
 
-    public void selectCrew(Crew crew) {
+    public String getCompanyName() {
+        return company == null
+                ? null
+                : company.getCompanyName();
+    }
+
+    public String getCrewName() {
+        return selectedCrew == null
+                ? null
+                : selectedCrew.getCrewName();
+    }
+
+    public void selectCrew(
+            Crew crew
+    ) {
         this.selectedCrew = crew;
-        this.status = ProjectStatus.CONTRACT_PENDING;
-        this.crewSelectedDate = LocalDate.now();
+        this.status =
+                ProjectStatus.CONTRACT_PENDING;
+        this.crewSelectedDate =
+                LocalDate.now();
     }
 
-    public void end() {
-        this.projectEndedDate = LocalDate.now();
-        this.status = ProjectStatus.DONE;
-    }
-
-    public boolean isDone(){
-        return this.status == ProjectStatus.DONE;
-    }
-
-    public boolean isWaitingResult(){
-        return this.status == ProjectStatus.WAITING_RESULT
-                || this.status == ProjectStatus.PROGRESS;
-    }
-
-    public boolean isBeforeSigningContract(){
-        return this.status == ProjectStatus.CONTRACT_PENDING;
-    }
-
-    public void submitProjectResult() {
-        this.status = ProjectStatus.INSPECTION;
-        this.resultSubmittedDate = LocalDate.now();
-    }
-
-    public void requestRevision() {
-        this.status = ProjectStatus.WAITING_RESULT;
+    public void completeContract() {
+        this.status =
+                ProjectStatus.PROGRESS;
     }
 
     public void afterProjectDeadline() {
-        this.status = ProjectStatus.WAITING_RESULT;
+        this.status =
+                ProjectStatus.WAITING_RESULT;
     }
 
-    public boolean isInProgress() {
-        return this.status == ProjectStatus.PROGRESS;
+    /*
+     * 결과물 제출 완료 상태 전이.
+     * 수정 요청 및 승인 API는 제거하지만, 제출 완료 시각과 기존 상태 집계를 위해 유지한다.
+     */
+    public void submitProjectResult() {
+        this.status =
+                ProjectStatus.INSPECTION;
+        this.resultSubmittedDate =
+                LocalDate.now();
     }
 
-    public boolean isAfterProgress() {
-        return this.status == ProjectStatus.PROGRESS || this.status == ProjectStatus.DONE || this.status == ProjectStatus.INSPECTION
-                || this.status == ProjectStatus.WAITING_RESULT;
-    }
+    public void completeInspection() {
+        if (status != ProjectStatus.INSPECTION) {
+            throw new CustomException(
+                    ErrorCode.INVALID_PROJECT_STATUS
+            );
+        }
 
-    public void approveResult() {
         this.status = ProjectStatus.ADJUSTING;
+    }
+
+    public void end() {
+        this.projectEndedDate =
+                LocalDate.now();
+        this.status =
+                ProjectStatus.DONE;
+    }
+
+    /*
+     * feature/2 정산 완료 호출부 호환용.
+     */
+    public void completeSettlement() {
+        end();
+    }
+
+    public void expire() {
+        this.status =
+                ProjectStatus.EXPIRED;
+        this.projectEndedDate =
+                LocalDate.now();
     }
 
     public void increaseViews() {
         this.views++;
     }
 
-    public void expire(){
-        this.status = ProjectStatus.EXPIRED;
-        this.projectEndedDate = LocalDate.now();
+    public boolean isDone() {
+        return status
+                == ProjectStatus.DONE;
     }
 
-    public void completeContract() {
-        this.status = ProjectStatus.PROGRESS;
+    public boolean isWaitingResult() {
+        return status
+                == ProjectStatus.WAITING_RESULT
+                || status
+                == ProjectStatus.PROGRESS;
+    }
+
+    public boolean isBeforeSigningContract() {
+        return status
+                == ProjectStatus.CONTRACT_PENDING;
+    }
+
+    public boolean isInProgress() {
+        return status
+                == ProjectStatus.PROGRESS;
+    }
+
+    public boolean isAfterProgress() {
+        return status
+                == ProjectStatus.PROGRESS
+                || status
+                == ProjectStatus.WAITING_RESULT
+                || status
+                == ProjectStatus.INSPECTION
+                || status
+                == ProjectStatus.ADJUSTING
+                || status
+                == ProjectStatus.DONE;
+    }
+
+    private static <T> List<T> copyList(
+            List<T> values
+    ) {
+        if (values == null) {
+            return new ArrayList<>();
+        }
+
+        return new ArrayList<>(values);
     }
 }

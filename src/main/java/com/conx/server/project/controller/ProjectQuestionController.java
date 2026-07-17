@@ -32,16 +32,23 @@ public class ProjectQuestionController {
             @PathVariable Long projectId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean mine,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Page<ProjectQuestionResponse> response = projectQuestionService.getQuestions(
-                projectId,
-                page,
-                size,
+        Page<ProjectQuestionResponse> response =
+                projectQuestionService.getQuestions(
+                        projectId,
+                        page,
+                        size,
+                        mine,
+                        userDetails
+                );
+
+        return apiResponseFactory.success(
+                "프로젝트 질문 목록 조회에 성공했습니다.",
+                response,
                 userDetails
         );
-
-        return apiResponseFactory.success(response, userDetails);
     }
 
     @GetMapping("/api/v1/projects/{projectId}/questions/{questionId}")
@@ -50,13 +57,18 @@ public class ProjectQuestionController {
             @PathVariable Long questionId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        ProjectQuestionDetailResponse response = projectQuestionService.getQuestion(
-                projectId,
-                questionId,
+        ProjectQuestionDetailResponse response =
+                projectQuestionService.getQuestion(
+                        projectId,
+                        questionId,
+                        userDetails
+                );
+
+        return apiResponseFactory.success(
+                "프로젝트 질문 상세 조회에 성공했습니다.",
+                response,
                 userDetails
         );
-
-        return apiResponseFactory.success(response, userDetails);
     }
 
     @PostMapping("/api/v1/projects/{projectId}/questions")
@@ -65,29 +77,41 @@ public class ProjectQuestionController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ProjectQuestionCreateRequest request
     ) {
-        ProjectQuestionDetailResponse response = projectQuestionService.createQuestion(
-                projectId,
-                userDetails,
-                request
-        );
+        ProjectQuestionDetailResponse response =
+                projectQuestionService.createQuestion(
+                        projectId,
+                        userDetails,
+                        request
+                );
 
-        return apiResponseFactory.success("프로젝트 질문 작성에 성공했습니다.", response, userDetails);
+        return apiResponseFactory.success(
+                "프로젝트 질문 작성에 성공했습니다.",
+                response,
+                userDetails
+        );
     }
 
-    @PatchMapping("/api/v1/projects/{projectId}/questions/{questionId}/answer")
+    @PatchMapping(
+            "/api/v1/projects/{projectId}/questions/{questionId}/answer"
+    )
     public ApiResponse<ProjectQuestionDetailResponse> answerQuestion(
             @PathVariable Long projectId,
             @PathVariable Long questionId,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ProjectQuestionAnswerRequest request
     ) {
-        ProjectQuestionDetailResponse response = projectQuestionService.answerQuestion(
-                projectId,
-                questionId,
-                userDetails,
-                request
-        );
+        ProjectQuestionDetailResponse response =
+                projectQuestionService.answerQuestion(
+                        projectId,
+                        questionId,
+                        userDetails,
+                        request
+                );
 
-        return apiResponseFactory.success("프로젝트 질문 답변 저장에 성공했습니다.", response, userDetails);
+        return apiResponseFactory.success(
+                "프로젝트 질문 답변 저장에 성공했습니다.",
+                response,
+                userDetails
+        );
     }
 }

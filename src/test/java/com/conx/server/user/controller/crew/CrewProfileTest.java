@@ -24,6 +24,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -97,7 +99,7 @@ public class CrewProfileTest {
 
         assertThat(responseDTO.crewId()).isEqualTo(1);
         assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
-        assertThat(responseDTO.crewSchool()).isEqualTo(null);
+        assertThat(responseDTO.schools()).isEqualTo(null);
     }
 
     @Test
@@ -106,9 +108,26 @@ public class CrewProfileTest {
     void modifyCrewPersonalInformation() throws Exception {
         String crewToken = loginSetting();
         CrewProfileUpdateRequest req = new CrewProfileUpdateRequest(
-                "$$$", "크루이름", CrewType.CLUB, null, "오정민",
-                "회장", "홍익대학교", 12, "저희는 재밌게 만들어가는 동아리입니다!",
-                null, null, Industry.CAREER, null, null, null
+                "$$$",
+                "크루이름",
+                CrewType.CLUB,
+                null,
+                "오정민",
+                "회장",
+
+                null,                    // activityField
+                Industry.CAREER,         // interestingIndustry
+
+                12,
+                "저희는 재밌게 만들어가는 동아리입니다!",
+                null,                    // crewIntroduction
+
+                List.of("홍익대학교"),
+                null,                    // advantages
+                null,                    // specialties
+
+                null,                    // links
+                null                     // files
         );
 
         mockMvc.perform(patch("/api/v1/crews/me")
@@ -133,7 +152,7 @@ public class CrewProfileTest {
 
         assertThat(responseDTO.crewId()).isEqualTo(1);
         assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
-        assertThat(responseDTO.crewSchool()).isEqualTo("홍익대학교");
+        assertThat(responseDTO.schools()).isEqualTo(List.of("홍익대학교"));
     }
 
     @Test

@@ -12,9 +12,24 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
 
     Optional<Company> findByEmail(String email);
 
-    Optional<Company> findByEmailAndStatus(String email, UserStatus status);
+    Optional<Company> findByEmailAndStatus(
+            String email,
+            UserStatus status
+    );
 
-    Optional<Company> findByIdAndStatus(Long id, UserStatus status);
+    Optional<Company> findByIdAndStatus(
+            Long id,
+            UserStatus status
+    );
 
-    boolean existsByEmailAndStatus(String email, UserStatus status);
+    boolean existsByEmailAndStatus(
+            String email,
+            UserStatus status
+    );
+
+    Optional<Company> findByEmailIgnoreCaseAndManagerNameAndStatus(
+            String email,
+            String managerName,
+            UserStatus status
+    );
 }

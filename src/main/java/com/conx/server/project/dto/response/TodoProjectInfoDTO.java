@@ -10,11 +10,18 @@ public record TodoProjectInfoDTO(
         ProjectStatus projectStatus,
         String projectName
 ) {
-    public static TodoProjectInfoDTO create(Project project){
-        return new TodoProjectInfoDTO(project.getId(), project.getStatus(), project.getProjectName());
+
+    public static TodoProjectInfoDTO create(Project project) {
+        return new TodoProjectInfoDTO(
+                project.getId(),
+                project.getStatus(),
+                project.getProjectName()
+        );
     }
 
-    public static List<TodoProjectInfoDTO> create(List<Project> projects){
-        return projects.stream().map(TodoProjectInfoDTO::create).toList();
+    public static List<TodoProjectInfoDTO> create(List<Project> projects) {
+        return projects.stream()
+                .map(TodoProjectInfoDTO::create)
+                .toList();
     }
 }

@@ -2,16 +2,18 @@ package com.conx.server.user.controller.crew;
 
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.crew.CrewBrowseSort;
+import com.conx.server.user.dto.crew.CrewProjectHistorySort;
 import com.conx.server.user.dto.crew.response.CrewBrowseDetailResponse;
 import com.conx.server.user.dto.crew.response.CrewBrowseResponse;
-import com.conx.server.user.service.browse.CrewBrowseService;
-import lombok.RequiredArgsConstructor;
+import com.conx.server.user.dto.crew.response.CrewProjectHistoryResponse;
 import com.conx.server.user.service.browse.CrewBrowseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,31 +30,96 @@ public class CrewBrowseController {
 
     @GetMapping
     public ApiResponse<Page<CrewBrowseResponse>> getCrews(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Industry category,
-            @RequestParam(required = false) CrewType crewType,
-            @RequestParam(required = false) CrewBrowseSort sort,
-            @RequestParam int page,
-            @RequestParam int size
-    ) {
-        Page<CrewBrowseResponse> response = crewBrowseService.getCrews(
-                keyword,
-                category,
-                crewType,
-                sort,
-                page,
-                size
-        );
+            @RequestParam(required = false)
+            String keyword,
 
-        return apiResponseFactory.success("크루 목록 조회에 성공했습니다.", response, null);
+            @RequestParam(required = false)
+            Industry category,
+
+            @RequestParam(required = false)
+            CrewType crewType,
+
+            @RequestParam(required = false)
+            CrewBrowseSort sort,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "12")
+            int size,
+
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails
+    ) {
+        Page<CrewBrowseResponse> response =
+                crewBrowseService.getCrews(
+                        keyword,
+                        category,
+                        crewType,
+                        sort,
+                        page,
+                        size,
+                        userDetails
+                );
+
+        return apiResponseFactory.success(
+                "크루 목록 조회에 성공했습니다.",
+                response,
+                null
+        );
     }
 
     @GetMapping("/{crewId}")
-    public ApiResponse<CrewBrowseDetailResponse> getCrewDetail(
-            @PathVariable Long crewId
-    ) {
-        CrewBrowseDetailResponse response = crewBrowseService.getCrewDetail(crewId);
+    public ApiResponse<CrewBrowseDetailResponse>
+    getCrewDetail(
+            @PathVariable
+            Long crewId,
 
-        return apiResponseFactory.success("크루 상세 조회에 성공했습니다.", response, null);
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails
+    ) {
+        CrewBrowseDetailResponse response =
+                crewBrowseService.getCrewDetail(
+                        crewId,
+                        userDetails
+                );
+
+        return apiResponseFactory.success(
+                "크루 상세 조회에 성공했습니다.",
+                response,
+                null
+        );
+    }
+
+    @GetMapping("/{crewId}/projects")
+    public ApiResponse<Page<CrewProjectHistoryResponse>>
+    getCrewProjects(
+            @PathVariable
+            Long crewId,
+
+            @RequestParam(defaultValue = "0")
+            int page,
+
+            @RequestParam(defaultValue = "8")
+            int size,
+
+            @RequestParam(
+                    defaultValue = "RECENT"
+            )
+            CrewProjectHistorySort sort
+    ) {
+        Page<CrewProjectHistoryResponse> response =
+                crewBrowseService.getCrewProjects(
+                        crewId,
+                        page,
+                        size,
+                        sort
+                );
+
+        return apiResponseFactory.success(
+                "크루 프로젝트 이력 조회에 성공했습니다.",
+                response,
+                null
+        );
     }
 }
