@@ -1,0 +1,61 @@
+package com.conx.server.user.dto.crew.response;
+
+import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.ProjectSettlement;
+import com.conx.server.project.domain.enums.CrewPaymentStatus;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
+import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.user.domain.company.Company;
+import com.conx.server.user.domain.types.Industry;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+public record CrewSettlementItemResponse(
+        long settlementId,
+        long projectId,
+        String projectName,
+        String brandName,
+        String companyName,
+        Industry category,
+        ProjectType projectType,
+        LocalDate projectStartDate,
+        LocalDate projectDeadline,
+        long amount,
+        ProjectSettlementStatus settlementStatus,
+        CrewPaymentStatus crewPaymentStatus,
+        LocalDate expectedPaymentDate,
+        LocalDate settlementDate,
+        LocalDate crewPaymentConfirmedDate,
+        LocalDateTime registeredAt
+) {
+
+    public static CrewSettlementItemResponse from(
+            ProjectSettlement settlement
+    ) {
+        Project project =
+                settlement.getProject();
+
+        Company company =
+                project.getCompany();
+
+        return new CrewSettlementItemResponse(
+                settlement.getId(),
+                project.getId(),
+                project.getProjectName(),
+                project.getBrandName(),
+                company.getCompanyName(),
+                company.getIndustry(),
+                project.getProjectType(),
+                project.getProjectStartDate(),
+                project.getProjectDeadline(),
+                settlement.getSubsidy(),
+                settlement.getStatus(),
+                settlement.getResolvedCrewPaymentStatus(),
+                settlement.getExpectedPaymentDate(),
+                settlement.getPaymentDate(),
+                settlement.getCrewPaymentConfirmedDate(),
+                settlement.getCreatedAt()
+        );
+    }
+}

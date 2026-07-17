@@ -8,8 +8,15 @@ public record CrewPortfolioResponseDTO(
         String name,
         String description
 ) {
-    public static CrewPortfolioResponseDTO create(Portfolio p){
-        //return new CrewPortfolioResponseDTO(p.getId(), p.getImageLink(), p.getPortfolioName(), p.getDescription());
-        return null;
+
+    public static CrewPortfolioResponseDTO create(
+            Portfolio portfolio
+    ) {
+        return new CrewPortfolioResponseDTO(
+                portfolio.getId(),
+                portfolio.getThumbnailImageLink(),
+                portfolio.getPortfolioName(),
+                portfolio.getDescription()
+        );
     }
 }

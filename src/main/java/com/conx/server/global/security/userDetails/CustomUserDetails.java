@@ -1,7 +1,7 @@
 package com.conx.server.global.security.userDetails;
 
-import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.domain.User;
+import com.conx.server.user.domain.types.UserStatus;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,9 +12,14 @@ import java.util.Collection;
 import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
-    private CustomUserDetails(long id, String email, String password,
-                              Collection<? extends GrantedAuthority> role, UserStatus status){
-        super();
+
+    private CustomUserDetails(
+            long id,
+            String email,
+            String password,
+            Collection<? extends GrantedAuthority> role,
+            UserStatus status
+    ) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -24,9 +29,13 @@ public class CustomUserDetails implements UserDetails {
 
     @Getter
     private long id;
+
     private String email;
+
     private String password;
+
     private Collection<? extends GrantedAuthority> role;
+
     @Getter
     private UserStatus status;
 
@@ -45,16 +54,35 @@ public class CustomUserDetails implements UserDetails {
         return email;
     }
 
-    public String getUserEmail(){
+    public String getUserEmail() {
         return email;
     }
 
-    public static CustomUserDetails of(User user){
+    public String getUserRole() {
+        return role.stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .orElseThrow(
+                        () -> new IllegalStateException(
+                                "사용자 권한 정보가 없습니다."
+                        )
+                );
+    }
+
+    public static CustomUserDetails of(User user) {
         Collection<? extends GrantedAuthority> role =
                 List.of(
-                        new SimpleGrantedAuthority(user.getRole().getRole())
+                        new SimpleGrantedAuthority(
+                                user.getRole().getRole()
+                        )
                 );
 
-        return new CustomUserDetails(user.getId(), user.getEmail(), user.getPassword(), role, user.getStatus());
+        return new CustomUserDetails(
+                user.getId(),
+                user.getEmail(),
+                user.getPassword(),
+                role,
+                user.getStatus()
+        );
     }
 }

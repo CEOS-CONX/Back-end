@@ -17,10 +17,13 @@ public record CompanySettlementResponse(
         String crewName,
         long amount,
         ProjectSettlementStatus settlementStatus,
-        LocalDate expectedPaymentDate
+        LocalDate expectedPaymentDate,
+        LocalDate settlementDate
 ) {
 
-    public static CompanySettlementResponse from(ProjectSettlement settlement) {
+    public static CompanySettlementResponse from(
+            ProjectSettlement settlement
+    ) {
         Project project = settlement.getProject();
         Crew crew = settlement.getCrew();
 
@@ -33,7 +36,8 @@ public record CompanySettlementResponse(
                 crew.getCrewName(),
                 settlement.getSubsidy(),
                 settlement.getStatus(),
-                settlement.getExpectedPaymentDate()
+                settlement.getExpectedPaymentDate(),
+                settlement.getPaymentDate()
         );
     }
 }

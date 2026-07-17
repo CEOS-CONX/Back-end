@@ -38,9 +38,41 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "T005", "리프레시 토큰을 찾을 수 없습니다"),
 
     //Error for email verification
-    EMAIL_NOT_FOUND(HttpStatus.BAD_REQUEST, "V001", "이메일 인증요청을 보내지 않았거나, 인증번호가 만료되었습니다."),
-    CODE_UNMATCHED(HttpStatus.BAD_REQUEST, "V002", "인증번호가 일치하지 않습니다"),
-    USER_UNVERIFIED(HttpStatus.UNAUTHORIZED, "V003", "이메일 인증이 진행되지 않았습니다"),
+    EMAIL_NOT_FOUND(
+            HttpStatus.BAD_REQUEST,
+            "V001",
+            "이메일 인증요청을 보내지 않았거나, 인증번호가 만료되었습니다."
+    ),
+    CODE_UNMATCHED(
+            HttpStatus.BAD_REQUEST,
+            "V002",
+            "인증번호가 일치하지 않습니다"
+    ),
+    USER_UNVERIFIED(
+            HttpStatus.UNAUTHORIZED,
+            "V003",
+            "이메일 인증이 진행되지 않았습니다"
+    ),
+    EMAIL_ALREADY_IN_USE(
+            HttpStatus.CONFLICT,
+            "V004",
+            "이미 사용 중인 이메일입니다."
+    ),
+    EMAIL_SAME_AS_CURRENT(
+            HttpStatus.BAD_REQUEST,
+            "V005",
+            "현재 사용 중인 이메일과 동일합니다."
+    ),
+    EMAIL_CHANGE_VERIFICATION_INVALID(
+            HttpStatus.BAD_REQUEST,
+            "V006",
+            "이메일 변경 인증이 만료되었거나 유효하지 않습니다."
+    ),
+    PASSWORD_RESET_VERIFICATION_INVALID(
+            HttpStatus.BAD_REQUEST,
+            "V007",
+            "비밀번호 재설정 인증이 만료되었거나 유효하지 않습니다."
+    ),
 
     //Error for Signup
     USER_ALREADY_EXITS(HttpStatus.BAD_REQUEST, "S001", "이미 가입한 사용자입니다"),
@@ -82,8 +114,46 @@ public enum ErrorCode {
     SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SM001", "제출된 결과물을 찾을 수 없습니다."),
     INVALID_SUBMISSION_STATUS(HttpStatus.BAD_REQUEST, "SM002", "현재 결과물 상태에서는 처리할 수 없습니다."),
 
+    //Error for Project Evaluation
+    PROJECT_EVALUATION_ALREADY_EXISTS(
+            HttpStatus.CONFLICT,
+            "EV001",
+            "이미 평가한 프로젝트입니다."
+    ),
+    PROJECT_EVALUATION_NOT_ALLOWED(
+            HttpStatus.BAD_REQUEST,
+            "EV002",
+            "현재 프로젝트 상태에서는 크루를 평가할 수 없습니다."
+    ),
+
     //Error for Settlement
-    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ST001", "정산 정보를 찾을 수 없습니다."),
+    SETTLEMENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "ST001",
+            "정산 정보를 찾을 수 없습니다."
+    ),
+    SETTLEMENT_ALREADY_PAID(
+            HttpStatus.CONFLICT,
+            "ST002",
+            "이미 지급 완료된 정산입니다."
+    ),
+
+    //Error for Representative Project
+    REPRESENTATIVE_PROJECT_LIMIT_EXCEEDED(
+            HttpStatus.BAD_REQUEST,
+            "RP001",
+            "대표 프로젝트는 최대 3개까지 선택할 수 있습니다."
+    ),
+    REPRESENTATIVE_PROJECT_DUPLICATED(
+            HttpStatus.BAD_REQUEST,
+            "RP002",
+            "동일한 프로젝트를 중복하여 선택할 수 없습니다."
+    ),
+    REPRESENTATIVE_PROJECT_NOT_AVAILABLE(
+            HttpStatus.BAD_REQUEST,
+            "RP003",
+            "대표 프로젝트로 선택할 수 없는 프로젝트가 포함되어 있습니다."
+    ),
 
     //Error for Portfolio
     PORTFOLIO_NOT_FOUND(HttpStatus.NOT_FOUND, "CR002", "포트폴리오를 찾을 수 없습니다.");

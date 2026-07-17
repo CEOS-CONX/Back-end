@@ -39,4 +39,4 @@ out/
 .env
 .env.*
 *.pem
-/src/main/resources/application-test.yaml
+/src/main/resources/application-test.yaml.DS_Store
