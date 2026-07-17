@@ -2,7 +2,7 @@ package com.conx.server.user.dto.company.response;
 
 
 public record ProjectInspectionWrapperDTO(
-        CompanyProjectDetailResponse common,
+        DetailedProjectResponseDTO common,
 
         //결과물
         ProjectSubmissionWrapperDTO submission,
@@ -10,7 +10,7 @@ public record ProjectInspectionWrapperDTO(
         ProjectFeedBackWrapperDTO feedBack
 ) {
     public static ProjectInspectionWrapperDTO from(
-            CompanyProjectDetailResponse common,
+            DetailedProjectResponseDTO common,
             ProjectSubmissionWrapperDTO submission,
             ProjectFeedBackWrapperDTO feedBack
     ) {

@@ -475,10 +475,8 @@ public class Project extends BaseEntity {
      * 수정 요청 및 승인 API는 제거하지만, 제출 완료 시각과 기존 상태 집계를 위해 유지한다.
      */
     public void submitProjectResult() {
-        this.status =
-                ProjectStatus.INSPECTION;
-        this.resultSubmittedDate =
-                LocalDate.now();
+        this.status = ProjectStatus.INSPECTION;
+        this.resultSubmittedDate = LocalDate.now();
     }
 
     public void completeInspection() {
@@ -522,10 +520,9 @@ public class Project extends BaseEntity {
     }
 
     public boolean isWaitingResult() {
-        return status
-                == ProjectStatus.WAITING_RESULT
-                || status
-                == ProjectStatus.PROGRESS;
+        return status == ProjectStatus.WAITING_RESULT
+                || status == ProjectStatus.PROGRESS
+                || status == ProjectStatus.INSPECTION;
     }
 
     public boolean isBeforeSigningContract() {
@@ -536,6 +533,11 @@ public class Project extends BaseEntity {
     public boolean isInProgress() {
         return status
                 == ProjectStatus.PROGRESS;
+    }
+
+    public boolean isRecruiting() {
+        return status
+                == ProjectStatus.RECRUITING;
     }
 
     public boolean isAfterProgress() {

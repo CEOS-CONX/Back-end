@@ -5,9 +5,11 @@ import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.consent.PersonalInformationConsent;
 import com.conx.server.user.domain.consent.PromotionalMessageConsent;
 import com.conx.server.user.domain.crew.Crew;
+import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.dto.signupRequest.SignupRequestDTO;
 import com.conx.server.user.dto.signupRequest.UpdateCrewUserDTO;
 import com.conx.server.user.repository.CrewRepository;
+import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.repository.PersonalInformationConsentRepository;
 import com.conx.server.user.repository.PromotionalMessageConsentRepository;
 import com.conx.server.user.service.common.SendingVerificationNumberService;
@@ -28,6 +30,7 @@ public class CrewSignupService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PersonalInformationConsentRepository personalInformationConsentRepository;
     private final PromotionalMessageConsentRepository promotionalMessageConsentRepository;
+    private final EvaluationRepository evaluationRepository;
 
     /**
      * 회원가입 1단계
@@ -53,7 +56,10 @@ public class CrewSignupService {
                 password
         );
 
+        Evaluation evaluation = Evaluation.create(crew);
+
         crewRepository.save(crew);
+        evaluationRepository.save(evaluation);
 
         PersonalInformationConsent personalInformationConsent =
                 PersonalInformationConsent.create(

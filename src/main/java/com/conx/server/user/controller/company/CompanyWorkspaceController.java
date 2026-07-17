@@ -13,11 +13,8 @@ import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectApplicationSelectResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
@@ -27,8 +24,8 @@ import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailRe
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
 import com.conx.server.user.dto.company.response.ProjectInspectionWrapperDTO;
 import com.conx.server.user.dto.company.response.SubsidyStatusResponse;
+import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
-import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -336,44 +333,10 @@ public class CompanyWorkspaceController {
     }
 
     /**
-     * 기업 프로젝트 결과물 공유 이력 조회
-     */
-    @GetMapping("/projects/{projectId}/submissions")
-    public ApiResponse<Page<CrewProjectSubmissionListItemResponse>>
-    getProjectSubmissions(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId,
-
-            @RequestParam(defaultValue = "0")
-            int page,
-
-            @RequestParam(defaultValue = "10")
-            int size
-    ) {
-        Page<CrewProjectSubmissionListItemResponse> response =
-                companyWorkspaceService.getProjectSubmissions(
-                        userDetails.getId(),
-                        projectId,
-                        page,
-                        size
-                );
-
-        return apiResponseFactory.success(
-                "프로젝트 결과물 공유 이력 조회에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
-    /**
      * 기업 프로젝트 결과물 상세 조회
      */
     @GetMapping("/projects/{projectId}/submissions/{submissionId}")
-    public ApiResponse<CrewProjectSubmissionDetailResponse>
-    getProjectSubmissionDetail(
+    public ApiResponse<CrewProjectSubmissionDetailResponse> getProjectSubmissionDetail(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
 
@@ -457,59 +420,6 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 프로젝트 지원서 목록 조회
-     */
-    @GetMapping("/projects/{projectId}/applications")
-    public ApiResponse<List<CompanyProjectApplicationResponse>>
-    getProjectApplications(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId
-    ) {
-        List<CompanyProjectApplicationResponse> response =
-                companyWorkspaceService.getProjectApplications(
-                        userDetails.getId(),
-                        projectId
-                );
-
-        return apiResponseFactory.success(
-                "프로젝트 지원서 목록 조회에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
-    /**
-     * 프로젝트 지원서 상세 조회
-     */
-    @GetMapping("/projects/{projectId}/applications/{applicationId}")
-    public ApiResponse<CompanyProjectApplicationDetailResponse>
-    getProjectApplicationDetail(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId,
-
-            @PathVariable
-            Long applicationId
-    ) {
-        CompanyProjectApplicationDetailResponse response =
-                companyWorkspaceService.getProjectApplicationDetail(
-                        userDetails.getId(),
-                        projectId,
-                        applicationId
-                );
-
-        return apiResponseFactory.success(
-                "프로젝트 지원서 상세 조회에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
 
     /**
      * 프로젝트 참여 크루 선정
@@ -570,7 +480,7 @@ public class CompanyWorkspaceController {
      * 프로젝트 평가 등록
      */
     @PostMapping("/projects/{projectId}/evaluation")
-    public ApiResponse<CompanyProjectEvaluationResponse> evaluateProject(
+    public ApiResponse<CrewEvaluationWrapperDTO> evaluateProject(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
 
@@ -581,7 +491,7 @@ public class CompanyWorkspaceController {
             @RequestBody
             CompanyProjectEvaluationRequest request
     ) {
-        CompanyProjectEvaluationResponse response =
+        CrewEvaluationWrapperDTO response =
                 companyWorkspaceService.evaluateProject(
                         userDetails.getId(),
                         projectId,

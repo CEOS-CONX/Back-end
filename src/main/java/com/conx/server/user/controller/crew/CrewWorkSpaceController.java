@@ -6,6 +6,7 @@ import com.conx.server.project.domain.enums.CrewPaymentStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
 import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceProjectStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceSort;
@@ -123,14 +124,16 @@ public class CrewWorkSpaceController {
      * 프로젝트 상세 워크스페이스 가져오기
      */
     @GetMapping("/workSpace/{projectId}")
-    public ApiResponse<CrewProjectWorkSpaceDTO> getCrewDetailedProject(
+    public ApiResponse<ProjectStatusResponseDTO> getCrewDetailedProject(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable long projectId
+            @PathVariable long projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
     ){
-        CrewProjectWorkSpaceDTO crewProjectWorkSpaceDTO =
-                crewWorkSpaceService.getDetailedCrewWorkSpace(customUserDetails, projectId);
+        ProjectStatusResponseDTO projectStatusDTO =
+                crewWorkSpaceService.getProjectDetail(customUserDetails.getId(), projectId, page, size);
 
-        return apiResponseFactory.success(crewProjectWorkSpaceDTO, customUserDetails);
+        return apiResponseFactory.success(projectStatusDTO, customUserDetails);
     }
 
     /**
@@ -144,19 +147,6 @@ public class CrewWorkSpaceController {
     ){
         crewWorkSpaceService.submitProjectResult(customUserDetails, projectId, req);
         return apiResponseFactory.success("결과물 제출 성공", customUserDetails);
-    }
-
-    /**
-     * 결과물 임시 저장하기
-     */
-    @PostMapping("/projects/{projectId}/draft-submissions")
-    public ApiResponse<?> draftResult(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable long projectId,
-            @RequestBody SubmitProjectResultRequestDTO req
-    ){
-        crewWorkSpaceService.draftProjectResult(customUserDetails, projectId, req);
-        return apiResponseFactory.success("결과물 임시 저장 성공", customUserDetails);
     }
 
     @GetMapping("/settlements/summary")

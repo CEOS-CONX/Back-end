@@ -13,16 +13,9 @@ public record CompanyBookmarkedCrewResponse(
         String customCrewType,
         Industry interestingIndustry,
         int memberAmount,
-        int cumulative,
+        int totalSubsidy,
         Double point
 ) {
-
-    /*
-     * 평가 정보가 없는 경우 0점으로 반환합니다.
-     */
-    public CompanyBookmarkedCrewResponse {
-        point = point == null ? 0.0 : point;
-    }
 
     /*
      * 별점까지 함께 조회한 경우 사용합니다.

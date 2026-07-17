@@ -26,6 +26,10 @@ import com.conx.server.project.repository.ProjectSubmissionRepository;
 import com.conx.server.project.service.CrewProjectTodoService;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
+import com.conx.server.user.dto.company.response.DetailedProjectResponseDTO;
+import com.conx.server.user.dto.company.response.InspectionInfoInOneLineDTO;
+import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
 import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceProjectStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceSort;
@@ -376,11 +380,11 @@ public class CrewWorkSpaceService {
 
         CrewSettlementSummaryResponse summary =
                 projectSettlementRepository
-                .findCrewSettlementSummary(
-                        crew.getId(),
-                        currentMonth.atDay(1),
-                        currentMonth.atEndOfMonth()
-                );
+                        .findCrewSettlementSummary(
+                                crew.getId(),
+                                currentMonth.atDay(1),
+                                currentMonth.atEndOfMonth()
+                        );
 
         return summary == null
                 ? new CrewSettlementSummaryResponse(0, 0, 0, null)
@@ -520,14 +524,13 @@ public class CrewWorkSpaceService {
      * 기존 프로젝트 상세 워크스페이스 조회
      */
     @Transactional(readOnly = true)
-    public CrewProjectWorkSpaceDTO getDetailedCrewWorkSpace(
-            CustomUserDetails customUserDetails,
-            long projectId
+    public ProjectStatusResponseDTO getProjectDetail(
+            Long crewId,
+            Long projectId,
+            int page,
+            int size
     ) {
-        Crew crew =
-                userFinder.findActiveCrew(
-                        customUserDetails.getId()
-                );
+        Crew crew = userFinder.findActiveCrew(crewId);
 
         Project project =
                 findCrewWorkspaceProject(
@@ -547,51 +550,35 @@ public class CrewWorkSpaceService {
             );
         }
 
-        ProjectSubmission submission =
-                projectSubmissionRepository
-                        .findTopByProjectIdOrderByIdDesc(
-                                project.getId()
+        DetailedProjectResponseDTO common = DetailedProjectResponseDTO.create(project);
+        Pageable pageable = PageRequest.of(
+                        Math.max(page, 0),
+                        Math.max(size, 1),
+                        Sort.by(
+                                Sort.Direction.DESC,
+                                "createdAt"
                         )
-                        .orElse(null);
-
-        CrewProjectSubmissionDTO submissionDTO =
-                CrewProjectSubmissionDTO.create(
-                        submission
                 );
 
-        DetailedProjectWrapperForCrewWorkSpaceDTO projectWrapper =
-                DetailedProjectWrapperForCrewWorkSpaceDTO.create(
-                        project
-                );
+        Page<InspectionInfoInOneLineDTO> submissions =
+                projectSubmissionRepository
+                        .findAllByProjectIdAndStatusNotOrderByIdDesc(
+                                project.getId(),
+                                ProjectSubmissionStatus.DRAFT,
+                                pageable
+                        )
+                        .map(
+                                InspectionInfoInOneLineDTO::create
+                        );
 
-        ProjectSubmitConditionDTO submitCondition =
-                ProjectSubmitConditionDTO.create(
-                        project
-                );
-
-        if (submission == null) {
-            return new CrewProjectWorkSpaceDTO(
-                    false,
-                    projectWrapper,
-                    null,
-                    submitCondition
-            );
-        }
-
-        return new CrewProjectWorkSpaceDTO(
-                submission.isEditable(),
-                projectWrapper,
-                submissionDTO,
-                submitCondition
+        return ProjectStatusResponseDTO.create(
+                common,
+                submissions
         );
     }
 
     /**
      * 결과물 제출
-     *
-     * 기존 DRAFT가 있으면 해당 DRAFT를 제출 상태로 전환하고,
-     * DRAFT가 없으면 새 제출 이력을 생성한다.
-     * 이미 제출 완료된 결과물은 수정하지 않는다.
      */
     @Transactional
     public void submitProjectResult(
@@ -622,241 +609,15 @@ public class CrewWorkSpaceService {
             );
         }
 
-        Optional<ProjectSubmission> draftOptional =
-                projectSubmissionRepository
-                        .findTopByProjectIdAndAuthorCrewIdAndStatusOrderByIdDesc(
-                                projectId,
-                                crew.getId(),
-                                ProjectSubmissionStatus.DRAFT
-                        );
+        ProjectSubmission submission = ProjectSubmission.create(project, crew, request.subject(),
+                request.content(), request.fileLinks(), request.links());
 
-        if (draftOptional.isPresent()) {
-            ProjectSubmission draft =
-                    draftOptional.get();
-
-            draft.update(
-                    request.subject(),
-                    request.content(),
-                    request.fileLinks(),
-                    request.links()
-            );
-
-            draft.activateSubmission();
-        } else {
-            ProjectSubmission submission =
-                    ProjectSubmission.create(
-                            project,
-                            crew,
-                            request.subject(),
-                            request.content(),
-                            request.fileLinks(),
-                            request.links()
-                    );
-
-            projectSubmissionRepository.save(
-                    submission
-            );
-        }
-
+        projectSubmissionRepository.save(submission);
         project.submitProjectResult();
-
-        crewProjectTodoService.completeSubmissionTodo(
-                crew,
-                project
-        );
-
-        notificationFacadeService
-                .saveNotificationAboutResultUploaded(
-                        project
-                );
+        crewProjectTodoService.completeSubmissionTodo(crew, project);
+        notificationFacadeService.saveNotificationAboutResultUploaded(project);
     }
 
-    /**
-     * 결과물 임시 저장
-     *
-     * 프로젝트별·크루별 최근 DRAFT 한 건만 수정한다.
-     */
-    @Transactional
-    public void draftProjectResult(
-            CustomUserDetails customUserDetails,
-            long projectId,
-            SubmitProjectResultRequestDTO request
-    ) {
-        Crew crew =
-                userFinder.findActiveCrew(
-                        customUserDetails.getId()
-                );
-
-        Project project =
-                findCrewWorkspaceProject(
-                        crew,
-                        projectId
-                );
-
-        if (project.getStatus() != ProjectStatus.WAITING_RESULT) {
-            throw new CustomException(
-                    ErrorCode.INVALID_PROJECT_STATUS
-            );
-        }
-
-        Optional<ProjectSubmission> draftOptional =
-                projectSubmissionRepository
-                        .findTopByProjectIdAndAuthorCrewIdAndStatusOrderByIdDesc(
-                                projectId,
-                                crew.getId(),
-                                ProjectSubmissionStatus.DRAFT
-                        );
-
-        if (draftOptional.isPresent()) {
-            draftOptional
-                    .get()
-                    .update(
-                            request.subject(),
-                            request.content(),
-                            request.fileLinks(),
-                            request.links()
-                    );
-        } else {
-            ProjectSubmission draft =
-                    ProjectSubmission.createDraft(
-                            project,
-                            crew,
-                            request.subject(),
-                            request.content(),
-                            request.fileLinks(),
-                            request.links()
-                    );
-
-            projectSubmissionRepository.save(
-                    draft
-            );
-        }
-    }
-
-    /**
-     * 신규 크루 프로젝트 작업 상세 조회
-     *
-     * 완료된 프로젝트도 조회할 수 있다.
-     */
-    @Transactional(readOnly = true)
-    public CrewProjectWorkspaceDetailResponse getCrewProjectWorkspaceDetail(
-            CustomUserDetails customUserDetails,
-            long projectId
-    ) {
-        Crew crew =
-                userFinder.findActiveCrew(
-                        customUserDetails.getId()
-                );
-
-        Project project =
-                findCrewWorkspaceProject(
-                        crew,
-                        projectId
-                );
-
-        ProjectSettlement settlement =
-                projectSettlementRepository
-                        .findByProjectIdAndCrewId(
-                                projectId,
-                                crew.getId()
-                        )
-                        .orElse(null);
-
-        ProjectSubmission latestSubmission =
-                projectSubmissionRepository
-                        .findTopByProjectIdAndStatusNotOrderByIdDesc(
-                                projectId,
-                                ProjectSubmissionStatus.DRAFT
-                        )
-                        .orElse(null);
-
-        return CrewProjectWorkspaceDetailResponse.from(
-                project,
-                settlement,
-                latestSubmission
-        );
-    }
-
-    /**
-     * 프로젝트 결과물 공유 이력 조회
-     */
-    @Transactional(readOnly = true)
-    public Page<CrewProjectSubmissionListItemResponse>
-    getCrewProjectSubmissions(
-            CustomUserDetails customUserDetails,
-            long projectId,
-            int page,
-            int size
-    ) {
-        Crew crew =
-                userFinder.findActiveCrew(
-                        customUserDetails.getId()
-                );
-
-        findCrewWorkspaceProject(
-                crew,
-                projectId
-        );
-
-        Pageable pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.max(size, 1)
-                );
-
-        return projectSubmissionRepository
-                .findAllByProjectIdAndStatusNotOrderByIdDesc(
-                        projectId,
-                        ProjectSubmissionStatus.DRAFT,
-                        pageable
-                )
-                .map(
-                        CrewProjectSubmissionListItemResponse::from
-                );
-    }
-
-    /**
-     * 프로젝트 결과물 공유 상세 조회
-     */
-    @Transactional(readOnly = true)
-    public CrewProjectSubmissionDetailResponse
-    getCrewProjectSubmissionDetail(
-            CustomUserDetails customUserDetails,
-            long projectId,
-            long submissionId
-    ) {
-        Crew crew =
-                userFinder.findActiveCrew(
-                        customUserDetails.getId()
-                );
-
-        findCrewWorkspaceProject(
-                crew,
-                projectId
-        );
-
-        ProjectSubmission submission =
-                projectSubmissionRepository
-                        .findByIdAndProjectId(
-                                submissionId,
-                                projectId
-                        )
-                        .orElseThrow(
-                                () -> new CustomException(
-                                        ErrorCode.SUBMISSION_NOT_FOUND
-                                )
-                        );
-
-        if (submission.getStatus() == ProjectSubmissionStatus.DRAFT) {
-            throw new CustomException(
-                    ErrorCode.SUBMISSION_NOT_FOUND
-            );
-        }
-
-        return CrewProjectSubmissionDetailResponse.from(
-                submission
-        );
-    }
 
     /**
      * 선택된 크루 본인의 프로젝트인지 검증

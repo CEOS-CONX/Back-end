@@ -5,17 +5,13 @@ import com.conx.server.user.domain.crew.Evaluation;
 import java.time.LocalDateTime;
 
 public record CompanyProjectEvaluationResponse(
-        Long evaluationId,
-        Long projectId,
         Long crewId,
-        Long companyId,
         int completeness,
         int schedule,
         int ability,
-        int recooperation,
+        int reCooperation,
         int communication,
-        double mean,
-        LocalDateTime createdAt
+        double overall
 ) {
 
     public static CompanyProjectEvaluationResponse from(
@@ -23,16 +19,7 @@ public record CompanyProjectEvaluationResponse(
     ) {
         return new CompanyProjectEvaluationResponse(
                 evaluation.getId(),
-                evaluation.getProject().getId(),
-                evaluation.getCrew().getId(),
-                evaluation.getCompany().getId(),
-                evaluation.getCompleteness(),
-                evaluation.getSchedule(),
-                evaluation.getAbility(),
-                evaluation.getRecooperation(),
-                evaluation.getCommunication(),
-                evaluation.getMean(),
-                evaluation.getCreatedAt()
+
         );
     }
 }
