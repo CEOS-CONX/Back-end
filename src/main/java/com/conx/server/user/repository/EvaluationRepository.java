@@ -22,7 +22,7 @@ public interface EvaluationRepository
             coalesce(avg(e.ability), 0.0),
             coalesce(avg(e.communication), 0.0),
             coalesce(avg(e.schedule), 0.0),
-            coalesce(avg(e.recooperation), 0.0)
+            coalesce(avg(e.reCooperation), 0.0)
         )
         from Evaluation e
         where e.crew = :crew

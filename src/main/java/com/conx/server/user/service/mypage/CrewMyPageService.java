@@ -22,7 +22,6 @@ import com.conx.server.user.dto.crew.request.ModifyCrewPortfolioRequestDTO;
 import com.conx.server.user.dto.crew.response.CrewBookmarkedProjectResponse;
 import com.conx.server.user.dto.crew.response.CrewFileResponse;
 import com.conx.server.user.dto.crew.response.CrewLinkResponse;
-import com.conx.server.user.dto.crew.response.CrewPortfolioItemResponse;
 import com.conx.server.user.dto.crew.response.CrewPortfolioResponseDTO;
 import com.conx.server.user.dto.crew.response.CrewProfileResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectHistoryResponse;
@@ -183,8 +182,7 @@ public class CrewMyPageService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CrewRepresentativeProjectCandidateResponse>
-    getRepresentativeProjectCandidates(
+    public Page<CrewRepresentativeProjectCandidateResponse> getRepresentativeProjectCandidates(
             Long crewId,
             int page,
             int size,
@@ -229,8 +227,7 @@ public class CrewMyPageService {
     }
 
     @Transactional
-    public List<CrewProjectHistoryResponse>
-    updateRepresentativeProjects(
+    public List<CrewProjectHistoryResponse> updateRepresentativeProjects(
             Long crewId,
             CrewRepresentativeProjectsUpdateRequest request
     ) {
@@ -327,8 +324,7 @@ public class CrewMyPageService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CrewBookmarkedProjectResponse>
-    getBookmarkedProjects(
+    public Page<CrewBookmarkedProjectResponse> getBookmarkedProjects(
             Long crewId,
             Pageable pageable
     ) {
@@ -336,38 +332,17 @@ public class CrewMyPageService {
                 userFinder.findActiveCrew(crewId);
 
         return projectBookmarkRepository
-                .findAllByCrewId(
-                        crew.getId(),
-                        pageable
-                )
-                .map(
-                        CrewBookmarkedProjectResponse::from
-                );
+                .findAllByCrewId(crew.getId(), pageable)
+                .map(CrewBookmarkedProjectResponse::from);
     }
 
     @Transactional
-    public CrewPortfolioResponseDTO registerPortfolio(
-            Long crewId,
-            CrewPortfolioRequestDTO request
-    ) {
-        Crew crew =
-                userFinder.findActiveCrew(crewId);
+    public CrewPortfolioResponseDTO registerPortfolio(Long crewId, CrewPortfolioRequestDTO request) {
+        Crew crew = userFinder.findActiveCrew(crewId);
+        Portfolio portfolio = Portfolio.create(request, crew);
+        Portfolio savedPortfolio = portfolioRepository.save(portfolio);
 
-        Portfolio portfolio =
-                Portfolio.create(
-                        crew,
-                        request.name(),
-                        request.description(),
-                        request.fileUrl(),
-                        request.imageUrl()
-                );
-
-        Portfolio savedPortfolio =
-                portfolioRepository.save(portfolio);
-
-        return CrewPortfolioResponseDTO.create(
-                savedPortfolio
-        );
+        return CrewPortfolioResponseDTO.create(savedPortfolio);
     }
 
     @Transactional
@@ -446,13 +421,13 @@ public class CrewMyPageService {
                         .map(CrewFileResponse::from)
                         .toList();
 
-        List<CrewPortfolioItemResponse> portfolios =
+        List<CrewPortfolioResponseDTO> portfolios =
                 portfolioRepository
                         .findAllByCrewIdOrderByIdDesc(
                                 crew.getId()
                         )
                         .stream()
-                        .map(CrewPortfolioItemResponse::from)
+                        .map(CrewPortfolioResponseDTO::create)
                         .toList();
 
         List<CrewProjectHistoryResponse>
@@ -488,10 +463,7 @@ public class CrewMyPageService {
         return convertProjectHistory(projects);
     }
 
-    private List<CrewProjectHistoryResponse>
-    convertProjectHistory(
-            List<Project> projects
-    ) {
+    private List<CrewProjectHistoryResponse> convertProjectHistory(List<Project> projects) {
         if (
                 projects == null
                         || projects.isEmpty()

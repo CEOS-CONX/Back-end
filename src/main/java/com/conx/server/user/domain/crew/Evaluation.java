@@ -71,7 +71,7 @@ public class Evaluation extends BaseEntity {
     private int ability;
 
     @Column(nullable = false)
-    private int recooperation;
+    private int reCooperation;
 
     @Column(nullable = false)
     private int communication;
@@ -86,7 +86,7 @@ public class Evaluation extends BaseEntity {
             int completeness,
             int schedule,
             int ability,
-            int recooperation,
+            int reCooperation,
             int communication
     ) {
         this.project = project;
@@ -95,13 +95,13 @@ public class Evaluation extends BaseEntity {
         this.completeness = completeness;
         this.schedule = schedule;
         this.ability = ability;
-        this.recooperation = recooperation;
+        this.reCooperation = reCooperation;
         this.communication = communication;
         this.mean = calculateMean(
                 completeness,
                 schedule,
                 ability,
-                recooperation,
+                reCooperation,
                 communication
         );
     }
@@ -113,7 +113,7 @@ public class Evaluation extends BaseEntity {
             int completeness,
             int schedule,
             int ability,
-            int recooperation,
+            int reCooperation,
             int communication
     ) {
         return new Evaluation(
@@ -123,7 +123,7 @@ public class Evaluation extends BaseEntity {
                 completeness,
                 schedule,
                 ability,
-                recooperation,
+                reCooperation,
                 communication
         );
     }
@@ -132,14 +132,14 @@ public class Evaluation extends BaseEntity {
             int completeness,
             int schedule,
             int ability,
-            int recooperation,
+            int reCooperation,
             int communication
     ) {
         return (
                 completeness
                         + schedule
                         + ability
-                        + recooperation
+                        + reCooperation
                         + communication
         ) / 5.0;
     }

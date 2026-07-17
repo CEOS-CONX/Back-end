@@ -29,7 +29,7 @@ public record CompanyProjectEvaluationResponse(
                 evaluation.getCompleteness(),
                 evaluation.getSchedule(),
                 evaluation.getAbility(),
-                evaluation.getRecooperation(),
+                evaluation.getReCooperation(),
                 evaluation.getCommunication(),
                 evaluation.getMean(),
                 evaluation.getCreatedAt()

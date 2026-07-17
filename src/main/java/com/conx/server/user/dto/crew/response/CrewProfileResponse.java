@@ -32,7 +32,7 @@ public record CrewProfileResponse(
 
         List<CrewLinkResponse> links,
         List<CrewFileResponse> files,
-        List<CrewPortfolioItemResponse> portfolios,
+        List<CrewPortfolioResponseDTO> portfolios,
         List<CrewProjectHistoryResponse> representativeProjects,
 
         int totalSubsidy
@@ -42,7 +42,7 @@ public record CrewProfileResponse(
             Crew crew,
             List<CrewLinkResponse> links,
             List<CrewFileResponse> files,
-            List<CrewPortfolioItemResponse> portfolios,
+            List<CrewPortfolioResponseDTO> portfolios,
             List<CrewProjectHistoryResponse> representativeProjects
     ) {
         return new CrewProfileResponse(

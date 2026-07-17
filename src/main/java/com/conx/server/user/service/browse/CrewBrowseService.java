@@ -14,12 +14,7 @@ import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.crew.CrewBrowseSort;
 import com.conx.server.user.dto.crew.CrewProjectHistorySort;
-import com.conx.server.user.dto.crew.response.CrewBrowseDetailResponse;
-import com.conx.server.user.dto.crew.response.CrewBrowseResponse;
-import com.conx.server.user.dto.crew.response.CrewFileResponse;
-import com.conx.server.user.dto.crew.response.CrewLinkResponse;
-import com.conx.server.user.dto.crew.response.CrewPortfolioItemResponse;
-import com.conx.server.user.dto.crew.response.CrewProjectHistoryResponse;
+import com.conx.server.user.dto.crew.response.*;
 import com.conx.server.user.repository.CrewFileRepository;
 import com.conx.server.user.repository.CrewLinkRepository;
 import com.conx.server.user.repository.CrewRepository;
@@ -142,13 +137,13 @@ public class CrewBrowseService {
                         .map(CrewFileResponse::from)
                         .toList();
 
-        List<CrewPortfolioItemResponse> portfolios =
+        List<CrewPortfolioResponseDTO> portfolios =
                 portfolioRepository
                         .findAllByCrewIdOrderByIdDesc(
                                 crewId
                         )
                         .stream()
-                        .map(CrewPortfolioItemResponse::from)
+                        .map(CrewPortfolioResponseDTO::create)
                         .toList();
 
         List<CrewProjectHistoryResponse>
@@ -364,7 +359,7 @@ public class CrewBrowseService {
             Crew crew,
             List<CrewLinkResponse> links,
             List<CrewFileResponse> files,
-            List<CrewPortfolioItemResponse> portfolios
+            List<CrewPortfolioResponseDTO> portfolios
     ) {
         return hasText(crew.getActivityField())
                 || !crew.getPublicSchools().isEmpty()

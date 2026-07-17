@@ -25,7 +25,7 @@ public record CrewBrowseDetailResponse(
 
         List<CrewLinkResponse> links,
         List<CrewFileResponse> files,
-        List<CrewPortfolioItemResponse> portfolios,
+        List<CrewPortfolioResponseDTO> portfolios,
         List<CrewProjectHistoryResponse> representativeProjects,
 
         boolean hasPublicDetail,
@@ -42,7 +42,7 @@ public record CrewBrowseDetailResponse(
             boolean hasPublicDetail,
             List<CrewLinkResponse> links,
             List<CrewFileResponse> files,
-            List<CrewPortfolioItemResponse> portfolios,
+            List<CrewPortfolioResponseDTO> portfolios,
             List<CrewProjectHistoryResponse> representativeProjects
     ) {
         /*

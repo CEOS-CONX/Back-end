@@ -35,34 +35,7 @@ import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
-import com.conx.server.user.dto.company.response.AdjustmentWrapperDTO;
-import com.conx.server.user.dto.company.response.CompanyExpenditureStatusResponseDTO;
-import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationSelectResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectStatusResponseDTO;
-import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementResponse;
-import com.conx.server.user.dto.company.response.CompanyTodoProjectResponseDTO;
-import com.conx.server.user.dto.company.response.CompanyWorkSpaceForProjectApplicationDTO;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
-import com.conx.server.user.dto.company.response.InspectionInfoInOneLineDTO;
-import com.conx.server.user.dto.company.response.ProjectApplicationForCompanyWrapperDTO;
-import com.conx.server.user.dto.company.response.ProjectFeedBackWrapperDTO;
-import com.conx.server.user.dto.company.response.ProjectInspectionWrapperDTO;
-import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
-import com.conx.server.user.dto.company.response.ProjectSubmissionWrapperDTO;
-import com.conx.server.user.dto.company.response.SubsidyStatusResponse;
-import com.conx.server.user.dto.company.response.SubsidyStatusWrapperDTO;
-import com.conx.server.user.dto.company.response.TodoProjectWrapperDTO;
+import com.conx.server.user.dto.company.response.*;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
 import com.conx.server.user.repository.EvaluationRepository;
@@ -244,12 +217,12 @@ public class CompanyWorkspaceService {
                         projectId
                 );
 
-        CompanyProjectDetailResponse common =
-                CompanyProjectDetailResponse.create(
+        DetailedProjectResponseDTO common =
+                DetailedProjectResponseDTO.create(
                         project
                 );
 
-        if (project.isInProgress()) {
+        if (project.isRecruiting()) {
             List<CompanyWorkSpaceForProjectApplicationDTO> applications =
                     projectApplicationRepository
                             .findAllByProject(
@@ -752,8 +725,8 @@ public class CompanyWorkspaceService {
                         submissionId
                 );
 
-        CompanyProjectDetailResponse common =
-                CompanyProjectDetailResponse.create(
+        DetailedProjectResponseDTO common =
+                DetailedProjectResponseDTO.create(
                         project
                 );
 
@@ -884,8 +857,8 @@ public class CompanyWorkspaceService {
                 CrewProjectTodoType.SETTLEMENT_CONFIRMATION
         );
 
-        CompanyProjectDetailResponse common =
-                CompanyProjectDetailResponse.create(
+        DetailedProjectResponseDTO common =
+                DetailedProjectResponseDTO.create(
                         project
                 );
 
@@ -933,7 +906,7 @@ public class CompanyWorkspaceService {
     }
 
     /**
-     * 프로젝트 평가 등록
+     * 크루 평가 등록
      */
     @Transactional
     public CompanyProjectEvaluationResponse evaluateProject(
@@ -984,7 +957,7 @@ public class CompanyWorkspaceService {
                         request.completeness(),
                         request.schedule(),
                         request.ability(),
-                        request.recooperation(),
+                        request.reCooperation(),
                         request.communication()
                 );
 

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -80,10 +80,7 @@ public class CrewMyPageController {
     }
 
     @GetMapping("/representative-project-candidates")
-    public ApiResponse<
-            Page<CrewRepresentativeProjectCandidateResponse>
-            >
-    getRepresentativeProjectCandidates(
+    public ApiResponse<Page<CrewRepresentativeProjectCandidateResponse>> getRepresentativeProjectCandidates(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
 
@@ -137,74 +134,39 @@ public class CrewMyPageController {
         );
     }
 
-    @PostMapping("/portfolios")
-    public ApiResponse<CrewPortfolioResponseDTO>
-    registerPortfolio(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @Valid
-            @RequestBody
-            CrewPortfolioRequestDTO request
+    @PostMapping("/portfolio")
+    public ApiResponse<CrewPortfolioResponseDTO> registerPortfolio(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestBody CrewPortfolioRequestDTO req
     ) {
-        CrewPortfolioResponseDTO response =
-                crewMyPageService.registerPortfolio(
-                        userDetails.getId(),
-                        request
-                );
-
-        return apiResponseFactory.success(
-                "포트폴리오 등록에 성공했습니다.",
-                response,
-                userDetails
+        CrewPortfolioResponseDTO response = crewMyPageService.registerPortfolio(
+                customUserDetails.getId(), req
         );
+
+        return apiResponseFactory.success("크루 포트폴리오 등록에 성공했습니다.", response, customUserDetails);
     }
 
-    @PatchMapping("/portfolios/{portfolioId}")
-    public ApiResponse<CrewPortfolioResponseDTO>
-    modifyPortfolio(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long portfolioId,
-
-            @Valid
-            @RequestBody
-            ModifyCrewPortfolioRequestDTO request
+    @PatchMapping("/portfolio/{portfolioId}")
+    public ApiResponse<CrewPortfolioResponseDTO> modifyPortfolio(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long portfolioId,
+            @RequestBody ModifyCrewPortfolioRequestDTO req
     ) {
-        CrewPortfolioResponseDTO response =
-                crewMyPageService.modifyPortfolio(
-                        userDetails.getId(),
-                        portfolioId,
-                        request
-                );
-
-        return apiResponseFactory.success(
-                "포트폴리오 수정에 성공했습니다.",
-                response,
-                userDetails
+        CrewPortfolioResponseDTO response = crewMyPageService.modifyPortfolio(
+                customUserDetails.getId(), portfolioId, req
         );
+
+        return apiResponseFactory.success("크루 포트폴리오 수정에 성공했습니다.", response, customUserDetails);
     }
 
-    @DeleteMapping("/portfolios/{portfolioId}")
-    public ApiResponse<Void> deletePortfolio(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long portfolioId
+    @DeleteMapping("/portfolio/{portfolioId}")
+    public ApiResponse<?> deletePortfolio(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long portfolioId,
+            @RequestBody ModifyCrewPortfolioRequestDTO req
     ) {
-        crewMyPageService.deletePortfolio(
-                userDetails.getId(),
-                portfolioId
-        );
-
-        return apiResponseFactory.success(
-                "포트폴리오 삭제에 성공했습니다.",
-                null,
-                userDetails
-        );
+        crewMyPageService.deletePortfolio(customUserDetails.getId(), portfolioId);
+        return apiResponseFactory.success("크루 포트폴리오 삭제에 성공했습니다.", customUserDetails);
     }
 
     @GetMapping("/bookmarked-projects")

@@ -19,7 +19,7 @@ public class FileController {
     private final ApiResponseFactory apiResponseFactory;
 
     /**
-     * 파일을 업로드합니다
+     * 파일을 업로드용 PresignedUrl을 발급합니다.
      * @param request 파일명 + 파일타입 정보
      */
     @PostMapping("/presigned-url")
