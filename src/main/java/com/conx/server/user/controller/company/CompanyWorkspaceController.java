@@ -229,7 +229,7 @@ public class CompanyWorkspaceController {
     /**
      * 피드백 달기
      */
-    @GetMapping("//projects/{projectId}/review/{submissionId}/feedback")
+    @GetMapping("/projects/{projectId}/review/{submissionId}/feedback")
     public ApiResponse<ProjectInspectionWrapperDTO> registerFeedback(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody CompanyFeedbackRequestDTO req,
