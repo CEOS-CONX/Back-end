@@ -95,7 +95,8 @@ public class CrewWorkSpaceTest {
         return mvcResult.getResponse().getHeader("Authorization");
     }
 
-    private long applyProjectAndGetApplicationId(
+    @Transactional
+    protected long applyProjectAndGetApplicationId(
             String crewToken,
             long projectId
     ) throws Exception {
@@ -442,7 +443,8 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk());
     }
 
-    private CompanySettlementResponse createWaitingSettlement(
+    @Transactional
+    protected CompanySettlementResponse createWaitingSettlement(
             String crewToken,
             String companyToken
     ) throws Exception {
@@ -527,7 +529,8 @@ public class CrewWorkSpaceTest {
                 .orElseThrow();
     }
 
-    private void registerFeedback(
+    @Transactional
+    protected void registerFeedback(
             String companyToken,
             long projectId,
             long submissionId
@@ -551,7 +554,8 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk());
     }
 
-    private CrewDashboardResultDTO getCrewDashboard(
+    @Transactional
+    protected CrewDashboardResultDTO getCrewDashboard(
             String token
     ) throws Exception {
 
@@ -579,7 +583,8 @@ public class CrewWorkSpaceTest {
         return response.payload();
     }
 
-    private long getLatestSubmissionId(
+    @Transactional
+    protected long getLatestSubmissionId(
             String companyToken,
             long projectId
     ) throws Exception {
@@ -600,7 +605,8 @@ public class CrewWorkSpaceTest {
 
     }
 
-    private CrewSettlementSummaryResponse getCrewSettlementSummary(
+    @Transactional
+    protected CrewSettlementSummaryResponse getCrewSettlementSummary(
             String crewToken
     ) throws Exception {
 
@@ -1449,149 +1455,6 @@ public class CrewWorkSpaceTest {
         assertThat(responseDTO.projects().get(0).projectId()).isEqualTo(1L);
         assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.INSPECTION);
     }
-
-/*
-    @Test
-    @Transactional
-    @DisplayName("검수 후 결과물 올리기")
-    void uploadProjectResultAfterInspection() throws Exception {
-        String crewToken = loginSetting();
-        String companyToken = loginSetting_Company();
-        completeProjectApplicationToContract();
-
-        String subject = "제목제목";
-        String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
-
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-
-        long firstSubmissionId =
-                getLatestSubmissionId(
-                        companyToken,
-                        1L
-                );
-
-        registerFeedback(companyToken, 1L, firstSubmissionId);
-
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/workSpace")
-                        .header("Authorization", crewToken))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        ApiResponse<CrewWorkSpaceResponseDTO> response = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<CrewWorkSpaceResponseDTO>>() {}
-        );
-
-        CrewWorkSpaceResponseDTO responseDTO = response.payload();
-
-        assertThat(responseDTO.projects().size()).isEqualTo(1);
-        assertThat(responseDTO.projects().get(0).projectId()).isEqualTo(1L);
-        assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.INSPECTION);
-    }
-
-    @Test
-    @Transactional
-    @DisplayName("수정사항이 도착하지 않았는데 결과물 재업로드")
-    void uploadProjectResultBeforeInspection() throws Exception {
-        String crewToken = loginSetting();
-        String companyToken = loginSetting_Company();
-        completeProjectApplicationToContract();
-
-        String subject = "제목제목";
-        String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
-
-
-
-        //결과물 제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-
-        //수정된 결과물 재제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status")
-                        .value("P002"));
-    }
-
- */
-
-    /*
-    @Test
-    @Transactional
-    @DisplayName("첫 번째 검수 후 업로드")
-    void uploadProjectResultAfterInspectionAndUpload() throws Exception {
-        String crewToken = loginSetting();
-        String companyToken = loginSetting_Company();
-        completeProjectApplicationToContract();
-
-        String subject = "제목제목";
-        String content = "XXX한 점에 집중하려했습니다.";
-        SubmitProjectResultRequestDTO req = new SubmitProjectResultRequestDTO(null, null, subject, content);
-
-
-
-        //결과물 제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        //결과물 수정요청
-        String revision = "~~ 여기 좀 수정해주세용ㅇㅇ";
-
-        long firstSubmissionId =
-                getLatestSubmissionId(
-                        companyToken,
-                        1L
-                );
-
-
-
-        //수정된 결과물 제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        //수정된 결과물 재제출
-        mockMvc.perform(post("/api/v1/crews/projects/1/submissions")
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status")
-                        .value("P002"));
-    }
-
-    */
 
     @Test
     @Transactional
