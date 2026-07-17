@@ -322,37 +322,9 @@ public class CompanyWorkspaceController {
     }
 
     /**
-     * 기업 프로젝트 결과물 상세 조회
-     */
-    @GetMapping("/projects/{projectId}/submissions/{submissionId}")
-    public ApiResponse<CrewProjectSubmissionDetailResponse> getProjectSubmissionDetail(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId,
-
-            @PathVariable
-            Long submissionId
-    ) {
-        CrewProjectSubmissionDetailResponse response =
-                companyWorkspaceService.getProjectSubmissionDetail(
-                        userDetails.getId(),
-                        projectId,
-                        submissionId
-                );
-
-        return apiResponseFactory.success(
-                "프로젝트 결과물 상세 조회에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
-    /**
      * 결과물 및 피드백 상세 조회
      */
-    @GetMapping("/projects/{projectId}/review/{submissionId}")
+    @GetMapping("/projects/{projectId}/submissions/{submissionId}")
     public ApiResponse<ProjectInspectionWrapperDTO> getProjectReviewDetail(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
@@ -380,7 +352,7 @@ public class CompanyWorkspaceController {
     /**
      * 결과물 피드백 등록
      */
-    @PostMapping("/projects/{projectId}/review/{submissionId}/feedback")
+    @PostMapping("/projects/{projectId}/submissions/{submissionId}/feedback")
     public ApiResponse<ProjectInspectionWrapperDTO> registerFeedback(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,

@@ -14,6 +14,9 @@ import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
+import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
+import com.conx.server.user.dto.company.response.ProjectApplicationForCompanyWrapperDTO;
+import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
 import com.conx.server.user.dto.crew.response.*;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
@@ -531,7 +534,7 @@ public class CrewWorkSpaceTest {
     ) throws Exception {
         mockMvc.perform(
                         post(
-                                "/api/v1/companies/me/projects/{projectId}/review/{submissionId}/feedback",
+                                "/api/v1/companies/me/projects/{projectId}/submissions/{submissionId}/feedback",
                                 projectId,
                                 submissionId
                         )
@@ -581,34 +584,20 @@ public class CrewWorkSpaceTest {
             long projectId
     ) throws Exception {
 
-        MvcResult mvcResult =
-                mockMvc.perform(
-                                get(
-                                        "/api/v1/companies/me/projects/{projectId}/submissions",
-                                        projectId
-                                )
-                                        .header(
-                                                "Authorization",
-                                                companyToken
-                                        )
-                                        .param("page", "0")
-                                        .param("size", "1")
-                        )
-                        .andExpect(status().isOk())
-                        .andReturn();
+        MvcResult mvcForCompanyProject1 = mockMvc.perform(get("/api/v1/companies/me/projects/" + projectId)
+                        .header("Authorization", companyToken))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        var responseBody =
-                objectMapper.readTree(
-                        mvcResult.getResponse()
-                                .getContentAsString()
-                );
+        ApiResponse<CompanyWorkspaceProjectDetailResponse> resForCompanyProject1 = objectMapper.readValue(
+                mvcForCompanyProject1.getResponse().getContentAsString(),
+                new TypeReference<ApiResponse<CompanyWorkspaceProjectDetailResponse>>() {
+                }
+        );
 
-        return responseBody
-                .path("payload")
-                .path("content")
-                .get(0)
-                .path("submissionId")
-                .asLong();
+        ProjectStatusResponseDTO resForCompanyProjectDTO = (ProjectStatusResponseDTO) resForCompanyProject1.payload();
+        return resForCompanyProjectDTO.inspections().get(resForCompanyProjectDTO.inspections().size() - 1).inspectionId();
+
     }
 
     private CrewSettlementSummaryResponse getCrewSettlementSummary(
