@@ -8,22 +8,13 @@ import com.conx.server.domain.file.service.FileService;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
-import com.conx.server.project.domain.AdditionalLinksWrapper;
-import com.conx.server.project.domain.Project;
-import com.conx.server.project.domain.ProjectApplication;
-import com.conx.server.project.domain.ProjectInspectionFeedback;
-import com.conx.server.project.domain.ProjectSettlement;
-import com.conx.server.project.domain.ProjectSubmission;
+import com.conx.server.project.domain.*;
 import com.conx.server.project.domain.enums.CrewProjectTodoType;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
-import com.conx.server.project.repository.ProjectApplicationRepository;
-import com.conx.server.project.repository.ProjectInspectionFeedbackRepository;
-import com.conx.server.project.repository.ProjectRepository;
-import com.conx.server.project.repository.ProjectSettlementRepository;
-import com.conx.server.project.repository.ProjectSubmissionRepository;
+import com.conx.server.project.repository.*;
 import com.conx.server.project.service.CrewProjectTodoService;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
@@ -36,6 +27,7 @@ import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.*;
+import com.conx.server.user.dto.crew.response.CrewProfileResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
 import com.conx.server.user.repository.EvaluationRepository;
@@ -72,6 +64,7 @@ public class CompanyWorkspaceService {
             projectInspectionFeedbackRepository;
     private final EvaluationRepository evaluationRepository;
     private final CrewProjectTodoService crewProjectTodoService;
+    private final ProjectSubmissionCriteriaRepository projectSubmissionCriteriaRepository;
 
     /**
      * 기업 워크스페이스 대시보드 조회
@@ -374,6 +367,29 @@ public class CompanyWorkspaceService {
     }
 
     /**
+     * 프로젝트 기준충족 버큰 누르기
+     */
+    @Transactional
+    public void checkCriteria(long companyId, Long criteriaId) {
+        Company company = userFinder.findActiveCompany(companyId);
+
+        ProjectSubmissionCriteria criteria = projectSubmissionCriteriaRepository.findByIdAndCompany(criteriaId, company).orElseThrow(
+                () -> new CustomException(ErrorCode.CRITERIA_NOT_FOUND)
+        );
+
+        criteria.mark();
+        Project project = criteria.getProject();
+
+        boolean completed = project.getResultCriteria()
+                .stream()
+                .allMatch(ProjectSubmissionCriteria::isDone);
+
+        if (completed) {
+            project.completeInspection();
+        }
+    }
+
+    /**
      * 프로젝트 임시 저장 수정
      */
     @Transactional
@@ -507,38 +523,6 @@ public class CompanyWorkspaceService {
     }
 
     /**
-     * 프로젝트 지원 상세 조회
-     */
-    @Transactional(readOnly = true)
-    public CompanyProjectApplicationDetailResponse
-    getProjectApplicationDetail(
-            Long companyId,
-            Long projectId,
-            Long applicationId
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        Project project =
-                findCompanyProject(
-                        company.getId(),
-                        projectId
-                );
-
-        ProjectApplication application =
-                findProjectApplication(
-                        project.getId(),
-                        applicationId
-                );
-
-        return CompanyProjectApplicationDetailResponse.from(
-                application
-        );
-    }
-
-    /**
      * 프로젝트 파트너 크루 선정
      */
     @Transactional
@@ -600,31 +584,6 @@ public class CompanyWorkspaceService {
         return CompanyProjectApplicationSelectResponse.of(
                 project,
                 selectedApplication
-        );
-    }
-
-    /**
-     * 파트너 크루 조회
-     */
-    @Transactional(readOnly = true)
-    public CompanyPartnerCrewResponse getPartnerCrew(
-            Long companyId,
-            Long projectId
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        Project project =
-                findCompanyProject(
-                        company.getId(),
-                        projectId
-                );
-
-        return CompanyPartnerCrewResponse.of(
-                project,
-                findPartnerCrew(project)
         );
     }
 
@@ -1123,7 +1082,7 @@ public class CompanyWorkspaceService {
                 request.settlementDate()
         );
 
-        project.completeSettlement();
+        project.end();
 
         crewProjectTodoService.completeIfExists(
                 settlement.getCrew(),

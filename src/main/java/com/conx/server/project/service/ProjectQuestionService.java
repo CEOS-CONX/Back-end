@@ -3,6 +3,7 @@ package com.conx.server.project.service;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
+import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectQuestion;
 import com.conx.server.project.dto.request.ProjectQuestionAnswerRequest;
@@ -30,50 +31,7 @@ public class ProjectQuestionService {
     private final ProjectRepository projectRepository;
     private final ProjectQuestionRepository projectQuestionRepository;
     private final UserFinder userFinder;
-
-    @Transactional(readOnly = true)
-    public Page<ProjectQuestionResponse> getQuestions(
-            Long projectId,
-            int page,
-            int size,
-            boolean mine,
-            CustomUserDetails userDetails
-    ) {
-        Project project = findRecruitingProject(projectId);
-        Pageable pageable = PageRequest.of(page, size);
-        UserRole userRole = getUserRole(userDetails);
-
-        Page<ProjectQuestion> questions;
-
-        if (mine) {
-            questions = projectQuestionRepository
-                    .findAllByProjectIdAndWriterIdAndWriterRoleOrderByIdDesc(
-                            project.getId(),
-                            userDetails.getId(),
-                            userRole,
-                            pageable
-                    );
-        } else {
-            questions = projectQuestionRepository
-                    .findAllByProjectIdOrderByIdDesc(
-                            project.getId(),
-                            pageable
-                    );
-        }
-
-        return questions.map(question -> {
-            boolean canView = canViewQuestion(
-                    question,
-                    project,
-                    userDetails
-            );
-
-            return ProjectQuestionResponse.from(
-                    question,
-                    canView
-            );
-        });
-    }
+    private final NotificationFacadeService notificationFacadeService;
 
     @Transactional(readOnly = true)
     public ProjectQuestionDetailResponse getQuestion(
@@ -132,8 +90,8 @@ public class ProjectQuestionService {
             );
         }
 
-        ProjectQuestion savedQuestion =
-                projectQuestionRepository.save(question);
+        ProjectQuestion savedQuestion = projectQuestionRepository.save(question);
+        notificationFacadeService.questionRegistered(question);
 
         return ProjectQuestionDetailResponse.from(savedQuestion);
     }
@@ -155,6 +113,7 @@ public class ProjectQuestionService {
         }
 
         question.answer(request.answerContent());
+        notificationFacadeService.answerRegistered(question);
 
         return ProjectQuestionDetailResponse.from(question);
     }

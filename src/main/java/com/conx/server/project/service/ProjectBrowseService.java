@@ -8,15 +8,20 @@ import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.ProjectQuestion;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.project.dto.ProjectBrowseSort;
 import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
 import com.conx.server.project.dto.response.ProjectBrowseResponse;
+import com.conx.server.project.dto.response.ProjectQuestionResponse;
+import com.conx.server.project.repository.ProjectQuestionRepository;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -34,6 +39,7 @@ public class ProjectBrowseService {
     private final ProjectBookmarkRepository projectBookmarkRepository;
     private final UserFinder userFinder;
     private final FileRepository fileRepository;
+    private final ProjectQuestionRepository projectQuestionRepository;
 
     @Transactional(readOnly = true)
     protected boolean isBookmarked(Project p, Crew c){
@@ -81,19 +87,111 @@ public class ProjectBrowseService {
         }
     }
 
+    private UserRole findUserRole(String authority) {
+        for (UserRole role : UserRole.values()) {
+            if (role.getRole().equals(authority)) {
+                return role;
+            }
+        }
+
+        throw new CustomException(ErrorCode.FORBIDDEN);
+    }
+
+    private UserRole getUserRole(
+            CustomUserDetails userDetails
+    ) {
+        return userDetails.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .map(this::findUserRole)
+                .findFirst()
+                .orElseThrow(() ->
+                        new CustomException(ErrorCode.FORBIDDEN)
+                );
+    }
+
+    private boolean isWriter(
+            ProjectQuestion question,
+            CustomUserDetails userDetails,
+            UserRole userRole
+    ) {
+        return question.getWriterRole() == userRole
+                && question.getWriterId().equals(userDetails.getId());
+    }
+
+    private boolean isProjectCompany(
+            Project project,
+            CustomUserDetails userDetails,
+            UserRole userRole
+    ) {
+        return userRole == UserRole.COMPANY
+                && project.getCompany().getId() == userDetails.getId();
+    }
+
+    private boolean isAdmin(UserRole userRole) {
+        return userRole == UserRole.ADMIN;
+    }
+
+    private boolean canViewSecret(
+            ProjectQuestion question,
+            Project project,
+            CustomUserDetails userDetails
+    ) {
+        UserRole userRole = getUserRole(userDetails);
+
+        return isAdmin(userRole)
+                || isWriter(question, userDetails, userRole)
+                || isProjectCompany(project, userDetails, userRole);
+    }
+
+    private boolean canViewQuestion(
+            ProjectQuestion question,
+            Project project,
+            CustomUserDetails userDetails
+    ) {
+        if (!question.isSecret()) {
+            return true;
+        }
+
+        return canViewSecret(question, project, userDetails);
+    }
+
     @Transactional
-    public ProjectBrowseDetailResponse getProjectDetail(Long projectId) {
+    public ProjectBrowseDetailResponse getProjectDetail(Long projectId,
+                                                        int page,
+                                                        int size,
+                                                        boolean mine,
+                                                        CustomUserDetails userDetails) {
         Project project = projectRepository.findRecruitingProjectById(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.PROJECT_NOT_FOUND));
 
         project.increaseViews();
         List<String> fileLinks = project.getFileLinks();
         List<File> files = fileRepository.findAllByUrlIn(fileLinks);
-        List<FileResponseDTO> fileResponseDTOS = files.stream().map(
-                FileResponseDTO::from
-        ).toList();
+        List<FileResponseDTO> fileResponseDTOS = files.stream().map(FileResponseDTO::from).toList();
 
-        return ProjectBrowseDetailResponse.from(project, fileResponseDTOS);
+        Pageable pageable = PageRequest.of(page, size);
+        UserRole userRole = getUserRole(userDetails);
+
+        Page<ProjectQuestion> questions;
+
+        if (mine) {
+            if(userDetails == null) {
+                throw new CustomException(ErrorCode.FORBIDDEN);
+            }
+
+            questions = projectQuestionRepository.findAllByProjectIdAndWriterIdAndWriterRoleOrderByIdDesc(
+                            project.getId(), userDetails.getId(), userRole, pageable);
+        } else {
+            questions = projectQuestionRepository.findAllByProjectIdOrderByIdDesc(project.getId(),pageable);
+        }
+
+        Page<ProjectQuestionResponse> questionResponses = questions.map(question -> {
+            boolean canView = canViewQuestion(question, project, userDetails);
+            return ProjectQuestionResponse.from(question, canView);
+        });
+
+        return ProjectBrowseDetailResponse.from(project, fileResponseDTOS, questionResponses);
     }
 
     private Page<Project> findProjects(

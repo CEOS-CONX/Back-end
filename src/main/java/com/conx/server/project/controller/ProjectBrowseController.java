@@ -71,10 +71,13 @@ public class ProjectBrowseController {
      */
     @GetMapping("/{projectId}")
     public ApiResponse<ProjectBrowseDetailResponse> getProjectDetail(
-            @PathVariable(name = "projectId") Long projectId
+            @PathVariable Long projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean mine,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        ProjectBrowseDetailResponse response = projectBrowseService.getProjectDetail(projectId);
-
+        ProjectBrowseDetailResponse response = projectBrowseService.getProjectDetail(projectId, page, size, mine, userDetails);
         return apiResponseFactory.success("프로젝트 상세 조회에 성공했습니다.", response, null);
     }
 }

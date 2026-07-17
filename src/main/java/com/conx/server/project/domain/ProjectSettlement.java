@@ -134,15 +134,6 @@ public class ProjectSettlement extends BaseEntity {
     }
 
     /**
-     * dev 코드 호환용
-     */
-    public void markAsPaid() {
-        markAsPaid(
-                LocalDate.now()
-        );
-    }
-
-    /**
      * 크루 지급 확인 상태 변경
      *
      * 실제 정산 상태 및 실제 정산일과는

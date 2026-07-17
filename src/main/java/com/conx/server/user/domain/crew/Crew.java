@@ -47,12 +47,6 @@ public class Crew extends User {
 
     private String profileImage;
 
-    /*
-     * 기존 데이터 호환을 위해 유지합니다.
-     * 신규 마이페이지 API는 schools를 사용합니다.
-     */
-    private String crewSchool;
-
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "crew_schools",
@@ -62,12 +56,6 @@ public class Crew extends User {
     private List<String> schools = new ArrayList<>();
 
     private int memberAmount;
-
-    /*
-     * 기존 API와 데이터 호환을 위해 유지합니다.
-     * 신규 마이페이지 API에서는 사용하지 않습니다.
-     */
-    private String additionalIntroduction;
 
     /*
      * 신규 크루 프로필의 활동 분야입니다.
@@ -99,16 +87,6 @@ public class Crew extends User {
     )
     @Column(name = "specialty")
     private List<String> specialties = new ArrayList<>();
-
-    /*
-     * 기존 데이터 호환을 위해 유지합니다.
-     * 신규 마이페이지 API는 CrewLink Entity를 사용합니다.
-     */
-    private String snsLink;
-
-    private String etcLink;
-
-    private String kakaotalkLink;
 
     private int totalSubsidy;
 
@@ -222,10 +200,6 @@ public class Crew extends User {
             return List.copyOf(schools);
         }
 
-        if (hasText(crewSchool)) {
-            return List.of(crewSchool.trim());
-        }
-
         return List.of();
     }
 
@@ -245,20 +219,6 @@ public class Crew extends User {
         return List.copyOf(specialties);
     }
 
-    /*
-     * 링크, 자료, 포트폴리오, 프로젝트는 별도 Entity이므로
-     * 최종 hasPublicDetail은 Service에서 함께 계산합니다.
-     */
-    public boolean hasPublicProfileContent() {
-        return !getPublicSchools().isEmpty()
-                || hasText(catchphrase)
-                || hasText(crewIntroduction)
-                || hasItems(advantages)
-                || !getPublicSpecialties().isEmpty()
-                || hasText(snsLink)
-                || hasText(etcLink)
-                || hasText(kakaotalkLink);
-    }
 
     private List<String> normalizeStringList(
             List<String> values

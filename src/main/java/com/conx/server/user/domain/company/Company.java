@@ -46,10 +46,7 @@ public class Company extends User {
 
     private String additionalFileLink;
 
-    /**
-     * DB 필드명은 기존 호환성을 위해 homepageLink로 유지하고,
-     * API DTO에서는 website로 사용한다.
-     */
+
     private String homepageLink;
 
     /**
@@ -114,32 +111,6 @@ public class Company extends User {
         this.profileImage = profileImageLink;
         this.businessRegistrationNumber =
                 businessRegistrationNumber;
-    }
-
-    /**
-     * 기존 dev 호출부 호환용
-     */
-    public void modifyProfile(
-            String companyName,
-            String brandName,
-            Industry industry,
-            String customIndustry,
-            String companyIntroduction,
-            String homepageLink,
-            String additionalFileLink,
-            String profileImageLink
-    ) {
-        modifyProfile(
-                companyName,
-                brandName,
-                industry,
-                customIndustry,
-                companyIntroduction,
-                homepageLink,
-                additionalFileLink,
-                profileImageLink,
-                this.businessRegistrationNumber
-        );
     }
 
     public void changeManagerName(

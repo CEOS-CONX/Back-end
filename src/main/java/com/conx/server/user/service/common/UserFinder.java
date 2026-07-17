@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+
 @Component
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserFinder {
@@ -52,7 +54,7 @@ public class UserFinder {
         }
 
         if (user instanceof Crew crew){
-            return crew.getCrewSchool() != null;
+            return !crew.getSchools().isEmpty();
         } else if (user instanceof Company company){
             return company.getCompanyIntroduction() != null;
         } else {

@@ -11,9 +11,7 @@ public record SubmitProjectResultRequestDTO(
 
         List<AdditionalLinksWrapper> links,
 
-        @NotBlank(
-                message = "결과물 제목을 입력해주세요"
-        )
+        @NotBlank(message = "결과물 제목을 입력해주세요")
         String subject,
 
         String content
@@ -36,23 +34,7 @@ public record SubmitProjectResultRequestDTO(
                         : subject.trim();
     }
 
-    /**
-     * feature/2의 기존 title() 호출부 호환용
-     */
-    public String title() {
-        return subject;
-    }
 
-    /**
-     * feature/2의 기존 referenceLinks() 호출부 호환용
-     */
-    public List<AdditionalLinksWrapper> referenceLinks() {
-        return links;
-    }
-
-    /**
-     * 기존 테스트 및 코드 호환용 생성자
-     */
     public SubmitProjectResultRequestDTO(
             List<String> fileLinks,
             String content

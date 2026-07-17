@@ -26,7 +26,7 @@ public record CrewProjectSubmissionListItemResponse(
 
         return new CrewProjectSubmissionListItemResponse(
                 submission.getId(),
-                submission.getTitle(),
+                submission.getSubject(),
                 authorName,
                 submission.getResolvedSubmittedAt(),
                 submission.getStatus(),

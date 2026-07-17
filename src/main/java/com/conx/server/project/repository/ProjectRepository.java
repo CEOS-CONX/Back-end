@@ -44,46 +44,6 @@ public interface ProjectRepository
             ProjectStatus status
     );
 
-    /**
-     * 기존 feature/2 기업 프로젝트 목록 호출부 호환용.
-     *
-     * 최신 화면용 Page 조회 메서드와 별도로 유지한다.
-     */
-    @Query("""
-            select p
-            from Project p
-            where p.company.id = :companyId
-              and p.status <> com.conx.server.project.domain.enums.ProjectStatus.DRAFT
-              and (
-                    :keyword is null
-                    or p.projectName like concat('%', :keyword, '%')
-                    or p.brandName like concat('%', :keyword, '%')
-              )
-              and (:projectType is null or p.projectType = :projectType)
-              and (:startDate is null or p.projectStartDate >= :startDate)
-              and (:endDate is null or p.projectDeadline <= :endDate)
-            order by p.id desc
-            """)
-    List<Project> findCompanyProjectsByFilter(
-            @Param("companyId")
-            Long companyId,
-
-            @Param("keyword")
-            String keyword,
-
-            @Param("projectType")
-            ProjectType projectType,
-
-            @Param("startDate")
-            LocalDate startDate,
-
-            @Param("endDate")
-            LocalDate endDate
-    );
-
-    /**
-     * dev의 최신 기업 프로젝트 목록 조회.
-     */
     @Query(
             value = """
                     select p
