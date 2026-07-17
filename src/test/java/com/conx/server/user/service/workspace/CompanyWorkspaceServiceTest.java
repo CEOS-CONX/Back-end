@@ -17,7 +17,6 @@ import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
-import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.service.common.UserFinder;
 import com.conx.server.project.domain.enums.CrewProjectTodoType;
@@ -135,7 +134,7 @@ class CompanyWorkspaceServiceTest {
         );
 
         // when
-        CrewEvaluationWrapperDTO response =
+        CompanyProjectEvaluationResponse response =
                 companyWorkspaceService.evaluateProject(
                         companyId,
                         projectId,
@@ -143,6 +142,15 @@ class CompanyWorkspaceServiceTest {
                 );
 
         // then
+        assertThat(response.projectId())
+                .isEqualTo(projectId);
+
+        assertThat(response.companyId())
+                .isEqualTo(companyId);
+
+        assertThat(response.crewId())
+                .isEqualTo(1L);
+
         assertThat(response.completeness())
                 .isEqualTo(5);
 
@@ -152,13 +160,13 @@ class CompanyWorkspaceServiceTest {
         assertThat(response.ability())
                 .isEqualTo(5);
 
-        assertThat(response.reCooperation())
+        assertThat(response.recooperation())
                 .isEqualTo(4);
 
         assertThat(response.communication())
                 .isEqualTo(5);
 
-        assertThat(response.overall())
+        assertThat(response.mean())
                 .isEqualTo(4.6);
 
         ArgumentCaptor<Evaluation> evaluationCaptor =
@@ -170,10 +178,16 @@ class CompanyWorkspaceServiceTest {
         Evaluation savedEvaluation =
                 evaluationCaptor.getValue();
 
+        assertThat(savedEvaluation.getProject())
+                .isEqualTo(project);
+
         assertThat(savedEvaluation.getCrew())
                 .isEqualTo(crew);
 
-        assertThat(savedEvaluation.getOverall())
+        assertThat(savedEvaluation.getCompany())
+                .isEqualTo(company);
+
+        assertThat(savedEvaluation.getMean())
                 .isEqualTo(4.6);
     }
 

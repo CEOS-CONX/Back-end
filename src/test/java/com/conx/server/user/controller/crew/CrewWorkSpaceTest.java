@@ -673,7 +673,7 @@ public class CrewWorkSpaceTest {
         assertThat(resultDTO.evaluation().ability()).isEqualTo(0.0);
         assertThat(resultDTO.evaluation().communication()).isEqualTo(0.0);
         assertThat(resultDTO.evaluation().schedule()).isEqualTo(0.0);
-        assertThat(resultDTO.evaluation().recooperation()).isEqualTo(0.0);
+        assertThat(resultDTO.evaluation().reCooperation()).isEqualTo(0.0);
 
         assertThat(resultDTO.todoProjects()).isEmpty();
     }

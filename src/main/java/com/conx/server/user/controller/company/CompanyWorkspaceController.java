@@ -12,18 +12,7 @@ import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
-import com.conx.server.user.dto.company.response.CompanyPartnerCrewResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectApplicationSelectResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
-import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementExpectedPaymentDateResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceDashboardResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectResponse;
-import com.conx.server.user.dto.company.response.ProjectInspectionWrapperDTO;
-import com.conx.server.user.dto.company.response.SubsidyStatusResponse;
+import com.conx.server.user.dto.company.response.*;
 import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
@@ -480,7 +469,7 @@ public class CompanyWorkspaceController {
      * 프로젝트 평가 등록
      */
     @PostMapping("/projects/{projectId}/evaluation")
-    public ApiResponse<CrewEvaluationWrapperDTO> evaluateProject(
+    public ApiResponse<CompanyProjectEvaluationResponse> evaluateProject(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
 
@@ -491,7 +480,7 @@ public class CompanyWorkspaceController {
             @RequestBody
             CompanyProjectEvaluationRequest request
     ) {
-        CrewEvaluationWrapperDTO response =
+        CompanyProjectEvaluationResponse response =
                 companyWorkspaceService.evaluateProject(
                         userDetails.getId(),
                         projectId,

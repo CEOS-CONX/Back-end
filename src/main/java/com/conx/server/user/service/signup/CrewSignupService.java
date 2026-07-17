@@ -56,10 +56,7 @@ public class CrewSignupService {
                 password
         );
 
-        Evaluation evaluation = Evaluation.create(crew);
-
         crewRepository.save(crew);
-        evaluationRepository.save(evaluation);
 
         PersonalInformationConsent personalInformationConsent =
                 PersonalInformationConsent.create(

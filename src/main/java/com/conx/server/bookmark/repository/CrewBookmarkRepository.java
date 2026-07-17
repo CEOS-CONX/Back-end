@@ -48,18 +48,22 @@ public interface CrewBookmarkRepository
             c.interestingIndustry,
             c.memberAmount,
             c.totalSubsidy,
-            case
-                when e is null or e.evaluationCount = 0 then cast(0.0 as double)
-                else cast(
-                    (e.completeness + e.schedule + e.ability + e.reCooperation + e.communication) * 1.0
-                    / (5 * e.evaluationCount)
-                as double)
-            end
+            coalesce(avg(e.mean), 0.0)
         )
         from CrewBookmark b
         join b.crew c
         left join Evaluation e on e.crew = c
         where b.company.id = :companyId
+        group by
+            c.id,
+            c.profileImage,
+            c.crewName,
+            c.crewIntroduction,
+            c.crewType,
+            c.customCrewType,
+            c.interestingIndustry,
+            c.memberAmount,
+            c.totalSubsidy
     """)
     List<CompanyBookmarkedCrewResponse>
     findAllBookmarkedCrewResponsesByCompanyId(

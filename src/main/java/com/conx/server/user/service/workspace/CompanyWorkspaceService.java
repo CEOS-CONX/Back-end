@@ -36,7 +36,6 @@ import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.*;
-import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
 import com.conx.server.user.repository.EvaluationRepository;
@@ -910,7 +909,7 @@ public class CompanyWorkspaceService {
      * 크루 평가 등록
      */
     @Transactional
-    public CrewEvaluationWrapperDTO evaluateProject(
+    public CompanyProjectEvaluationResponse evaluateProject(
             Long companyId,
             Long projectId,
             CompanyProjectEvaluationRequest request
@@ -926,16 +925,50 @@ public class CompanyWorkspaceService {
                         projectId
                 );
 
-        if (project.getStatus() != ProjectStatus.ADJUSTING
-                        && project.getStatus() != ProjectStatus.DONE) {
-            throw new CustomException(ErrorCode.PROJECT_EVALUATION_NOT_ALLOWED);
+        if (
+                project.getStatus() != ProjectStatus.ADJUSTING
+                        && project.getStatus() != ProjectStatus.DONE
+        ) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_EVALUATION_NOT_ALLOWED
+            );
         }
 
-        Crew selectedCrew = findPartnerCrew(project);
-        Evaluation evaluation = evaluationRepository.findByCrew(selectedCrew);
-        evaluation.evaluate(request);
+        Crew selectedCrew =
+                findPartnerCrew(
+                        project
+                );
 
-        return evaluation.getWrapperDTO();
+        if (
+                evaluationRepository.existsByProjectId(
+                        project.getId()
+                )
+        ) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_EVALUATION_ALREADY_EXISTS
+            );
+        }
+
+        Evaluation evaluation =
+                Evaluation.create(
+                        project,
+                        selectedCrew,
+                        company,
+                        request.completeness(),
+                        request.schedule(),
+                        request.ability(),
+                        request.reCooperation(),
+                        request.communication()
+                );
+
+        Evaluation savedEvaluation =
+                evaluationRepository.save(
+                        evaluation
+                );
+
+        return CompanyProjectEvaluationResponse.from(
+                savedEvaluation
+        );
     }
 
     /**

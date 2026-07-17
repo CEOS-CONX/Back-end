@@ -3,8 +3,6 @@ package com.conx.server.user.domain.crew;
 import com.conx.server.global.BaseEntity;
 import com.conx.server.project.domain.Project;
 import com.conx.server.user.domain.company.Company;
-import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
-import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -38,6 +36,17 @@ public class Evaluation extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /*
+     * 프로젝트 하나당 평가 하나만 존재합니다.
+     */
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "project_id",
+            nullable = false,
+            unique = true
+    )
+    private Project project;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "crew_id",
@@ -45,75 +54,93 @@ public class Evaluation extends BaseEntity {
     )
     private Crew crew;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "company_id",
+            nullable = false
+    )
+    private Company company;
+
     @Column(nullable = false)
     private int completeness;
-    //double로 관리하면 소수점 때문에 오차가 발생해서 정수로 관리합니다. 절대 건드리지 마세요!
 
     @Column(nullable = false)
     private int schedule;
-    //double로 관리하면 소수점 때문에 오차가 발생해서 정수로 관리합니다. 절대 건드리지 마세요!
 
     @Column(nullable = false)
     private int ability;
-    //double로 관리하면 소수점 때문에 오차가 발생해서 정수로 관리합니다. 절대 건드리지 마세요!
 
     @Column(nullable = false)
     private int reCooperation;
-    //double로 관리하면 소수점 때문에 오차가 발생해서 정수로 관리합니다. 절대 건드리지 마세요!
 
     @Column(nullable = false)
     private int communication;
-    //double로 관리하면 소수점 때문에 오차가 발생해서 정수로 관리합니다. 절대 건드리지 마세요!
-
-    private int totalEvaluation;
-    //double로 관리하면 소수점 때문에 오차가 발생해서 정수로 관리합니다. 절대 건드리지 마세요!
 
     @Column(nullable = false)
-    private int total;
-    //double로 관리하면 소수점 때문에 오차가 발생해서 정수로 관리합니다. 절대 건드리지 마세요!
+    private double mean;
 
-    private Evaluation(Crew crew) {
-        this.crew = crew;
-        this.total = 0;
-        this.totalEvaluation = 0;
-    }
-
-    public static Evaluation create(Crew crew) {
-        return new Evaluation(crew);
-    }
-
-    private void calculateTotal(){
-        total = completeness + schedule + ability + reCooperation + communication;
-    }
-
-    public void evaluate(CompanyProjectEvaluationRequest req){
-        this.completeness += req.completeness();
-        this.schedule += req.schedule();
-        this.ability += req.ability();
-        this.reCooperation += req.reCooperation();
-        this.communication += req.communication();
-
-        totalEvaluation++;
-        calculateTotal();
-    }
-
-    public double getOverall() {
-        if (totalEvaluation == 0) {
-            return 0;
-        }
-
-        return (double) total / (5 * totalEvaluation);
-    }
-
-    public record CrewEvaluationWrapperDTO(
-            double overall,
-            double completeness,
-            double ability,
-            double communication,
-            double schedule,
-            double reCooperation
+    private Evaluation(
+            Project project,
+            Crew crew,
+            Company company,
+            int completeness,
+            int schedule,
+            int ability,
+            int reCooperation,
+            int communication
     ) {
+        this.project = project;
+        this.crew = crew;
+        this.company = company;
+        this.completeness = completeness;
+        this.schedule = schedule;
+        this.ability = ability;
+        this.reCooperation = reCooperation;
+        this.communication = communication;
+        this.mean = calculateMean(
+                completeness,
+                schedule,
+                ability,
+                reCooperation,
+                communication
+        );
     }
 
-    public CrewEvaluationWrapperDTO getWrapperDTO(){}
+    public static Evaluation create(
+            Project project,
+            Crew crew,
+            Company company,
+            int completeness,
+            int schedule,
+            int ability,
+            int reCooperation,
+            int communication
+    ) {
+        return new Evaluation(
+                project,
+                crew,
+                company,
+                completeness,
+                schedule,
+                ability,
+                reCooperation,
+                communication
+        );
+    }
+
+    private static double calculateMean(
+            int completeness,
+            int schedule,
+            int ability,
+            int reCooperation,
+            int communication
+    ) {
+        return (
+                completeness
+                        + schedule
+                        + ability
+                        + reCooperation
+                        + communication
+        ) / 5.0;
+    }
 }

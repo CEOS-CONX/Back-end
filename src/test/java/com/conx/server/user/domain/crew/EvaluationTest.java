@@ -49,7 +49,7 @@ class EvaluationTest {
         assertThat(evaluation.getAbility())
                 .isEqualTo(5);
 
-        assertThat(evaluation.getRecooperation())
+        assertThat(evaluation.getReCooperation())
                 .isEqualTo(4);
 
         assertThat(evaluation.getCommunication())
