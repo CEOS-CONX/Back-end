@@ -1,6 +1,5 @@
 package com.conx.server.project.dto.response;
 
-import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectSubmissionCriteria;
 import jakarta.persistence.*;
 
