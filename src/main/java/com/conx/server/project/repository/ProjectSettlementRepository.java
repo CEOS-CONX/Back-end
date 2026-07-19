@@ -33,10 +33,6 @@ public interface ProjectSettlementRepository
             ProjectSettlementStatus status
     );
 
-    /**
-     * 메서드명은 기존 서비스 호환을 위해 유지하고,
-     * 실제 엔티티 필드인 subsidy를 합산한다.
-     */
     @Query("""
             select coalesce(sum(settlement.subsidy), 0)
             from ProjectSettlement settlement

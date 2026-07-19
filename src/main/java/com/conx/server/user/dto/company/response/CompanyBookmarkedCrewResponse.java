@@ -44,24 +44,4 @@ public record CompanyBookmarkedCrewResponse(
                 point
         );
     }
-
-    /*
-     * 기존 코드가 from(Crew)를 사용하는 경우를 위한 호환 메서드입니다.
-     */
-    public static CompanyBookmarkedCrewResponse from(
-            Crew crew
-    ) {
-        return new CompanyBookmarkedCrewResponse(
-                crew.getId(),
-                crew.getProfileImage(),
-                crew.getCrewName(),
-                crew.getCrewIntroduction(),
-                crew.getCrewType(),
-                crew.getCustomCrewType(),
-                crew.getInterestingIndustry(),
-                crew.getMemberAmount(),
-                crew.getTotalSubsidy(),
-                0.0
-        );
-    }
 }

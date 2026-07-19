@@ -125,8 +125,9 @@ public class CrewBrowseService {
                                 crewId
                         );
 
-        List<CrewLinkResponse> links =
-                getCrewLinks(crew);
+        List<CrewLinkResponse> links = crewLinkRepository.findAllByCrewIdOrderByIdAsc(crew.getId()).stream()
+                .map(CrewLinkResponse::from)
+                .toList();
 
         List<CrewFileResponse> files =
                 crewFileRepository
@@ -291,65 +292,6 @@ public class CrewBrowseService {
                 .orElse(0.0);
     }
 
-    private List<CrewLinkResponse> getCrewLinks(
-            Crew crew
-    ) {
-        List<CrewLink> savedLinks =
-                crewLinkRepository
-                        .findAllByCrewIdOrderByIdAsc(
-                                crew.getId()
-                        );
-
-        if (!savedLinks.isEmpty()) {
-            return savedLinks.stream()
-                    .map(CrewLinkResponse::from)
-                    .toList();
-        }
-
-        /*
-         * 기존 데이터에 CrewLink가 없으면
-         * 이전 단일 링크 필드를 fallback으로 반환합니다.
-         */
-        List<CrewLinkResponse> legacyLinks =
-                new ArrayList<>();
-
-        addLegacyLink(
-                legacyLinks,
-                "SNS",
-                crew.getSnsLink()
-        );
-
-        addLegacyLink(
-                legacyLinks,
-                "기타 링크",
-                crew.getEtcLink()
-        );
-
-        addLegacyLink(
-                legacyLinks,
-                "카카오톡",
-                crew.getKakaotalkLink()
-        );
-
-        return legacyLinks;
-    }
-
-    private void addLegacyLink(
-            List<CrewLinkResponse> links,
-            String name,
-            String url
-    ) {
-        if (!hasText(url)) {
-            return;
-        }
-
-        links.add(
-                CrewLinkResponse.legacy(
-                        name,
-                        url
-                )
-        );
-    }
 
     /*
      * 대표 프로젝트만 선택해 놓은 경우에는

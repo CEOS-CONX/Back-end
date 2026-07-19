@@ -612,8 +612,8 @@ public class CrewWorkSpaceService {
         ProjectSubmission submission = ProjectSubmission.create(project, crew, request.subject(),
                 request.content(), request.fileLinks(), request.links());
 
-        projectSubmissionRepository.save(submission);
         project.submitProjectResult();
+        projectSubmissionRepository.save(submission);
         crewProjectTodoService.completeSubmissionTodo(crew, project);
         notificationFacadeService.saveNotificationAboutResultUploaded(project);
     }

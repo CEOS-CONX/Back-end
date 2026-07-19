@@ -87,7 +87,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -115,7 +114,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -153,7 +151,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -184,7 +181,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -222,7 +218,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -252,7 +247,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -290,7 +284,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -322,7 +315,6 @@ public interface CrewRepository
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
                     or c.crewIntroduction like concat('%', :keyword, '%')
-                    or c.crewSchool like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
