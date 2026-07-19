@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - chore/ci-optimization
   pull_request:
     branches:
       - dev
