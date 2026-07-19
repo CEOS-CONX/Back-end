@@ -24,6 +24,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileService {
 
+    @PostConstruct // 또는 테스트 코드에서
+    public void checkCredentials() {
+        try {
+            s3Client.listBuckets();
+            System.out.println("자격증명 OK - S3 접근 가능");
+        } catch (Exception e) {
+            System.out.println("자격증명 문제: " + e.getMessage());
+        }
+    }
+
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
     private final S3Client s3Client;

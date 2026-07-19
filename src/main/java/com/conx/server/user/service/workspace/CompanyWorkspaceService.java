@@ -1273,12 +1273,25 @@ public class CompanyWorkspaceService {
                         ? List.of()
                         : request.fileLinks();
 
-        List<File> files = fileRequests.stream().map(
-                fileRequest -> { HeadObjectResponse head = fileService.getHeadObject(
-                                                    fileRequest.fileLinks());
-                                return File.create(fileRequest.originalName(), head, fileRequest.fileLinks(), fileRequest.explanation());
+        List<File> files =
+                fileRequests
+                        .stream()
+                        .map(
+                                fileRequest -> {
+                                    HeadObjectResponse head =
+                                            fileService.getHeadObject(
+                                                    fileRequest.fileLinks()
+                                            );
+
+                                    return File.create(
+                                            fileRequest.originalName(),
+                                            head,
+                                            fileRequest.fileLinks(),
+                                            fileRequest.explanation()
+                                    );
                                 }
-                        ).toList();
+                        )
+                        .toList();
 
         if (!files.isEmpty()) {
             fileRepository.saveAll(
