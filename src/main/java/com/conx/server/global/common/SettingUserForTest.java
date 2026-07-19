@@ -25,7 +25,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Component
-@Profile("test")
+@Profile({"test", "local"})
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class SettingUserForTest {
 
