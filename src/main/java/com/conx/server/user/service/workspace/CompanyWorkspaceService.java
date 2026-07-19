@@ -268,29 +268,14 @@ public class CompanyWorkspaceService {
             Long companyId,
             CompanyProjectRequestDTO request
     ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
+        Company company = userFinder.findActiveCompany(companyId);
 
-        Project project =
-                Project.createRecruitingProject(
-                        company,
-                        request
-                );
+        Project project = Project.createRecruitingProject(company, request);
 
-        saveFiles(
-                request
-        );
+        saveFiles(request);
+        Project savedProject = projectRepository.save(project);
 
-        Project savedProject =
-                projectRepository.save(
-                        project
-                );
-
-        return CompanyProjectIdResponse.from(
-                savedProject
-        );
+        return CompanyProjectIdResponse.from(savedProject);
     }
 
     /**
@@ -370,10 +355,10 @@ public class CompanyWorkspaceService {
      * 프로젝트 기준충족 버큰 누르기
      */
     @Transactional
-    public void checkCriteria(long companyId, Long criteriaId) {
+    public void checkCriteria(long projectId, long companyId, Long criteriaId) {
         Company company = userFinder.findActiveCompany(companyId);
 
-        ProjectSubmissionCriteria criteria = projectSubmissionCriteriaRepository.findByIdAndCompany(criteriaId, company).orElseThrow(
+        ProjectSubmissionCriteria criteria = projectSubmissionCriteriaRepository.findByIdAndCompany(projectId, criteriaId, company).orElseThrow(
                 () -> new CustomException(ErrorCode.CRITERIA_NOT_FOUND)
         );
 
@@ -492,42 +477,12 @@ public class CompanyWorkspaceService {
         );
     }
 
-    /**
-     * 프로젝트 지원 목록 조회
-     */
-    @Transactional(readOnly = true)
-    public List<CompanyProjectApplicationResponse> getProjectApplications(
-            Long companyId,
-            Long projectId
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        Project project =
-                findCompanyProject(
-                        company.getId(),
-                        projectId
-                );
-
-        return projectApplicationRepository
-                .findAllByProjectId(
-                        project.getId()
-                )
-                .stream()
-                .map(
-                        CompanyProjectApplicationResponse::from
-                )
-                .toList();
-    }
 
     /**
      * 프로젝트 파트너 크루 선정
      */
     @Transactional
-    public CompanyProjectApplicationSelectResponse
-    selectProjectApplication(
+    public CompanyProjectApplicationSelectResponse selectProjectApplication(
             Long companyId,
             Long projectId,
             Long applicationId
@@ -584,77 +539,6 @@ public class CompanyWorkspaceService {
         return CompanyProjectApplicationSelectResponse.of(
                 project,
                 selectedApplication
-        );
-    }
-
-    /**
-     * 프로젝트 결과물 공유 이력 조회
-     */
-    @Transactional(readOnly = true)
-    public Page<CrewProjectSubmissionListItemResponse>
-    getProjectSubmissions(
-            Long companyId,
-            Long projectId,
-            int page,
-            int size
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        Project project =
-                findCompanyProject(
-                        company.getId(),
-                        projectId
-                );
-
-        Pageable pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.max(size, 1)
-                );
-
-        return projectSubmissionRepository
-                .findAllByProjectIdAndStatusNotOrderByIdDesc(
-                        project.getId(),
-                        ProjectSubmissionStatus.DRAFT,
-                        pageable
-                )
-                .map(
-                        CrewProjectSubmissionListItemResponse::from
-                );
-    }
-
-    /**
-     * 프로젝트 결과물 공유 상세 조회
-     */
-    @Transactional(readOnly = true)
-    public CrewProjectSubmissionDetailResponse
-    getProjectSubmissionDetail(
-            Long companyId,
-            Long projectId,
-            Long submissionId
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        Project project =
-                findCompanyProject(
-                        company.getId(),
-                        projectId
-                );
-
-        ProjectSubmission submission =
-                findVisibleSubmission(
-                        project.getId(),
-                        submissionId
-                );
-
-        return CrewProjectSubmissionDetailResponse.from(
-                submission
         );
     }
 
@@ -774,11 +658,7 @@ public class CompanyWorkspaceService {
                                 )
                         );
 
-        if (
-                !submission
-                        .getProject()
-                        .getCompany()
-                        .equals(company)
+        if (!submission.getProject().getCompany().equals(company)
         ) {
             throw new CustomException(
                     ErrorCode.FORBIDDEN
@@ -786,24 +666,13 @@ public class CompanyWorkspaceService {
         }
 
         if (!submission.canRegisterFeedback()) {
-            throw new CustomException(
-                    ErrorCode.INVALID_SUBMISSION_STATUS
-            );
+            throw new CustomException(ErrorCode.INVALID_SUBMISSION_STATUS);
         }
 
-        ProjectInspectionFeedback feedback =
-                ProjectInspectionFeedback.create(
-                        submission,
-                        request
-                );
+        ProjectInspectionFeedback feedback = ProjectInspectionFeedback.create(submission, request);
+        saveFiles(request);
 
-        saveFiles(
-                request
-        );
-
-        projectInspectionFeedbackRepository.save(
-                feedback
-        );
+        projectInspectionFeedbackRepository.save(feedback);
 
         submission.setFeedback();
 
