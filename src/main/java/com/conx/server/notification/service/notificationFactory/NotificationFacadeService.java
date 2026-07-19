@@ -5,6 +5,7 @@ import com.conx.server.notification.domain.Notification;
 import com.conx.server.notification.repository.NotificationRepository;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectApplication;
+import com.conx.server.project.domain.ProjectQuestion;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -71,6 +72,18 @@ public class NotificationFacadeService {
     //정산이 완료됨(크류용)
     public void saveNotificationAboutAdjustmentDone(Project project){
         Notification notification = NotificationFactory.adjustmentDone(project);
+        notificationRepository.save(notification);
+    }
+
+    //담당자 Q&A 등록됨
+    public void questionRegistered(ProjectQuestion q){
+        Notification notification = NotificationFactory.projectQuestionRegistered(q);
+        notificationRepository.save(notification);
+    }
+
+    //담당자 Q&A 답변 등록됨
+    public void answerRegistered(ProjectQuestion q){
+        Notification notification = NotificationFactory.projectAnswerRegistered(q);
         notificationRepository.save(notification);
     }
 }

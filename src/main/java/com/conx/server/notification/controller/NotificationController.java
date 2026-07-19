@@ -3,6 +3,7 @@ package com.conx.server.notification.controller;
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
+import com.conx.server.notification.dto.NotificationFilter;
 import com.conx.server.notification.dto.NotificationWrapperDTO;
 import com.conx.server.notification.service.NotificationService;
 import lombok.AccessLevel;
@@ -67,9 +68,10 @@ public class NotificationController {
      */
     @GetMapping
     public ApiResponse<List<NotificationWrapperDTO>> getNotifications(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam NotificationFilter filter
     ){
-        List<NotificationWrapperDTO> notifications = notificationService.getAllNotifications(customUserDetails);
+        List<NotificationWrapperDTO> notifications = notificationService.getAllNotifications(customUserDetails, filter);
         return apiResponseFactory.success(notifications, customUserDetails);
     }
 }

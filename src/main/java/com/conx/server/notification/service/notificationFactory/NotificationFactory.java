@@ -5,6 +5,7 @@ import com.conx.server.notification.domain.Notification;
 import com.conx.server.notification.domain.NotificationType;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectApplication;
+import com.conx.server.project.domain.ProjectQuestion;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -61,6 +62,28 @@ class NotificationFactory {
                 project.getCompany().getId(),
                 NotificationType.RESULT_UPLOADED.format(project.getProjectName()),
                 project.getCrewName()
+        );
+    }
+
+    static Notification projectQuestionRegistered(ProjectQuestion q){
+        Project project = q.getProject();
+
+        return Notification.create(
+                NotificationType.QUESTION_REGISTERED,
+                project.getCompany().getId(),
+                NotificationType.QUESTION_REGISTERED.format(project.getProjectName()),
+                q.getWriterName()
+        );
+    }
+
+    static Notification projectAnswerRegistered(ProjectQuestion q){
+        Project project = q.getProject();
+
+        return Notification.create(
+                NotificationType.QUESTION_ANSWER_REGISTERED,
+                q.getWriterId(),
+                NotificationType.QUESTION_ANSWER_REGISTERED.format(project.getProjectName()),
+                project.getCompanyName()
         );
     }
 

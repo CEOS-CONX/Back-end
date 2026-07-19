@@ -27,30 +27,6 @@ public class ProjectQuestionController {
     private final ProjectQuestionService projectQuestionService;
     private final ApiResponseFactory apiResponseFactory;
 
-    @GetMapping("/api/v1/projects/{projectId}/questions")
-    public ApiResponse<Page<ProjectQuestionResponse>> getQuestions(
-            @PathVariable Long projectId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "false") boolean mine,
-            @AuthenticationPrincipal CustomUserDetails userDetails
-    ) {
-        Page<ProjectQuestionResponse> response =
-                projectQuestionService.getQuestions(
-                        projectId,
-                        page,
-                        size,
-                        mine,
-                        userDetails
-                );
-
-        return apiResponseFactory.success(
-                "프로젝트 질문 목록 조회에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
     @GetMapping("/api/v1/projects/{projectId}/questions/{questionId}")
     public ApiResponse<ProjectQuestionDetailResponse> getQuestion(
             @PathVariable Long projectId,

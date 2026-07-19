@@ -14,6 +14,7 @@ import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.*;
 import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
+import com.conx.server.user.dto.crew.response.CrewProfileResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import jakarta.validation.Valid;
@@ -388,8 +389,7 @@ public class CompanyWorkspaceController {
     @PostMapping(
             "/projects/{projectId}/applications/{applicationId}/select"
     )
-    public ApiResponse<CompanyProjectApplicationSelectResponse>
-    selectProjectApplication(
+    public ApiResponse<CompanyProjectApplicationSelectResponse> selectProjectApplication(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
 
@@ -408,30 +408,6 @@ public class CompanyWorkspaceController {
 
         return apiResponseFactory.success(
                 "프로젝트 참여 크루 선정에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
-    /**
-     * 파트너 크루 조회
-     */
-    @GetMapping("/projects/{projectId}/partner-crew")
-    public ApiResponse<CompanyPartnerCrewResponse> getPartnerCrew(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId
-    ) {
-        CompanyPartnerCrewResponse response =
-                companyWorkspaceService.getPartnerCrew(
-                        userDetails.getId(),
-                        projectId
-                );
-
-        return apiResponseFactory.success(
-                "파트너 크루 조회에 성공했습니다.",
                 response,
                 userDetails
         );

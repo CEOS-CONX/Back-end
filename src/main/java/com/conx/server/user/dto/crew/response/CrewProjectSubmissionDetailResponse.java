@@ -33,7 +33,7 @@ public record CrewProjectSubmissionDetailResponse(
         return new CrewProjectSubmissionDetailResponse(
                 submission.getId(),
                 submission.getProject().getId(),
-                submission.getTitle(),
+                submission.getSubject(),
                 authorName,
                 submission.getResolvedSubmittedAt(),
                 submission.getStatus(),

@@ -444,7 +444,7 @@ class CompanyWorkspaceServiceTest {
                 .markAsPaid(settlementDate);
 
         verify(project)
-                .completeSettlement();
+                .end();
 
         verify(crewProjectTodoService)
                 .completeIfExists(
@@ -499,7 +499,7 @@ class CompanyWorkspaceServiceTest {
                 .markAsPaid(any(LocalDate.class));
 
         verify(project, never())
-                .completeSettlement();
+                .end();
 
         verify(
                 crewProjectTodoService,
@@ -559,7 +559,7 @@ class CompanyWorkspaceServiceTest {
                 .markAsPaid(any(LocalDate.class));
 
         verify(project, never())
-                .completeSettlement();
+                .end();
 
         verify(
                 crewProjectTodoService,
@@ -610,7 +610,7 @@ class CompanyWorkspaceServiceTest {
                 .markAsPaid(any(LocalDate.class));
 
         verify(project, never())
-                .completeSettlement();
+                .end();
 
         verify(
                 crewProjectTodoService,

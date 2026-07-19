@@ -145,35 +145,6 @@ public class ProjectSubmission extends BaseEntity {
         return submission;
     }
 
-    /**
-     * 임시 저장 결과물 생성
-     */
-    public static ProjectSubmission createDraft(
-            Project project,
-            Crew authorCrew,
-            String subject,
-            String content,
-            List<String> fileLinks,
-            List<AdditionalLinksWrapper> additionalLinks
-    ) {
-        ProjectSubmission submission =
-                new ProjectSubmission(
-                        project,
-                        authorCrew,
-                        subject,
-                        content,
-                        fileLinks,
-                        additionalLinks
-                );
-
-        submission.draftSubmission();
-
-        return submission;
-    }
-
-    /**
-     * dev 코드 호환용 제출 생성 메서드
-     */
     public static ProjectSubmission create(
             Project project,
             String subject,
@@ -189,64 +160,6 @@ public class ProjectSubmission extends BaseEntity {
                 fileLinks,
                 additionalLinks
         );
-    }
-
-    /**
-     * 기존 코드 호환용 제출 생성 메서드
-     */
-    public static ProjectSubmission create(
-            Project project,
-            String content,
-            List<String> fileLinks
-    ) {
-        return create(
-                project,
-                project.getSelectedCrew(),
-                "결과물 제출",
-                content,
-                fileLinks,
-                List.of()
-        );
-    }
-
-    /**
-     * 기존 코드 호환용 임시 저장 생성 메서드
-     */
-    public static ProjectSubmission createDraft(
-            Project project,
-            String content,
-            List<String> fileLinks
-    ) {
-        return createDraft(
-                project,
-                project.getSelectedCrew(),
-                "결과물 임시 저장",
-                content,
-                fileLinks,
-                List.of()
-        );
-    }
-
-    /**
-     * DRAFT 상태의 결과물만 수정 가능하다.
-     */
-    public void update(
-            String subject,
-            String content,
-            List<String> fileLinks,
-            List<AdditionalLinksWrapper> additionalLinks
-    ) {
-        if (!isDraft()) {
-            throw new CustomException(
-                    ErrorCode.INVALID_SUBMISSION_STATUS
-            );
-        }
-
-        this.subject = subject;
-        this.content = content;
-        this.fileLinks = copyList(fileLinks);
-        this.additionalLinks =
-                copyList(additionalLinks);
     }
 
     /**
@@ -295,13 +208,6 @@ public class ProjectSubmission extends BaseEntity {
         }
 
         return project.getSelectedCrew();
-    }
-
-    /**
-     * 기존 title 기반 응답 코드 호환용
-     */
-    public String getTitle() {
-        return subject;
     }
 
     public boolean isSubmitted() {

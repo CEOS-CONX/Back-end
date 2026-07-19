@@ -5,6 +5,7 @@ import com.conx.server.notification.domain.NotificationType;
 import org.apache.tomcat.util.modeler.NotificationInfo;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record NotificationWrapperDTO(
@@ -13,7 +14,7 @@ public record NotificationWrapperDTO(
         String message,
         boolean isRead,
 
-        LocalDate arriveTime,
+        LocalDateTime arriveTime,
         String sender
 ) {
     public static NotificationWrapperDTO create(Notification n){
@@ -22,7 +23,7 @@ public record NotificationWrapperDTO(
                 n.getType(),
                 n.getMessage(),
                 n.isRead(),
-                n.getCreatedAt().toLocalDate(),
+                n.getCreatedAt(),
                 n.getSender()
         );
     }

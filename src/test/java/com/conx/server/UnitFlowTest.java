@@ -158,12 +158,12 @@ public class UnitFlowTest {
                 .andExpect(status().isOk());
 
         //크루별 알림 확인
-        MvcResult mvcForNotification1 = mockMvc.perform(get("/api/v1/notifications")
+        MvcResult mvcForNotification1 = mockMvc.perform(get("/api/v1/notifications?filter=ALL")
                         .header("Authorization", crew1Token))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        MvcResult mvcForNotification2 = mockMvc.perform(get("/api/v1/notifications")
+        MvcResult mvcForNotification2 = mockMvc.perform(get("/api/v1/notifications?filter=ALL")
                         .header("Authorization", crew2Token))
                 .andExpect(status().isOk())
                 .andReturn();

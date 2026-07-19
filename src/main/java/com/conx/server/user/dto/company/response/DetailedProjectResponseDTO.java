@@ -1,8 +1,10 @@
 package com.conx.server.user.dto.company.response;
 
 import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.ProjectSubmissionCriteria;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.response.ResultFormResponse;
+import com.conx.server.project.dto.response.SubmissionCriteriaResponseDTO;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.CrewType;
 
@@ -30,7 +32,7 @@ public record DetailedProjectResponseDTO(
         LocalDate endDate,
 
         //제출기준
-        List<ResultFormResponse> resultForm
+        List<SubmissionCriteriaResponseDTO> criteria
 ) {
     public static DetailedProjectResponseDTO create(Project project){
         LocalDate crewSelectedDate = project.getCrewSelectedDate();
@@ -53,7 +55,7 @@ public record DetailedProjectResponseDTO(
                     project.getSelectedCrew().getCrewType(),
 
                     crewSelectedDate, projectStartDate, projectEndDate, submissionDate, endDate,
-                    project.getResultForm().stream().map(ResultFormResponse::from).toList()
+                    project.getResultCriteria().stream().map(SubmissionCriteriaResponseDTO::from).toList()
             );
         } else {
             return new DetailedProjectResponseDTO(project.getId(),
@@ -69,7 +71,7 @@ public record DetailedProjectResponseDTO(
                     null,
 
                     crewSelectedDate, projectStartDate, projectEndDate, submissionDate, endDate,
-                    project.getResultForm().stream().map(ResultFormResponse::from).toList()
+                    project.getResultCriteria().stream().map(SubmissionCriteriaResponseDTO::from).toList()
             );
         }
     }

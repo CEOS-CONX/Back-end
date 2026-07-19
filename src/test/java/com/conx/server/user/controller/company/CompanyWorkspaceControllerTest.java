@@ -616,32 +616,6 @@ class CompanyWorkspaceControllerTest {
     }
 
     @Test
-    @DisplayName("파트너 크루를 조회한다")
-    void getPartnerCrew() throws Exception {
-        Long projectId = 100L;
-
-        mockMvc.perform(
-                        get(
-                                "/api/v1/companies/me/projects/{projectId}/partner-crew",
-                                projectId
-                        )
-                )
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "파트너 크루 조회에 성공했습니다."
-                                )
-                );
-
-        verify(companyWorkspaceService).getPartnerCrew(
-                COMPANY_ID,
-                projectId
-        );
-    }
-
-    @Test
     @DisplayName("기존 기업 정산 목록을 조회한다")
     void getSettlements() throws Exception {
         given(

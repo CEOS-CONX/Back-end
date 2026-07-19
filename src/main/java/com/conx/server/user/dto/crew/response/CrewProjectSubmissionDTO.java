@@ -34,7 +34,7 @@ public record CrewProjectSubmissionDTO(
 
         return new CrewProjectSubmissionDTO(
                 submission.getId(),
-                submission.getTitle(),
+                submission.getSubject(),
                 safeList(
                         submission.getFileLinks()
                 ),

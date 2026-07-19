@@ -11,14 +11,7 @@ import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -135,8 +128,14 @@ public class Project extends BaseEntity {
             name = "project_result_form",
             joinColumns = @JoinColumn(name = "project_id")
     )
-    private List<ResultForm> resultForm =
-            new ArrayList<>();
+    private List<ResultForm> resultForm = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "project",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<ProjectSubmissionCriteria> resultCriteria = new ArrayList<>();
 
     /*
      * 프로젝트 일정
@@ -201,6 +200,11 @@ public class Project extends BaseEntity {
 
     private int views;
 
+    public void addResultCriteria(ResultForm form) {
+        ProjectSubmissionCriteria criteria = ProjectSubmissionCriteria.from(this, form);
+        resultCriteria.add(criteria);
+    }
+
     public static Project createWithStatus(
             Company company,
             CompanyProjectRequestDTO request,
@@ -230,7 +234,7 @@ public class Project extends BaseEntity {
                         .map(AdditionalLinksWrapper::from)
                         .toList();
 
-        return new Project(
+        Project project = new Project(
                 company,
                 null,
                 request.brandName(),
@@ -258,6 +262,13 @@ public class Project extends BaseEntity {
                 status,
                 0
         );
+
+
+        for (ResultForm resultForm : resultForms){
+            project.addResultCriteria(resultForm);
+        }
+
+        return project;
     }
 
     public static Project createRecruitingProject(
@@ -275,41 +286,14 @@ public class Project extends BaseEntity {
             Company company,
             CompanyProjectRequestDTO request
     ) {
-        return createWithStatus(
-                company,
-                request,
-                ProjectStatus.DRAFT
-        );
+        return createWithStatus(company, request, ProjectStatus.DRAFT);
     }
 
-    private void modify(
-            CompanyProjectRequestDTO request
-    ) {
-        this.brandName =
-                getOrDefault(
-                        request.brandName(),
-                        this.brandName
-                );
-
-        this.managerName =
-                getOrDefault(
-                        request.managerName(),
-                        this.managerName
-                );
-
-        this.managerEmail =
-                getOrDefault(
-                        request.managerEmail(),
-                        this.managerEmail
-                );
-
-        this.projectImage =
-                copyList(
-                        getOrDefault(
-                                request.projectImages(),
-                                this.projectImage
-                        )
-                );
+    private void modify(CompanyProjectRequestDTO request) {
+        this.brandName = getOrDefault(request.brandName(), this.brandName);
+        this.managerName = getOrDefault(request.managerName(), this.managerName);
+        this.managerEmail = getOrDefault(request.managerEmail(), this.managerEmail);
+        this.projectImage = copyList(getOrDefault(request.projectImages(), this.projectImage));
 
         this.projectName =
                 getOrDefault(
@@ -336,11 +320,13 @@ public class Project extends BaseEntity {
                 );
 
         if (request.resultForm() != null) {
-            this.resultForm =
-                    request.resultForm()
-                            .stream()
-                            .map(ResultForm::from)
-                            .toList();
+            this.resultForm = request.resultForm().stream()
+                    .map(ResultForm::from).toList();
+
+            this.resultCriteria.clear();
+            for (ResultForm form : this.resultForm) {
+                addResultCriteria(form);
+            }
         }
 
         this.recruitDeadLine =
@@ -424,6 +410,8 @@ public class Project extends BaseEntity {
                             .map(AdditionalLinksWrapper::from)
                             .toList();
         }
+
+
     }
 
     public void modifyDraft(
@@ -480,27 +468,16 @@ public class Project extends BaseEntity {
     }
 
     public void completeInspection() {
-        if (status != ProjectStatus.INSPECTION) {
-            throw new CustomException(
-                    ErrorCode.INVALID_PROJECT_STATUS
-            );
+        if (status != ProjectStatus.INSPECTION && status != ProjectStatus.PROGRESS) {
+            throw new CustomException(ErrorCode.INVALID_PROJECT_STATUS);
         }
 
         this.status = ProjectStatus.ADJUSTING;
     }
 
     public void end() {
-        this.projectEndedDate =
-                LocalDate.now();
-        this.status =
-                ProjectStatus.DONE;
-    }
-
-    /*
-     * feature/2 정산 완료 호출부 호환용.
-     */
-    public void completeSettlement() {
-        end();
+        this.projectEndedDate = LocalDate.now();
+        this.status = ProjectStatus.DONE;
     }
 
     public void expire() {
@@ -531,13 +508,11 @@ public class Project extends BaseEntity {
     }
 
     public boolean isInProgress() {
-        return status
-                == ProjectStatus.PROGRESS;
+        return status == ProjectStatus.PROGRESS;
     }
 
     public boolean isRecruiting() {
-        return status
-                == ProjectStatus.RECRUITING;
+        return status == ProjectStatus.RECRUITING;
     }
 
     public boolean isAfterProgress() {

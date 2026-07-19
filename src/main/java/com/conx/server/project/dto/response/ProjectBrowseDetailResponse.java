@@ -7,6 +7,7 @@ import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -49,10 +50,13 @@ public record ProjectBrowseDetailResponse(
         List<FileResponseDTO> files,
         List<AdditionalLinksWrapper> links,
 
-        int views
+        int views,
+
+        List<ProjectQuestionResponse> question
 ) {
     public static ProjectBrowseDetailResponse from(Project project,
-                                                   List<FileResponseDTO> files) {
+                                                   List<FileResponseDTO> files,
+                                                   Page<ProjectQuestionResponse> question) {
         int dayBeforeDeadline = (int) ChronoUnit.DAYS.between(
                 LocalDate.now(),
                 project.getRecruitDeadLine()
@@ -94,7 +98,9 @@ public record ProjectBrowseDetailResponse(
 
                 files,
                 project.getLinks(),
-                project.getViews()
+                project.getViews(),
+
+                question.getContent()
         );
     }
 }

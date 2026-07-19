@@ -38,8 +38,7 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "T005", "리프레시 토큰을 찾을 수 없습니다"),
 
     //Error for email verification
-    EMAIL_NOT_FOUND(
-            HttpStatus.BAD_REQUEST,
+    EMAIL_NOT_FOUND(HttpStatus.BAD_REQUEST,
             "V001",
             "이메일 인증요청을 보내지 않았거나, 인증번호가 만료되었습니다."
     ),
@@ -154,6 +153,9 @@ public enum ErrorCode {
             "RP003",
             "대표 프로젝트로 선택할 수 없는 프로젝트가 포함되어 있습니다."
     ),
+
+    //Error for Criteria
+    CRITERIA_NOT_FOUND(HttpStatus.NOT_FOUND, "PC001", "기준을 찾을 수 없습니다."),
 
     //Error for Portfolio
     PORTFOLIO_NOT_FOUND(HttpStatus.NOT_FOUND, "CR002", "포트폴리오를 찾을 수 없습니다.");
