@@ -211,18 +211,12 @@ public class ProjectSubmission extends BaseEntity {
     }
 
     public boolean isSubmitted() {
-        return status
-                == ProjectSubmissionStatus.SUBMITTED;
+        return status == ProjectSubmissionStatus.SUBMITTED;
     }
 
     public boolean isDraft() {
         return status
                 == ProjectSubmissionStatus.DRAFT;
-    }
-
-    public boolean isFeedbacked() {
-        return status
-                == ProjectSubmissionStatus.FEEDBACKED;
     }
 
     /**
