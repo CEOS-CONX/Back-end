@@ -53,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles("local")
 public class CrewWorkSpaceTest {
     @Autowired
     private CrewRepository crewRepository;
@@ -199,7 +199,7 @@ public class CrewWorkSpaceTest {
 
         List<ProjectWrapperForLandingPageDTO> landingResponse = response.payload();
 
-        assertThat(landingResponse.size()).isEqualTo(2);
+        assertThat(landingResponse.size()).isEqualTo(7);
     }
 
     @Test
@@ -211,7 +211,7 @@ public class CrewWorkSpaceTest {
         mockMvc.perform(get("/api/v1/projects?page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(2));
+                .andExpect(jsonPath("$.payload.content.length()").value(6));
     }
 
     @Test
@@ -239,7 +239,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(1));
+                .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
     @Test
@@ -253,7 +253,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(2));
+                .andExpect(jsonPath("$.payload.content.length()").value(5));
     }
 
     @Test
@@ -267,7 +267,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(2));
+                .andExpect(jsonPath("$.payload.content.length()").value(6));
     }
 
     @Test

@@ -1,39 +1,20 @@
 spring:
-  h2:
-    console:
-      enabled: true
-
   config:
     activate:
       on-profile: test
 
-  data:
-    redis:
-      port: 6379
-      host: localhost
-
   datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    database-platform: org.hibernate.dialect.H2Dialect
+      ddl-auto: create
     show-sql: true
-
-cloud:
-  aws:
-    region: ap-northeast-2
-    s3:
-      bucket: test-bucket
-
-jwt:
-  secret:
-    key: bXlTdXBlclNlY3JldEtleUZvckpXVFRlc3RpbmdBbmRTcHJpbmdCb290M1NlY3VyaXR5
-
-google:
-  user: test@gmail.com
-  password: 1q2w3e4r!!
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        default_batch_fetch_size: 100

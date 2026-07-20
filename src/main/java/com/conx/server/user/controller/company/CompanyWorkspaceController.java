@@ -13,9 +13,6 @@ import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.*;
-import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
-import com.conx.server.user.dto.crew.response.CrewProfileResponse;
-import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -298,6 +295,7 @@ public class CompanyWorkspaceController {
         );
     }
 
+
     /**
      * 임시 저장 프로젝트 상세 조회
      */
@@ -350,23 +348,28 @@ public class CompanyWorkspaceController {
         );
     }
 
+
+
+    /**
+     * 프로젝트 기준 충족 버튼 클릭
+     */
+    @PostMapping("/projects/{projectId}/criteria/{criteriaId}")
+    public ApiResponse<?> checkCriteria(@PathVariable Long projectId,
+                                        @PathVariable long criteriaId,
+                                        @AuthenticationPrincipal CustomUserDetails customUserDetails){
+        companyWorkspaceService.checkCriteria(projectId, customUserDetails.getId(), criteriaId);
+        return apiResponseFactory.success("프로젝트 기준 충족 버튼을 클릭하는데 성공했습니다.", customUserDetails);
+    }
+
     /**
      * 결과물 피드백 등록
      */
     @PostMapping("/projects/{projectId}/submissions/{submissionId}/feedback")
     public ApiResponse<ProjectInspectionWrapperDTO> registerFeedback(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId,
-
-            @PathVariable
-            Long submissionId,
-
-            @Valid
-            @RequestBody
-            CompanyFeedbackRequestDTO request
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long projectId,
+            @PathVariable Long submissionId,
+            @Valid @RequestBody CompanyFeedbackRequestDTO request
     ) {
         ProjectInspectionWrapperDTO response =
                 companyWorkspaceService.registerFeedBack(

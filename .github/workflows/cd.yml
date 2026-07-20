@@ -69,7 +69,8 @@ jobs:
               GOOGLE_USER=${{ secrets.GOOGLE_USER }}
               GOOGLE_PASSWORD=${{ secrets.GOOGLE_PASSWORD }}
               JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-              SPRING_PROFILES_ACTIVE=prod
+              AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+              SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
               EOF
               
               docker compose -p conx-server pull
