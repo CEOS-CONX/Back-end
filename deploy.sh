@@ -160,9 +160,6 @@ cmd_deploy() {
         exit 1
     fi
 
-    log "새 버전 안정성 확인중..(30초)"
-    sleep 30
-
     log "안정성 확인. 이전 컨테이너 종료"
     dc stop "app_${active}"
 
