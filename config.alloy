@@ -5,7 +5,7 @@ loki.write "default" {
   }
 
   external_labels = {
-    host = "ec2"
+    host = "ec2",
   }
 }
 
@@ -43,7 +43,7 @@ loki.source.file "spring_boot" {
 
     app = "conx-server"
     job = "spring-boot"
-    env = "prod"
+    env = "prod",
   }]
 
   forward_to = [loki.process.spring_boot.receiver]
