@@ -49,42 +49,29 @@ jobs:
           tags: |
             contactconx/conx-server:latest
             contactconx/conx-server:${{ github.event.workflow_run.head_sha }}
-      
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
-            host: ${{ secrets.EC2_HOST }}
-            username: ubuntu
-            key: ${{ secrets.EC2_KEY }}
-            script: |
-              cd /home/ubuntu/CONX-server
-              git pull origin main
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/CONX-server
+            git pull origin main
+            
+            cat > .env << EOF
+            DB_URL=${{ secrets.DB_URL }}
+            DB_USERNAME=admin
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            AWS_REGION=ap-northeast-2
+            GOOGLE_USER=${{ secrets.GOOGLE_USER }}
+            GOOGLE_PASSWORD=${{ secrets.GOOGLE_PASSWORD }}
+            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+            AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+            SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
+            EOF
               
-              cat > .env << EOF
-              IMAGE_TAG=${{ github.event.workflow_run.head_sha }}
-              DB_URL=${{ secrets.DB_URL }}
-              DB_USERNAME=admin
-              DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-              AWS_REGION=ap-northeast-2
-              GOOGLE_USER=${{ secrets.GOOGLE_USER }}
-              GOOGLE_PASSWORD=${{ secrets.GOOGLE_PASSWORD }}
-              JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-              AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
-              SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
-              EOF
-              
-              docker compose -p conx-server pull
-              docker compose -p conx-server up -d --force-recreate            
-              
-              for i in {1..15}; do
-                if curl -f http://localhost:8082/health/ready; then
-                  echo "Health Check passed"
-                  break
-                fi
-                echo "Waiting for Service..."
-                sleep 5
-              done
-  
-              curl -f http://localhost:8082/health/ready || exit 1
-              
-              sudo docker image prune -f
+            sudo ./deploy.sh deploy ${{ github.event.workflow_run.head_sha }}
+            sudo docker image prune -f
