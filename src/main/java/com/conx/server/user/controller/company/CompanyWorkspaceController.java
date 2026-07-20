@@ -175,24 +175,29 @@ public class CompanyWorkspaceController {
      */
     @PostMapping("/projects")
     public ApiResponse<CompanyProjectIdResponse> createProject(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @Valid
-            @RequestBody
-            CompanyProjectRequestDTO request
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody CompanyProjectRequestDTO request,
+            @RequestParam boolean isDraft
     ) {
-        CompanyProjectIdResponse response =
-                companyWorkspaceService.createProject(
-                        userDetails.getId(),
-                        request
-                );
+        CompanyProjectIdResponse response = companyWorkspaceService.createProject(userDetails.getId(),
+                request, isDraft);
 
         return apiResponseFactory.success(
                 "새 프로젝트 등록에 성공했습니다.",
                 response,
                 userDetails
         );
+    }
+
+    /**
+     * 임시저장한 프로젝트가 있는지 여부 조사
+     */
+    @GetMapping("/projects/hasDraft")
+    public ApiResponse<Boolean> hasDraft(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ){
+        Boolean hasDraft = companyWorkspaceService.findDraft(customUserDetails.getId());
+        return apiResponseFactory.success("임시저장 프로젝트 존재여부 확인에 성공했습니다.", hasDraft, customUserDetails);
     }
 
     /**
@@ -273,21 +278,16 @@ public class CompanyWorkspaceController {
     /**
      * 임시 저장 프로젝트 수정
      */
-    @PatchMapping("/project-drafts/{draftId}")
+    @PatchMapping("/project-drafts")
     public ApiResponse<CompanyProjectIdResponse> updateProjectDraft(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long draftId,
-
-            @RequestBody
-            CompanyProjectRequestDTO request
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            //@PathVariable Long draftId,
+            @RequestBody CompanyProjectRequestDTO request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.updateProjectDraft(
                         userDetails.getId(),
-                        draftId,
+                        //draftId,
                         request
                 );
 
@@ -301,18 +301,18 @@ public class CompanyWorkspaceController {
     /**
      * 임시 저장 프로젝트 상세 조회
      */
-    @GetMapping("/project-drafts/{draftId}")
+    @GetMapping("/project-drafts")
     public ApiResponse<CompanyProjectDraftResponse> getProjectDraft(
             @AuthenticationPrincipal
-            CustomUserDetails userDetails,
+            CustomUserDetails userDetails
 
-            @PathVariable
-            Long draftId
+//            @PathVariable
+//            Long draftId
     ) {
         CompanyProjectDraftResponse response =
                 companyWorkspaceService.getProjectDraft(
-                        userDetails.getId(),
-                        draftId
+                        userDetails.getId()
+                        //draftId
                 );
 
         return apiResponseFactory.success(

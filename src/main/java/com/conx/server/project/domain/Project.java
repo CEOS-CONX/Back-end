@@ -282,6 +282,11 @@ public class Project extends BaseEntity {
         );
     }
 
+    public void activateProject(){
+        this.status = ProjectStatus.RECRUITING;
+
+    }
+
     public static Project createDraft(
             Company company,
             CompanyProjectRequestDTO request

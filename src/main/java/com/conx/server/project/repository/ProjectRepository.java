@@ -510,4 +510,12 @@ public interface ProjectRepository
             ProjectStatus status,
             Sort sort
     );
+
+    void deleteByIdAndCompanyIdAndStatus(long id, long companyId, ProjectStatus status);
+
+    boolean existsByCompany(Company company);
+
+    boolean existsByCompanyAndStatus(Company company, ProjectStatus status);
+
+    Optional<Project> findByCompanyAndStatus(Company company, ProjectStatus status);
 }

@@ -334,12 +334,13 @@ class CompanyWorkspaceControllerTest {
         given(
                 companyWorkspaceService.createProject(
                         eq(COMPANY_ID),
-                        eq(request)
+                        eq(request),
+                        eq(false)
                 )
         ).willReturn(response);
 
         mockMvc.perform(
-                        post("/api/v1/companies/me/projects")
+                        post("/api/v1/companies/me/projects?isDraft=false")
                                 .contentType(
                                         MediaType.APPLICATION_JSON
                                 )
@@ -365,7 +366,8 @@ class CompanyWorkspaceControllerTest {
 
         verify(companyWorkspaceService).createProject(
                 COMPANY_ID,
-                request
+                request,
+                false
         );
     }
 
@@ -519,15 +521,14 @@ class CompanyWorkspaceControllerTest {
         given(
                 companyWorkspaceService.updateProjectDraft(
                         eq(COMPANY_ID),
-                        eq(draftId),
+                        //eq(draftId),
                         eq(request)
                 )
         ).willReturn(response);
 
         mockMvc.perform(
                         patch(
-                                "/api/v1/companies/me/project-drafts/{draftId}",
-                                draftId
+                                "/api/v1/companies/me/project-drafts"
                         )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -554,7 +555,7 @@ class CompanyWorkspaceControllerTest {
 
         verify(companyWorkspaceService).updateProjectDraft(
                 COMPANY_ID,
-                draftId,
+                //draftId,
                 request
         );
     }
@@ -566,8 +567,7 @@ class CompanyWorkspaceControllerTest {
 
         mockMvc.perform(
                         get(
-                                "/api/v1/companies/me/project-drafts/{draftId}",
-                                draftId
+                                "/api/v1/companies/me/project-drafts"
                         )
                 )
                 .andDo(print())
@@ -580,8 +580,8 @@ class CompanyWorkspaceControllerTest {
                 );
 
         verify(companyWorkspaceService).getProjectDraft(
-                COMPANY_ID,
-                draftId
+                COMPANY_ID
+                //draftId
         );
     }
 
