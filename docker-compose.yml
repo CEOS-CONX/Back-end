@@ -1,12 +1,22 @@
 version: "3.8"
 
 services:
-  app:
-    depends_on:
-      redis:
-        condition: service_started
+  app_blue:
+    image: contactconx/conx-server:${IMAGE_TAG:-latest}
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    env_file:
+      - .env
 
-    image: contactconx/conx-server:${IMAGE_TAG}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  app_green:
+    image: contactconx/conx-server:${IMAGE_TAG:-latest}
     ports:
       - "8082:8080"
     restart: unless-stopped
