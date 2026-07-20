@@ -1,8 +1,11 @@
 version: "3.8"
 
+
 services:
   app_blue:
     image: contactconx/conx-server:${IMAGE_TAG:-latest}
+    environment:
+      JAVA_OPTS: "-Xmx400m -Xms200m"
     ports:
       - "8081:8080"
     restart: unless-stopped
@@ -17,6 +20,8 @@ services:
 
   app_green:
     image: contactconx/conx-server:${IMAGE_TAG:-latest}
+    environment:
+      JAVA_OPTS: "-Xmx400m -Xms200m"
     ports:
       - "8082:8080"
     restart: unless-stopped

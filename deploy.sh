@@ -23,7 +23,7 @@ SAMPLE_CONF_DIR="${SCRIPT_DIR}/nginx-conf.d-sample"
 
 declare -A APP_PORT=( [blue]=8081 [green]=8082 )
 HEALTH_PATH="/health/ready"
-HEALTH_RETRIES=15
+HEALTH_RETRIES=60
 HEALTH_INTERVAL=2
 IMAGE_NAME="${APP_IMAGE_NAME:-myapp}"
 

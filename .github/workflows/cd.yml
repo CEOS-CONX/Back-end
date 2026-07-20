@@ -59,7 +59,8 @@ jobs:
           script: |
             set -e
             cd /home/ubuntu/CONX-server
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
             
             cat > .env << EOF
             DB_URL=${{ secrets.DB_URL }}
