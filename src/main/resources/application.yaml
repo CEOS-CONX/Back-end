@@ -51,3 +51,8 @@ management:
       exposure:
         include: health,info,metrics,prometheus
         exclude: env, heapdump, threaddump, configprops, quartz
+
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
