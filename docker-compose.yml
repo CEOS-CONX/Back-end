@@ -12,7 +12,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./logs:/logs
+      - ./logs/blue:/app/logs
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
@@ -30,7 +30,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./logs:/logs
+      - ./logs/green:/app/logs
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
