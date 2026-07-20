@@ -37,14 +37,20 @@ loki.process "spring_boot" {
 // 로그 파일 수집
 loki.source.file "spring_boot" {
 
-  targets = [{
-    __address__ = "localhost",
-    __path__    = "/var/log/spring-boot/*.log",
-
-    app = "conx-server"
-    job = "spring-boot"
-    env = "prod",
-  }]
+  targets = [
+    {
+      __path__ = "/var/log/spring-boot/blue/*.log",
+      app = "conx-server",
+      job = "spring-boot",
+      env = "prod",
+    },
+    {
+      __path__ = "/var/log/spring-boot/green/*.log",
+      app = "conx-server",
+      job = "spring-boot",
+      env = "prod",
+    },
+  ]
 
   forward_to = [loki.process.spring_boot.receiver]
 
