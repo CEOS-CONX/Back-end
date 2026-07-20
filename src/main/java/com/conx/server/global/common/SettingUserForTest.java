@@ -44,6 +44,10 @@ public class SettingUserForTest {
 
     @Transactional
     protected void settingUser() {
+        if (companyRepository.count() > 0){
+            return;
+        }
+
         String password = passwordEncoder.encode("1q2w3e4r!!");
 
         Admin admin = new Admin("jclee@gmail.com", password);
@@ -109,6 +113,10 @@ public class SettingUserForTest {
 
     @Transactional
     protected void settingProject() {
+        if (projectRepository.count() > 0) {
+            return;
+        }
+
         CompanyProjectRequestDTO request1 = new CompanyProjectRequestDTO(
                 "네이버", "이수진", "navernaver@gmail.com",
                 List.of(),

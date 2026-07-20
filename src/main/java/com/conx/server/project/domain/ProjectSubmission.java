@@ -198,8 +198,7 @@ public class ProjectSubmission extends BaseEntity {
             );
         }
 
-        this.status =
-                ProjectSubmissionStatus.FEEDBACKED;
+        this.status = ProjectSubmissionStatus.FEEDBACKED;
     }
 
     public Crew getCrew() {

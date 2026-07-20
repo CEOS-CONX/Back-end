@@ -11,6 +11,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    volumes:
+      - ./logs/blue:/app/logs
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
@@ -27,6 +29,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    volumes:
+      - ./logs/green:/app/logs
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]

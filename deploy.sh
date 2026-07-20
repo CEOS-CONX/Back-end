@@ -130,6 +130,8 @@ switch_traffic() {
 # 메인배포로직
 cmd_deploy() {
     require_root
+    mkdir -p logs/blue logs/green
+    chown -R ubuntu:ubuntu logs
     local tag="${1:-latest}"
     export APP_IMAGE="${IMAGE_NAME}:${tag}"
 
