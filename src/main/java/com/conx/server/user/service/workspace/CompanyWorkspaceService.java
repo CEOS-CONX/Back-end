@@ -284,7 +284,7 @@ public class CompanyWorkspaceService {
         Project savedProject = projectRepository.save(project);
         saveFiles(request);
         return CompanyProjectIdResponse.from(savedProject);
-    }   
+    }
 
     /**
      * 프로젝트 임시 저장
