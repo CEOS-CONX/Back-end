@@ -266,15 +266,23 @@ public class CompanyWorkspaceService {
     @Transactional
     public CompanyProjectIdResponse createProject(
             Long companyId,
-            CompanyProjectRequestDTO request
+            CompanyProjectRequestDTO request,
+            boolean isDraft
     ) {
         Company company = userFinder.findActiveCompany(companyId);
 
         Project project = Project.createRecruitingProject(company, request);
 
-        saveFiles(request);
-        Project savedProject = projectRepository.save(project);
+        if (isDraft) {
+            Project draft = projectRepository.findByCompanyAndStatus(company, ProjectStatus.DRAFT).orElseThrow(
+                    () -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+            );
 
+            projectRepository.delete(draft);
+        }
+
+        Project savedProject = projectRepository.save(project);
+        saveFiles(request);
         return CompanyProjectIdResponse.from(savedProject);
     }
 
@@ -286,29 +294,28 @@ public class CompanyWorkspaceService {
             Long companyId,
             CompanyProjectRequestDTO request
     ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
+        Company company = userFinder.findActiveCompany(companyId);
 
-        Project draft =
-                Project.createDraft(
-                        company,
-                        request
-                );
+        if (projectRepository.existsByCompanyAndStatus(company, ProjectStatus.DRAFT)) {
+            throw new CustomException(ErrorCode.PROJECT_NOT_FOUND);
+        }
 
-        saveFiles(
-                request
-        );
+        Project draft = Project.createDraft(company, request);
+        Project savedDraft = projectRepository.save(draft);
+        saveFiles(request);
 
-        Project savedDraft =
-                projectRepository.save(
-                        draft
-                );
+        return CompanyProjectIdResponse.from(savedDraft);
+    }
 
-        return CompanyProjectIdResponse.from(
-                savedDraft
-        );
+    /**
+     * 이미 등록된 임시저장 프로젝트가 있는지 조사
+     */
+    @Transactional
+    public boolean findDraft(
+            Long companyId
+    ){
+        Company com = userFinder.findActiveCompany(companyId);
+        return projectRepository.existsByCompanyAndStatus(com, ProjectStatus.DRAFT);
     }
 
     /**
@@ -380,7 +387,7 @@ public class CompanyWorkspaceService {
     @Transactional
     public CompanyProjectIdResponse updateProjectDraft(
             Long companyId,
-            Long draftId,
+            //Long draftId,
             CompanyProjectRequestDTO request
     ) {
         Company company =
@@ -388,11 +395,15 @@ public class CompanyWorkspaceService {
                         companyId
                 );
 
-        Project draft =
-                findCompanyDraft(
-                        company.getId(),
-                        draftId
-                );
+        Project draft = projectRepository.findByCompanyAndStatus(company, ProjectStatus.DRAFT).orElseThrow(
+                () -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+        );
+
+//        Project draft =
+//                findCompanyDraft(
+//                        company.getId(),
+//                        draftId
+//                );
 
         saveUnregisteredFiles(
                 request,
@@ -413,19 +424,23 @@ public class CompanyWorkspaceService {
      */
     @Transactional(readOnly = true)
     public CompanyProjectDraftResponse getProjectDraft(
-            Long companyId,
-            Long draftId
+            Long companyId
+            //Long draftId
     ) {
         Company company =
                 userFinder.findActiveCompany(
                         companyId
                 );
 
-        Project draft =
-                findCompanyDraft(
-                        company.getId(),
-                        draftId
-                );
+        Project draft = projectRepository.findByCompanyAndStatus(company, ProjectStatus.DRAFT).orElseThrow(
+                () -> new CustomException(ErrorCode.PROJECT_NOT_FOUND)
+        );
+
+//        Project draft =
+//                findCompanyDraft(
+//                        company.getId(),
+//                        draftId
+//                );
 
         List<FileResponseDTO> files =
                 fileRepository
