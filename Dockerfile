@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY build/libs/*.jar app.jar
 RUN chown ubuntu:ubuntu app.jar
