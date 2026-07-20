@@ -181,7 +181,7 @@ cmd_rollback() {
     dc up -d --no-deps "app_${idle}"
     if ! health_check "$idle"; then
         dc stop "app_${idle}"
-        err "롤백 대상(${idle}) 비정상, 수동 확인이 필요"
+        err "롤백 대상(${idle}) 비정상, 수동 확인이 필요" 
         exit 1
     fi
 
