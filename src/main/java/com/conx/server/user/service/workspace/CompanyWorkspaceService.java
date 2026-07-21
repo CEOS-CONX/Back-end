@@ -196,7 +196,9 @@ public class CompanyWorkspaceService {
         return projects.map(project -> CompanyPartnerCrewResponse.of(
                 project,
                 project.getSelectedCrew(),
-                crewEvaluationRepository.findByCrew(project.getSelectedCrew())
+                crewEvaluationRepository.findByCrew(project.getSelectedCrew()).orElseThrow(
+                        () -> new CustomException(ErrorCode.EVALUATION_NOT_FOUND)
+                )
         ));
     }
 
@@ -820,7 +822,10 @@ public class CompanyWorkspaceService {
                         evaluation
                 );
 
-        CrewEvaluation crewEvaluation = crewEvaluationRepository.findByCrew(selectedCrew);
+        CrewEvaluation crewEvaluation = crewEvaluationRepository.findByCrew(selectedCrew).orElseThrow(
+                () -> new CustomException(ErrorCode.EVALUATION_NOT_FOUND)
+        );
+
         crewEvaluation.addEvaluation(evaluation);
 
         return CompanyProjectEvaluationResponse.from(

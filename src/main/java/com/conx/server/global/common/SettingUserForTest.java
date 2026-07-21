@@ -79,6 +79,10 @@ public class SettingUserForTest {
         Crew crew8 = Crew.create("crewMusic@gmail.com", password);
         crew8.activateCrew("중앙대학교 밴드동아리 사운드웨이브", CrewType.CLUB, null, "정다은", "동아리 회장");
 
+        Crew crew9 = Crew.create("cccccc@gmail.com", password);
+        crew9.activateCrew("중앙대학교 밴드동아리 사운드웨이브", CrewType.CLUB, null, "정다은", "동아리 회장");
+
+
         Company company1 = Company.create("kdhyun422@gmail.com", password);
         company1.activateCompany("코카콜라", Industry.ETC, "음료", "정수진", "코카콜라 코리아 마케팅팀 대리");
 
@@ -104,11 +108,11 @@ public class SettingUserForTest {
         company8.activateCompany("스타벅스코리아", Industry.LIFESTYLE, "카페", "송호섭", "스타벅스코리아 대표이사");
 
         crewRepository.saveAll(
-                List.of(crew1, crew2, crew3, crew4, crew5, crew6, crew7, crew8)
+                List.of(crew1, crew2, crew3, crew4, crew5, crew6, crew7, crew8, crew9)
         );
 
         List<CrewEvaluation> evaluations = new ArrayList<>();
-        for (Crew crew : List.of(crew1, crew2, crew3, crew4, crew5, crew6, crew7, crew8)){
+        for (Crew crew : List.of(crew1, crew2, crew3, crew4, crew5, crew6, crew7, crew8, crew9)){
             evaluations.add(CrewEvaluation.create(crew));
         }
         crewEvaluationRepository.saveAll(evaluations);

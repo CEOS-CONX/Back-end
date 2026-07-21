@@ -37,6 +37,8 @@ public enum ErrorCode {
     INTERNAL_TOKEN_ERROR(HttpStatus.BAD_REQUEST, "T004", "토큰에 오류가 있습니다."),
     REFRESH_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "T005", "리프레시 토큰을 찾을 수 없습니다"),
 
+    EVALUATION_NOT_FOUND(HttpStatus.NOT_FOUND, "CE328", "크루 평가를 찾을 수 없습니다."),
+
     //Error for email verification
     EMAIL_NOT_FOUND(HttpStatus.BAD_REQUEST,
             "V001",
