@@ -24,6 +24,7 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.crew.response.CrewWorkSpaceResponseDTO;
 import com.conx.server.user.service.workspace.CrewWorkSpaceService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,10 @@ public class CrewWorkSpaceController {
     /**
      * 대시보드
      */
+    @Operation(
+            summary = "크루 대시보드 조회",
+            description = "로그인한 크루의 누적 지급액, 평가 점수, 단계별 프로젝트 수와 최근 미완료 Todo를 조회합니다."
+    )
     @GetMapping("/dashboard")
     public ApiResponse<CrewDashboardResultDTO> getCrewDashboard(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
@@ -56,6 +61,10 @@ public class CrewWorkSpaceController {
     /**
      * 지원 현황
      */
+    @Operation(
+            summary = "크루 프로젝트 지원 현황 조회",
+            description = "로그인한 크루의 프로젝트 지원 현황을 조회합니다. status는 PENDING, SELECTED, REJECTED, ALL 중 하나를 필수로 전달해야 합니다."
+    )
     @GetMapping("/applications")
     public ApiResponse<CrewApplicationStatusResponseDTO> getCrewApplication(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -70,6 +79,10 @@ public class CrewWorkSpaceController {
         return apiResponseFactory.success(result, customUserDetails);
     }
 
+    @Operation(
+            summary = "크루 프로젝트 현황 목록 조회",
+            description = "로그인한 크루의 프로젝트 현황을 페이지 단위로 조회합니다. 검색어, 상태, 업종, 프로젝트 유형, 기간과 정렬 조건을 적용할 수 있습니다."
+    )
     @GetMapping("/projects")
     public ApiResponse<Page<CrewProjectStatusItemResponse>> getCrewProjects(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -92,6 +105,10 @@ public class CrewWorkSpaceController {
         );
     }
 
+    @Operation(
+            summary = "크루 프로젝트 Todo 목록 조회",
+            description = "로그인한 크루의 프로젝트 Todo 목록을 페이지 단위로 조회합니다. 검색어, 진행 상태와 정렬 조건을 적용할 수 있습니다."
+    )
     @GetMapping("/todo-projects")
     public ApiResponse<Page<CrewTodoProjectResponse>> getCrewTodoProjects(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -112,6 +129,10 @@ public class CrewWorkSpaceController {
     /**
      * 크루 워크스페이스
      */
+    @Operation(
+            summary = "크루 워크스페이스 목록 조회",
+            description = "로그인한 크루가 선정된 프로젝트 목록과 각 프로젝트의 결과물 제출 마감일까지 남은 기간을 조회합니다."
+    )
     @GetMapping("/workSpace")
     public ApiResponse<CrewWorkSpaceResponseDTO> getCrewWorkSpace(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
@@ -123,6 +144,10 @@ public class CrewWorkSpaceController {
     /**
      * 프로젝트 상세 워크스페이스 가져오기
      */
+    @Operation(
+            summary = "크루 프로젝트 워크스페이스 상세 조회",
+            description = "로그인한 크루가 선정된 프로젝트의 상세 정보와 결과물 제출·검수 이력을 조회합니다. 계약 전이거나 종료된 프로젝트는 조회할 수 없습니다."
+    )
     @GetMapping("/workSpace/{projectId}")
     public ApiResponse<ProjectStatusResponseDTO> getCrewDetailedProject(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -139,6 +164,10 @@ public class CrewWorkSpaceController {
     /**
      * 결과물 제출하기
      */
+    @Operation(
+            summary = "크루 프로젝트 결과물 제출",
+            description = "로그인한 크루가 수행 중인 프로젝트의 결과물을 제출합니다. 제출 후 프로젝트는 검수 상태로 변경되고 관련 Todo 완료 및 알림 처리가 수행됩니다."
+    )
     @PostMapping("/projects/{projectId}/submissions")
     public ApiResponse<?> submitResult(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
@@ -149,6 +178,10 @@ public class CrewWorkSpaceController {
         return apiResponseFactory.success("결과물 제출 성공", customUserDetails);
     }
 
+    @Operation(
+            summary = "크루 정산 요약 조회",
+            description = "로그인한 크루의 지급 완료 금액, 지급 대기 금액, 이번 달 지급액과 다음 예정 지급일을 조회합니다."
+    )
     @GetMapping("/settlements/summary")
     public ApiResponse<CrewSettlementSummaryResponse> getCrewSettlementSummary(
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -159,6 +192,10 @@ public class CrewWorkSpaceController {
         );
     }
 
+    @Operation(
+            summary = "크루 정산 목록 조회",
+            description = "로그인한 크루의 정산 목록을 페이지 단위로 조회합니다. 검색어, 정산 상태, 지급 확인 상태, 업종, 프로젝트 유형과 기간 조건을 적용할 수 있습니다."
+    )
     @GetMapping("/settlements")
     public ApiResponse<Page<CrewSettlementItemResponse>> getCrewSettlements(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -185,6 +222,10 @@ public class CrewWorkSpaceController {
         );
     }
 
+    @Operation(
+            summary = "크루 지급 확인 상태 변경",
+            description = "로그인한 크루가 본인 정산 건의 지급 확인 상태를 BEFORE_PAYMENT 또는 PAYMENT_CONFIRMED로 변경합니다. 이 처리는 실제 정산 상태나 지급일을 변경하지 않습니다."
+    )
     @PatchMapping("/settlements/{settlementId}/payment-status")
     public ApiResponse<CrewPaymentStatusUpdateResponse> updateCrewPaymentStatus(
             @AuthenticationPrincipal CustomUserDetails userDetails,
