@@ -6,6 +6,7 @@ import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.email.EmailViewRequest;
 import com.conx.server.user.dto.email.EmailViewResponse;
 import com.conx.server.user.service.common.EmailViewService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,10 @@ public class EmailViewController {
     private final EmailViewService emailViewService;
     private final ApiResponseFactory apiResponseFactory;
 
+    @Operation(
+            summary = "연락 이메일 조회",
+            description = "로그인한 COMPANY 또는 CREW가 consentAgreed=true로 동의한 뒤 크루 또는 프로젝트 등록 기업의 연락 이메일을 조회합니다. targetType은 CREW 또는 PROJECT이며 조회할 때마다 조회자와 대상 이메일 정보가 이력으로 저장됩니다."
+    )
     @PostMapping("/api/v1/email-views")
     public ApiResponse<EmailViewResponse> viewEmail(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
