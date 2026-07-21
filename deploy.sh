@@ -140,7 +140,7 @@ cmd_deploy() {
     idle=$(opposite_color "$active")
 
     log "active: ${active} / idle: ${idle}"
-    log "이미지: ${APP_IMAGE}"
+    log "이미지: ${APP_IMAGE}"깅
 
     dc pull "app_${idle}" || warn "pull 실패"
 

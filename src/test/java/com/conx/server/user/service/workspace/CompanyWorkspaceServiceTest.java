@@ -12,11 +12,13 @@ import com.conx.server.project.repository.ProjectSettlementRepository;
 import com.conx.server.project.repository.ProjectSubmissionRepository;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
+import com.conx.server.user.domain.crew.CrewEvaluation;
 import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.response.CompanyProjectEvaluationResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
+import com.conx.server.user.repository.CrewEvaluationRepository;
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.service.common.UserFinder;
 import com.conx.server.project.domain.enums.CrewProjectTodoType;
@@ -37,8 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CompanyWorkspaceServiceTest {
@@ -82,6 +83,9 @@ class CompanyWorkspaceServiceTest {
     @InjectMocks
     private CompanyWorkspaceService companyWorkspaceService;
 
+    @Mock
+    private CrewEvaluationRepository crewEvaluationRepository;
+
     @Test
     @DisplayName("기업은 승인된 프로젝트의 크루를 평가할 수 있다")
     void evaluateProject() {
@@ -97,6 +101,11 @@ class CompanyWorkspaceServiceTest {
                         4,
                         5
                 );
+
+        CrewEvaluation crewEvaluation = mock(CrewEvaluation.class);
+
+        given(crewEvaluationRepository.findByCrew(any(Crew.class)))
+                .willReturn(Optional.of(crewEvaluation));
 
         given(userFinder.findActiveCompany(companyId))
                 .willReturn(company);
@@ -134,6 +143,7 @@ class CompanyWorkspaceServiceTest {
         );
 
         // when
+
         CompanyProjectEvaluationResponse response =
                 companyWorkspaceService.evaluateProject(
                         companyId,
