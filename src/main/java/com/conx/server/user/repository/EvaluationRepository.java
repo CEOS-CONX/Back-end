@@ -52,4 +52,6 @@ public interface EvaluationRepository
     List<Evaluation> findAllByProjectIdIn(
             Collection<Long> projectIds
     );
+
+    Evaluation findByCrew(Crew crew);
 }

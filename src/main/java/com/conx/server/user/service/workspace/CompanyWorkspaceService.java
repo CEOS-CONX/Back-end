@@ -18,9 +18,11 @@ import com.conx.server.project.repository.*;
 import com.conx.server.project.service.CrewProjectTodoService;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
+import com.conx.server.user.domain.crew.CrewEvaluation;
 import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.ProjectStatusFilter;
 import com.conx.server.user.dto.company.request.CompanyFeedbackRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
@@ -30,6 +32,8 @@ import com.conx.server.user.dto.company.response.*;
 import com.conx.server.user.dto.crew.response.CrewProfileResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.dto.crew.response.CrewProjectSubmissionListItemResponse;
+import com.conx.server.user.repository.CrewEvaluationRepository;
+import com.conx.server.user.repository.CrewRepository;
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.service.common.UserFinder;
 import lombok.RequiredArgsConstructor;
@@ -65,6 +69,8 @@ public class CompanyWorkspaceService {
     private final EvaluationRepository evaluationRepository;
     private final CrewProjectTodoService crewProjectTodoService;
     private final ProjectSubmissionCriteriaRepository projectSubmissionCriteriaRepository;
+    private final CrewRepository crewRepository;
+    private final CrewEvaluationRepository crewEvaluationRepository;
 
     /**
      * 기업 워크스페이스 대시보드 조회
@@ -161,32 +167,37 @@ public class CompanyWorkspaceService {
      */
     @Transactional(readOnly = true)
     public Page<CompanyWorkspaceProjectResponse> getProjects(
-            Long companyId,
-            String keyword,
-            Industry category,
-            CrewType crewType,
-            LocalDate startDate,
-            LocalDate endDate,
-            Pageable pageable
+            Long companyId, String keyword, ProjectStatusFilter status, Industry category, CrewType crewType, LocalDate startDate, LocalDate endDate, Pageable pageable
     ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
+        Company company = userFinder.findActiveCompany(companyId);
 
-        return projectRepository
-                .findCompanyProjectsByFilter(
-                        company.getId(),
-                        normalizeKeyword(keyword),
-                        category,
-                        crewType,
-                        startDate,
-                        endDate,
-                        pageable
-                )
-                .map(
-                        CompanyWorkspaceProjectResponse::from
-                );
+        List<ProjectStatus> statuses = (status != null) ? status.getStatuses() : null;
+
+        return projectRepository.findCompanyProjectsByFilter(company.getId(), normalizeKeyword(keyword),
+                        statuses, category, crewType, startDate, endDate, pageable)
+                .map(CompanyWorkspaceProjectResponse::from);
+    }
+
+    /**
+     * 파트너 크루 조회
+     */
+    @Transactional(readOnly = true)
+    public Page<CompanyPartnerCrewResponse> getPartnerCrew(
+            Long companyId, String keyword, ProjectStatusFilter status,
+            Industry category, CrewType crewType, LocalDate startDate, LocalDate endDate, Pageable pageable
+    ) {
+        Company company = userFinder.findActiveCompany(companyId);
+
+        List<ProjectStatus> statuses = (status != null) ? status.getStatuses() : null;
+
+        Page<Project> projects = crewRepository.findPartnerCrewProjectsByFilter(
+                company.getId(), normalizeKeyword(keyword), statuses, category, crewType, startDate, endDate, pageable);
+
+        return projects.map(project -> CompanyPartnerCrewResponse.of(
+                project,
+                project.getSelectedCrew(),
+                crewEvaluationRepository.findByCrew(project.getSelectedCrew())
+        ));
     }
 
     /**
@@ -808,6 +819,9 @@ public class CompanyWorkspaceService {
                 evaluationRepository.save(
                         evaluation
                 );
+
+        CrewEvaluation crewEvaluation = crewEvaluationRepository.findByCrew(selectedCrew);
+        crewEvaluation.addEvaluation(evaluation);
 
         return CompanyProjectEvaluationResponse.from(
                 savedEvaluation
