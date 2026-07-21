@@ -162,7 +162,7 @@ public class CrewProfileTest {
     void bookmarkProject() throws Exception {
         String crewToken = loginSetting();
 
-        mockMvc.perform(post("/api/v1/projects/2/bookmarks")
+        mockMvc.perform(post("/api/v1/projects/1/bookmarks")
                         .header("Authorization", crewToken))
                 .andExpect(status().isOk());
 
@@ -178,7 +178,7 @@ public class CrewProfileTest {
         JsonNode content = root.path("payload").path("content");
 
         assertThat(content.size()).isEqualTo(1);
-        assertThat(content.get(0).path("projectId").asLong()).isEqualTo(2);
+        assertThat(content.get(0).path("projectId").asLong()).isEqualTo(1);
     }
 
     @Test
