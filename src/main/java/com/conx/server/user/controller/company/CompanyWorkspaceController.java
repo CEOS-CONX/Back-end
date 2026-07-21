@@ -7,6 +7,7 @@ import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.ProjectStatusFilter;
 import com.conx.server.user.dto.company.request.CompanyFeedbackRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
@@ -90,26 +91,13 @@ public class CompanyWorkspaceController {
      */
     @GetMapping("/projects")
     public ApiResponse<Page<CompanyWorkspaceProjectResponse>> getProjects(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @RequestParam(required = false)
-            String keyword,
-
-            @RequestParam(required = false)
-            Industry category,
-
-            @RequestParam(required = false)
-            CrewType crewType,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate startDate,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate endDate,
-
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ProjectStatusFilter status,
+            @RequestParam(required = false) Industry category,
+            @RequestParam(required = false) CrewType crewType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @PageableDefault(
                     size = 12,
                     sort = "id",
@@ -121,6 +109,7 @@ public class CompanyWorkspaceController {
                 companyWorkspaceService.getProjects(
                         userDetails.getId(),
                         keyword,
+                        status,
                         category,
                         crewType,
                         startDate,
@@ -130,6 +119,30 @@ public class CompanyWorkspaceController {
 
         return apiResponseFactory.success(
                 "기업 프로젝트 목록 조회에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    /**
+     * 파트너 크루 조회
+     */
+    @GetMapping("/projects/partner-crew")
+    public ApiResponse<Page<CompanyPartnerCrewResponse>> getPartnerCrew(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ProjectStatusFilter status,
+            @RequestParam(required = false) Industry category,
+            @RequestParam(required = false) CrewType crewType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 12, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<CompanyPartnerCrewResponse> response = companyWorkspaceService.getPartnerCrew(
+                userDetails.getId(), keyword, status, category, crewType, startDate, endDate, pageable);
+
+        return apiResponseFactory.success(
+                "파트너 크루 조회에 성공했습니다.",
                 response,
                 userDetails
         );

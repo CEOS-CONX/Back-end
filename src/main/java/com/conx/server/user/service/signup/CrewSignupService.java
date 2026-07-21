@@ -5,13 +5,11 @@ import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.consent.PersonalInformationConsent;
 import com.conx.server.user.domain.consent.PromotionalMessageConsent;
 import com.conx.server.user.domain.crew.Crew;
+import com.conx.server.user.domain.crew.CrewEvaluation;
 import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.dto.signupRequest.SignupRequestDTO;
 import com.conx.server.user.dto.signupRequest.UpdateCrewUserDTO;
-import com.conx.server.user.repository.CrewRepository;
-import com.conx.server.user.repository.EvaluationRepository;
-import com.conx.server.user.repository.PersonalInformationConsentRepository;
-import com.conx.server.user.repository.PromotionalMessageConsentRepository;
+import com.conx.server.user.repository.*;
 import com.conx.server.user.service.common.SendingVerificationNumberService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +29,7 @@ public class CrewSignupService {
     private final PersonalInformationConsentRepository personalInformationConsentRepository;
     private final PromotionalMessageConsentRepository promotionalMessageConsentRepository;
     private final EvaluationRepository evaluationRepository;
+    private final CrewEvaluationRepository crewEvaluationRepository;
 
     /**
      * 회원가입 1단계
@@ -106,5 +105,8 @@ public class CrewSignupService {
                 req.managerName(),
                 req.job()
         );
+
+        CrewEvaluation crewEvaluation = CrewEvaluation.create(crew);
+        crewEvaluationRepository.save(crewEvaluation);
     }
 }

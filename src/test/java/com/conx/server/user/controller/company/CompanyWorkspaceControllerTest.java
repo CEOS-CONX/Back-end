@@ -9,6 +9,7 @@ import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.ProjectStatusFilter;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
@@ -191,6 +192,7 @@ class CompanyWorkspaceControllerTest {
                 companyWorkspaceService.getProjects(
                         eq(COMPANY_ID),
                         eq("프로젝트"),
+                        isNull(),
                         eq(Industry.IT),
                         eq(CrewType.CLUB),
                         eq(startDate),
@@ -239,6 +241,7 @@ class CompanyWorkspaceControllerTest {
         verify(companyWorkspaceService).getProjects(
                 eq(COMPANY_ID),
                 eq("프로젝트"),
+                isNull(),
                 eq(Industry.IT),
                 eq(CrewType.CLUB),
                 eq(startDate),
@@ -253,6 +256,7 @@ class CompanyWorkspaceControllerTest {
         given(
                 companyWorkspaceService.getProjects(
                         eq(COMPANY_ID),
+                        isNull(),
                         isNull(),
                         isNull(),
                         isNull(),
@@ -280,6 +284,7 @@ class CompanyWorkspaceControllerTest {
 
         verify(companyWorkspaceService).getProjects(
                 eq(COMPANY_ID),
+                isNull(),
                 isNull(),
                 isNull(),
                 isNull(),

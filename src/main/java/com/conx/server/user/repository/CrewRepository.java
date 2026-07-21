@@ -1,6 +1,8 @@
 package com.conx.server.user.repository;
 
 import com.conx.server.landingPage.dto.CrewWrapperForLandingPageDTO;
+import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
@@ -12,6 +14,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +38,50 @@ public interface CrewRepository
     boolean existsByEmailAndStatus(
             String email,
             UserStatus status
+    );
+
+    @Query(
+            value = """
+            select p
+            from Project p
+            where p.company.id = :companyId
+              and p.selectedCrew is not null
+              and (
+                    :keyword is null
+                    or p.selectedCrew.crewName like concat('%', :keyword, '%')
+              )
+              and (:statuses is null or p.status in :statuses)
+              and (:category is null or p.selectedCrew.interestingIndustry = :category)
+              and (:crewType is null or p.selectedCrew.crewType = :crewType)
+              and (:startDate is null or p.projectStartDate >= :startDate)
+              and (:endDate is null or p.projectDeadline <= :endDate)
+            order by p.id desc
+            """,
+            countQuery = """
+            select count(p)
+            from Project p
+            where p.company.id = :companyId
+              and p.selectedCrew is not null
+              and (
+                    :keyword is null
+                    or p.selectedCrew.crewName like concat('%', :keyword, '%')
+              )
+              and (:statuses is null or p.status in :statuses)
+              and (:category is null or p.selectedCrew.interestingIndustry = :category)
+              and (:crewType is null or p.selectedCrew.crewType = :crewType)
+              and (:startDate is null or p.projectStartDate >= :startDate)
+              and (:endDate is null or p.projectDeadline <= :endDate)
+            """
+    )
+    Page<Project> findPartnerCrewProjectsByFilter(
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("statuses") List<ProjectStatus> statuses,
+            @Param("category") Industry category,
+            @Param("crewType") CrewType crewType,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 
     @Query("""
