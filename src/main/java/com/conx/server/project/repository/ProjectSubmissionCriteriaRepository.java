@@ -16,10 +16,12 @@ public interface ProjectSubmissionCriteriaRepository extends JpaRepository<Proje
     select sc
     from ProjectSubmissionCriteria sc
     join sc.project p
-    where sc.id = :criteriaId
+    where p.id = :projectId
+      and sc.id = :criteriaId
       and p.company = :company
     """)
     Optional<ProjectSubmissionCriteria> findByIdAndCompany(
+            @Param("projectId") long projectId,
             @Param("criteriaId") long criteriaId,
             @Param("company") Company company
     );

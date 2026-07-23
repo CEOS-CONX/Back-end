@@ -34,14 +34,14 @@ public class ProjectInspectionFeedback extends BaseEntity {
 
     @ElementCollection
     @CollectionTable(
-            name = "file_links",
+            name = "project_feedback_file_links",
             joinColumns = @JoinColumn(name = "project_id")
     )
     private List<String> fileLinks;
 
     @ElementCollection
     @CollectionTable(
-            name = "project_links",
+            name = "project_feedback_additional_links",
             joinColumns = @JoinColumn(name = "project_id")
     )
     private List<AdditionalLinksWrapper> additionalLinks;

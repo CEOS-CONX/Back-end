@@ -270,8 +270,8 @@ class CrewBrowseServiceTest {
                         List.of("SNS 운영")
                 );
 
-        given(crew.getTotalSubsidy())
-                .willReturn(1_000_000);
+        given(crew.getTotalProjectCount())
+                .willReturn(3);
 
         given(
                 evaluationRepository.getMeanByCrew(crew)
@@ -378,6 +378,9 @@ class CrewBrowseServiceTest {
 
         assertThat(result.bookmarked())
                 .isTrue();
+
+        assertThat(result.totalProject())
+                .isEqualTo(3);
 
         assertThat(result.activityField())
                 .isEqualTo("콘텐츠 마케팅");

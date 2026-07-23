@@ -7,6 +7,7 @@ import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationC
 import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationSendRequest;
 import com.conx.server.user.dto.passwordReset.response.PasswordResetVerificationConfirmResponse;
 import com.conx.server.user.service.common.PasswordResetService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -28,6 +29,10 @@ public class PasswordResetController {
      *
      * 계정 존재 여부와 관계없이 동일한 성공 메시지를 반환한다.
      */
+    @Operation(
+            summary = "기업 비밀번호 재설정 인증번호 발송",
+            description = "ACTIVE 기업 계정의 담당자명과 가입 이메일이 일치하면 5분간 유효한 6자리 인증번호를 발송합니다. 계정 존재 여부 보호를 위해 일치하는 계정이 없어도 동일한 성공 응답을 반환합니다."
+    )
     @PostMapping("/verifications")
     public ApiResponse<?> sendVerificationCode(
             @Valid
@@ -47,6 +52,10 @@ public class PasswordResetController {
     /**
      * 이메일 인증번호를 확인하고 비밀번호 재설정 토큰을 발급한다.
      */
+    @Operation(
+            summary = "기업 비밀번호 재설정 인증번호 확인",
+            description = "가입 이메일과 6자리 인증번호를 확인하고 30분간 유효한 일회성 resetToken을 응답 본문에 발급합니다. 확인 성공 후 기존 인증번호는 삭제됩니다."
+    )
     @PostMapping("/verifications/confirm")
     public ApiResponse<PasswordResetVerificationConfirmResponse>
     confirmVerificationCode(
@@ -69,6 +78,10 @@ public class PasswordResetController {
     /**
      * 인증 완료 토큰을 사용해 비밀번호를 재설정한다.
      */
+    @Operation(
+            summary = "기업 비밀번호 재설정",
+            description = "인증번호 확인 단계에서 발급된 30분 유효 resetToken과 새 비밀번호·확인값으로 기업 비밀번호를 변경합니다. 성공 시 resetToken과 Redis refresh token은 삭제되지만 기존 access token과 클라이언트 쿠키는 즉시 삭제되지 않습니다."
+    )
     @PatchMapping
     public ApiResponse<?> resetPassword(
             @Valid

@@ -11,6 +11,7 @@ public record CompanyWorkSpaceForProjectApplicationDTO(
 
         //크루정보
         long crewId,
+        String crewName,
         String crewImageLink,
         CrewType crewType,
         String motivation,
@@ -19,7 +20,7 @@ public record CompanyWorkSpaceForProjectApplicationDTO(
     public static CompanyWorkSpaceForProjectApplicationDTO from(ProjectApplication pa){
         Crew crew = pa.getCrew();
 
-        return new CompanyWorkSpaceForProjectApplicationDTO(pa.getId(), crew.getId(), crew.getProfileImage(),
-                crew.getCrewType(), pa.getMotivation(), crew.getAdvantages());
+        return new CompanyWorkSpaceForProjectApplicationDTO(pa.getId(), crew.getId(), crew.getCrewName(),
+                crew.getProfileImage(), crew.getCrewType(), pa.getMotivation(), crew.getAdvantages());
     }
 }

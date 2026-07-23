@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles("local")
 public class CrewProfileTest {
     @Transactional
     String loginSetting() throws Exception {
@@ -162,7 +162,7 @@ public class CrewProfileTest {
     void bookmarkProject() throws Exception {
         String crewToken = loginSetting();
 
-        mockMvc.perform(post("/api/v1/projects/2/bookmarks")
+        mockMvc.perform(post("/api/v1/projects/1/bookmarks")
                         .header("Authorization", crewToken))
                 .andExpect(status().isOk());
 
@@ -178,7 +178,7 @@ public class CrewProfileTest {
         JsonNode content = root.path("payload").path("content");
 
         assertThat(content.size()).isEqualTo(1);
-        assertThat(content.get(0).path("projectId").asLong()).isEqualTo(2);
+        assertThat(content.get(0).path("projectId").asLong()).isEqualTo(1);
     }
 
     @Test
@@ -288,10 +288,174 @@ public class CrewProfileTest {
         );
 
         mockMvc.perform(delete("/api/v1/crews/me/portfolio/" + response.payload().id())
-                        .header("Authorization", crewToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(mock1)))
+                        .header("Authorization", crewToken))
                 .andExpect(status().isOk())
                 .andReturn();
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("포트폴리오 이름이 비어 있으면 등록에 실패한다")
+    void registerPortfolioFailsWhenNameIsBlank() throws Exception {
+        String crewToken = loginSetting();
+
+        String[] invalidNames = {
+                null,
+                "",
+                "   "
+        };
+
+        for (String invalidName : invalidNames) {
+            CrewPortfolioRequestDTO request =
+                    new CrewPortfolioRequestDTO(
+                            "https://cdn.example.com/portfolio/img1.png",
+                            invalidName,
+                            "https://cdn.example.com/portfolio/file1.pdf"
+                    );
+
+            mockMvc.perform(post("/api/v1/crews/me/portfolio")
+                            .header("Authorization", crewToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("포트폴리오 파일 링크가 비어 있으면 등록에 실패한다")
+    void registerPortfolioFailsWhenFileLinkIsBlank() throws Exception {
+        String crewToken = loginSetting();
+
+        String[] invalidFileLinks = {
+                null,
+                "",
+                "   "
+        };
+
+        for (String invalidFileLink : invalidFileLinks) {
+            CrewPortfolioRequestDTO request =
+                    new CrewPortfolioRequestDTO(
+                            "https://cdn.example.com/portfolio/img1.png",
+                            "브랜드 아이덴티티 디자인",
+                            invalidFileLink
+                    );
+
+            mockMvc.perform(post("/api/v1/crews/me/portfolio")
+                            .header("Authorization", crewToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Transactional
+    String loginSetting_SecondCrew() throws Exception {
+        LoginRequestDTO req = new LoginRequestDTO(
+                "testing1234@gmail.com",
+                "1q2w3e4r!!"
+        );
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return mvcResult.getResponse().getHeader("Authorization");
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("다른 크루의 포트폴리오는 삭제할 수 없다")
+    void deleteOtherCrewPortfolioFails() throws Exception {
+        String firstCrewToken = loginSetting();
+        String secondCrewToken = loginSetting_SecondCrew();
+
+        CrewPortfolioRequestDTO request =
+                new CrewPortfolioRequestDTO(
+                        "https://cdn.example.com/portfolio/img1.png",
+                        "다른 크루의 포트폴리오",
+                        "https://cdn.example.com/portfolio/file1.pdf"
+                );
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                post("/api/v1/crews/me/portfolio")
+                                        .header(
+                                                "Authorization",
+                                                secondCrewToken
+                                        )
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        request
+                                                )
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<CrewPortfolioResponseDTO> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<CrewPortfolioResponseDTO>
+                                >() {
+                        }
+                );
+
+        Long portfolioId =
+                response.payload().id();
+
+        mockMvc.perform(
+                        delete(
+                                "/api/v1/crews/me/portfolio/"
+                                        + portfolioId
+                        )
+                                .header(
+                                        "Authorization",
+                                        firstCrewToken
+                                )
+                )
+                .andExpect(status().isNotFound());
+
+        /*
+         * 첫 번째 크루의 삭제 시도가 실패하여
+         * 포트폴리오가 유지됐는지 확인합니다.
+         */
+        mockMvc.perform(
+                        delete(
+                                "/api/v1/crews/me/portfolio/"
+                                        + portfolioId
+                        )
+                                .header(
+                                        "Authorization",
+                                        secondCrewToken
+                                )
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("존재하지 않는 포트폴리오는 삭제할 수 없다")
+    void deleteNonexistentPortfolioFails() throws Exception {
+        String crewToken = loginSetting();
+
+        mockMvc.perform(
+                        delete(
+                                "/api/v1/crews/me/portfolio/"
+                                        + Long.MAX_VALUE
+                        )
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                )
+                .andExpect(status().isNotFound());
     }
 }

@@ -9,6 +9,7 @@ import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.ProjectStatusFilter;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
@@ -191,6 +192,7 @@ class CompanyWorkspaceControllerTest {
                 companyWorkspaceService.getProjects(
                         eq(COMPANY_ID),
                         eq("프로젝트"),
+                        isNull(),
                         eq(Industry.IT),
                         eq(CrewType.CLUB),
                         eq(startDate),
@@ -239,6 +241,7 @@ class CompanyWorkspaceControllerTest {
         verify(companyWorkspaceService).getProjects(
                 eq(COMPANY_ID),
                 eq("프로젝트"),
+                isNull(),
                 eq(Industry.IT),
                 eq(CrewType.CLUB),
                 eq(startDate),
@@ -253,6 +256,7 @@ class CompanyWorkspaceControllerTest {
         given(
                 companyWorkspaceService.getProjects(
                         eq(COMPANY_ID),
+                        isNull(),
                         isNull(),
                         isNull(),
                         isNull(),
@@ -280,6 +284,7 @@ class CompanyWorkspaceControllerTest {
 
         verify(companyWorkspaceService).getProjects(
                 eq(COMPANY_ID),
+                isNull(),
                 isNull(),
                 isNull(),
                 isNull(),
@@ -334,12 +339,13 @@ class CompanyWorkspaceControllerTest {
         given(
                 companyWorkspaceService.createProject(
                         eq(COMPANY_ID),
-                        eq(request)
+                        eq(request),
+                        eq(false)
                 )
         ).willReturn(response);
 
         mockMvc.perform(
-                        post("/api/v1/companies/me/projects")
+                        post("/api/v1/companies/me/projects?isDraft=false")
                                 .contentType(
                                         MediaType.APPLICATION_JSON
                                 )
@@ -365,7 +371,8 @@ class CompanyWorkspaceControllerTest {
 
         verify(companyWorkspaceService).createProject(
                 COMPANY_ID,
-                request
+                request,
+                false
         );
     }
 
@@ -519,15 +526,14 @@ class CompanyWorkspaceControllerTest {
         given(
                 companyWorkspaceService.updateProjectDraft(
                         eq(COMPANY_ID),
-                        eq(draftId),
+                        //eq(draftId),
                         eq(request)
                 )
         ).willReturn(response);
 
         mockMvc.perform(
                         patch(
-                                "/api/v1/companies/me/project-drafts/{draftId}",
-                                draftId
+                                "/api/v1/companies/me/project-drafts"
                         )
                                 .contentType(
                                         MediaType.APPLICATION_JSON
@@ -554,7 +560,7 @@ class CompanyWorkspaceControllerTest {
 
         verify(companyWorkspaceService).updateProjectDraft(
                 COMPANY_ID,
-                draftId,
+                //draftId,
                 request
         );
     }
@@ -566,8 +572,7 @@ class CompanyWorkspaceControllerTest {
 
         mockMvc.perform(
                         get(
-                                "/api/v1/companies/me/project-drafts/{draftId}",
-                                draftId
+                                "/api/v1/companies/me/project-drafts"
                         )
                 )
                 .andDo(print())
@@ -580,8 +585,8 @@ class CompanyWorkspaceControllerTest {
                 );
 
         verify(companyWorkspaceService).getProjectDraft(
-                COMPANY_ID,
-                draftId
+                COMPANY_ID
+                //draftId
         );
     }
 

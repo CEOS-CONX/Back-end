@@ -1,0 +1,62 @@
+// Loki로 로그 전송
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+
+  external_labels = {
+    host = "ec2",
+  }
+}
+
+// Spring Boot 로그 파싱
+loki.process "spring_boot" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.regex {
+    expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})"
+  }
+
+  stage.regex {
+    expression = "\\[.*?\\]\\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR)"
+  }
+
+  stage.labels {
+    values = {
+      level = null,
+    }
+  }
+
+  stage.timestamp {
+    source   = "timestamp"
+    format   = "2006-01-02 15:04:05.000"
+    location = "Asia/Seoul"
+  }
+}
+
+// 로그 파일 수집
+loki.source.file "spring_boot" {
+
+  targets = [
+    {
+      __path__ = "/var/log/spring-boot/blue/*.log",
+      app = "conx-server",
+      job = "spring-boot",
+      env = "prod",
+    },
+    {
+      __path__ = "/var/log/spring-boot/green/*.log",
+      app = "conx-server",
+      job = "spring-boot",
+      env = "prod",
+    },
+  ]
+
+  forward_to = [loki.process.spring_boot.receiver]
+
+  file_match {
+    enabled = true
+  }
+
+  legacy_positions_file = "/tmp/positions.yaml"
+}

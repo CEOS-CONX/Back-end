@@ -179,7 +179,7 @@ public class Project extends BaseEntity {
      */
     @ElementCollection
     @CollectionTable(
-            name = "file_links",
+            name = "project_file_links",
             joinColumns = @JoinColumn(name = "project_id")
     )
     private List<String> fileLinks =
@@ -190,7 +190,7 @@ public class Project extends BaseEntity {
      */
     @ElementCollection
     @CollectionTable(
-            name = "project_links",
+            name = "project_additional_links",
             joinColumns = @JoinColumn(name = "project_id")
     )
     private List<AdditionalLinksWrapper> links =
@@ -280,6 +280,11 @@ public class Project extends BaseEntity {
                 request,
                 ProjectStatus.RECRUITING
         );
+    }
+
+    public void activateProject(){
+        this.status = ProjectStatus.RECRUITING;
+
     }
 
     public static Project createDraft(

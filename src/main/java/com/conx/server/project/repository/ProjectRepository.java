@@ -34,68 +34,49 @@ public interface ProjectRepository
             ProjectStatus status
     );
 
-    long countByCompanyIdAndStatusNot(
-            Long companyId,
-            ProjectStatus status
-    );
-
-    long countByCompanyIdAndStatus(
-            Long companyId,
-            ProjectStatus status
-    );
-
     @Query(
             value = """
-                    select p
-                    from Project p
-                    where p.company.id = :companyId
-                      and p.status <> com.conx.server.project.domain.enums.ProjectStatus.DRAFT
-                      and (
-                            :keyword is null
-                            or p.projectName like concat('%', :keyword, '%')
-                            or p.brandName like concat('%', :keyword, '%')
-                      )
-                      and (:category is null or p.industry = :category)
-                      and (:crewType is null or p.crewType = :crewType)
-                      and (:startDate is null or p.projectStartDate >= :startDate)
-                      and (:endDate is null or p.projectDeadline <= :endDate)
-                    order by p.id desc
-                    """,
+                select p
+                from Project p
+                where p.company.id = :companyId
+                  and p.status <> com.conx.server.project.domain.enums.ProjectStatus.DRAFT
+                  and (
+                        :keyword is null
+                        or p.projectName like concat('%', :keyword, '%')
+                        or p.brandName like concat('%', :keyword, '%')
+                  )
+                  and (:statuses is null or p.status in :statuses)
+                  and (:category is null or p.industry = :category)
+                  and (:crewType is null or p.crewType = :crewType)
+                  and (:startDate is null or p.projectStartDate >= :startDate)
+                  and (:endDate is null or p.projectDeadline <= :endDate)
+                order by p.id desc
+                """,
             countQuery = """
-                    select count(p)
-                    from Project p
-                    where p.company.id = :companyId
-                      and p.status <> com.conx.server.project.domain.enums.ProjectStatus.DRAFT
-                      and (
-                            :keyword is null
-                            or p.projectName like concat('%', :keyword, '%')
-                            or p.brandName like concat('%', :keyword, '%')
-                      )
-                      and (:category is null or p.industry = :category)
-                      and (:crewType is null or p.crewType = :crewType)
-                      and (:startDate is null or p.projectStartDate >= :startDate)
-                      and (:endDate is null or p.projectDeadline <= :endDate)
-                    """
+                select count(p)
+                from Project p
+                where p.company.id = :companyId
+                  and p.status <> com.conx.server.project.domain.enums.ProjectStatus.DRAFT
+                  and (
+                        :keyword is null
+                        or p.projectName like concat('%', :keyword, '%')
+                        or p.brandName like concat('%', :keyword, '%')
+                  )
+                  and (:statuses is null or p.status in :statuses)
+                  and (:category is null or p.industry = :category)
+                  and (:crewType is null or p.crewType = :crewType)
+                  and (:startDate is null or p.projectStartDate >= :startDate)
+                  and (:endDate is null or p.projectDeadline <= :endDate)
+                """
     )
     Page<Project> findCompanyProjectsByFilter(
-            @Param("companyId")
-            Long companyId,
-
-            @Param("keyword")
-            String keyword,
-
-            @Param("category")
-            Industry category,
-
-            @Param("crewType")
-            CrewType crewType,
-
-            @Param("startDate")
-            LocalDate startDate,
-
-            @Param("endDate")
-            LocalDate endDate,
-
+            @Param("companyId") Long companyId,
+            @Param("keyword") String keyword,
+            @Param("statuses") List<ProjectStatus> statuses,
+            @Param("category") Industry category,
+            @Param("crewType") CrewType crewType,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
             Pageable pageable
     );
 
@@ -510,4 +491,12 @@ public interface ProjectRepository
             ProjectStatus status,
             Sort sort
     );
+
+    void deleteByIdAndCompanyIdAndStatus(long id, long companyId, ProjectStatus status);
+
+    boolean existsByCompany(Company company);
+
+    boolean existsByCompanyAndStatus(Company company, ProjectStatus status);
+
+    Optional<Project> findByCompanyAndStatus(Company company, ProjectStatus status);
 }

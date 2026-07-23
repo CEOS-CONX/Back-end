@@ -62,7 +62,10 @@ public class SecurityConfig {
                                 "/images/**",
                                 "/favicon.ico/**",
                                 "/api/v1/auth/**",
-                                "/api/v1/login/**"
+                                "/api/v1/login/**",
+                                "/actuator/prometheus",
+                                "/actuator/health",
+                                "/actuator/info"
                         ).permitAll()
 
                         .requestMatchers(

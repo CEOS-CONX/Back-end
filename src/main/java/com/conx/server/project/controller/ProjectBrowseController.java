@@ -9,6 +9,7 @@ import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
 import com.conx.server.project.dto.response.ProjectBrowseResponse;
 import com.conx.server.project.service.ProjectBrowseService;
 import com.conx.server.user.domain.types.Industry;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,6 +39,10 @@ public class ProjectBrowseController {
      * @param endDate 검색필터링 종료일
      * @param sort 정렬기준
      */
+    @Operation(
+            summary = "모집 중인 프로젝트 목록 조회",
+            description = "모집 중인 프로젝트를 검색·필터링하여 페이지 단위로 조회합니다. page와 size는 필수이며, sort 기본값은 RECENT이고 비로그인 사용자의 북마크 여부는 항상 false입니다."
+    )
     @GetMapping
     public ApiResponse<Page<ProjectBrowseResponse>> getProjects(
             @RequestParam(name = "keyword", required = false) String keyword,
@@ -69,6 +74,10 @@ public class ProjectBrowseController {
      * 프로젝트 상세조회하기
      * @param projectId 조회할 프로젝트id
      */
+    @Operation(
+            summary = "모집 중인 프로젝트 상세 조회",
+            description = "로그인 사용자가 모집 중인 프로젝트 상세와 질문 목록을 조회합니다. page와 size는 질문 목록에 적용되며, mine=true이면 본인이 작성한 질문만 반환하고 비밀 질문은 작성자·프로젝트 기업·관리자에게만 공개됩니다."
+    )
     @GetMapping("/{projectId}")
     public ApiResponse<ProjectBrowseDetailResponse> getProjectDetail(
             @PathVariable Long projectId,

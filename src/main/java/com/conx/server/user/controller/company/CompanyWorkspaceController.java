@@ -7,15 +7,13 @@ import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.ProjectStatusFilter;
 import com.conx.server.user.dto.company.request.CompanyFeedbackRequestDTO;
 import com.conx.server.user.dto.company.request.CompanyProjectEvaluationRequest;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
 import com.conx.server.user.dto.company.response.*;
-import com.conx.server.user.dto.crew.response.CrewEvaluationWrapperDTO;
-import com.conx.server.user.dto.crew.response.CrewProfileResponse;
-import com.conx.server.user.dto.crew.response.CrewProjectSubmissionDetailResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +36,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/companies/me")
@@ -46,9 +47,10 @@ public class CompanyWorkspaceController {
     private final CompanyWorkspaceService companyWorkspaceService;
     private final ApiResponseFactory apiResponseFactory;
 
-    /**
-     * 기업 워크스페이스 대시보드 조회
-     */
+    @Operation(
+            summary = "기업 워크스페이스 대시보드 조회",
+            description = "로그인한 기업의 워크스페이스 대시보드를 조회합니다. 프로젝트 상태, 기간 조건과 페이지네이션을 적용할 수 있습니다."
+    )
     @GetMapping("/workspace/dashboard")
     public ApiResponse<CompanyWorkspaceDashboardResponse> getDashboard(
             @AuthenticationPrincipal
@@ -88,31 +90,19 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 기업 프로젝트 목록 조회
-     */
+    @Operation(
+            summary = "기업 프로젝트 목록 조회",
+            description = "로그인한 기업이 등록한 프로젝트 목록을 조회합니다. 검색어, 프로젝트 상태, 업종, 크루 유형, 기간 조건과 페이지네이션을 적용할 수 있습니다."
+    )
     @GetMapping("/projects")
     public ApiResponse<Page<CompanyWorkspaceProjectResponse>> getProjects(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @RequestParam(required = false)
-            String keyword,
-
-            @RequestParam(required = false)
-            Industry category,
-
-            @RequestParam(required = false)
-            CrewType crewType,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate startDate,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate endDate,
-
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ProjectStatusFilter status,
+            @RequestParam(required = false) Industry category,
+            @RequestParam(required = false) CrewType crewType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @PageableDefault(
                     size = 12,
                     sort = "id",
@@ -124,6 +114,7 @@ public class CompanyWorkspaceController {
                 companyWorkspaceService.getProjects(
                         userDetails.getId(),
                         keyword,
+                        status,
                         category,
                         crewType,
                         startDate,
@@ -138,9 +129,35 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 기업 프로젝트 상세 조회
-     */
+    @Operation(
+            summary = "기업 파트너 크루 목록 조회",
+            description = "로그인한 기업의 프로젝트에 선정된 파트너 크루 목록을 조회합니다. 검색어, 프로젝트 상태, 업종, 크루 유형, 기간 조건과 페이지네이션을 적용할 수 있습니다."
+    )
+    @GetMapping("/projects/partner-crew")
+    public ApiResponse<Page<CompanyPartnerCrewResponse>> getPartnerCrew(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ProjectStatusFilter status,
+            @RequestParam(required = false) Industry category,
+            @RequestParam(required = false) CrewType crewType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @PageableDefault(size = 12, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<CompanyPartnerCrewResponse> response = companyWorkspaceService.getPartnerCrew(
+                userDetails.getId(), keyword, status, category, crewType, startDate, endDate, pageable);
+
+        return apiResponseFactory.success(
+                "파트너 크루 조회에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "기업 프로젝트 상세 조회",
+            description = "로그인한 기업이 등록한 특정 프로젝트의 상세 정보를 조회합니다. page와 size로 포함된 목록의 조회 범위를 지정할 수 있습니다."
+    )
     @GetMapping("/projects/{projectId}")
     public ApiResponse<CompanyWorkspaceProjectDetailResponse> getProjectDetail(
             @AuthenticationPrincipal
@@ -170,23 +187,18 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 프로젝트 등록
-     */
+    @Operation(
+            summary = "기업 프로젝트 등록",
+            description = "로그인한 기업이 새로운 프로젝트를 등록합니다. 요청 본문으로 프로젝트 정보를 전달하고 isDraft 값으로 임시 저장 여부를 지정합니다."
+    )
     @PostMapping("/projects")
     public ApiResponse<CompanyProjectIdResponse> createProject(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @Valid
-            @RequestBody
-            CompanyProjectRequestDTO request
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody CompanyProjectRequestDTO request,
+            @RequestParam boolean isDraft
     ) {
-        CompanyProjectIdResponse response =
-                companyWorkspaceService.createProject(
-                        userDetails.getId(),
-                        request
-                );
+        CompanyProjectIdResponse response = companyWorkspaceService.createProject(userDetails.getId(),
+                request, isDraft);
 
         return apiResponseFactory.success(
                 "새 프로젝트 등록에 성공했습니다.",
@@ -195,9 +207,22 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 프로젝트 수정
-     */
+    @Operation(
+            summary = "임시 저장 프로젝트 존재 여부 조회",
+            description = "로그인한 기업에게 임시 저장된 프로젝트가 있는지 여부를 조회합니다."
+    )
+    @GetMapping("/projects/hasDraft")
+    public ApiResponse<Boolean> hasDraft(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ){
+        Boolean hasDraft = companyWorkspaceService.findDraft(customUserDetails.getId());
+        return apiResponseFactory.success("임시저장 프로젝트 존재여부 확인에 성공했습니다.", hasDraft, customUserDetails);
+    }
+
+    @Operation(
+            summary = "기업 프로젝트 수정",
+            description = "로그인한 기업이 등록한 특정 프로젝트의 정보를 수정합니다."
+    )
     @PatchMapping("/projects/{projectId}")
     public ApiResponse<CompanyProjectIdResponse> updateProject(
             @AuthenticationPrincipal
@@ -224,9 +249,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 프로젝트 삭제
-     */
+    @Operation(
+            summary = "기업 프로젝트 삭제",
+            description = "로그인한 기업이 등록한 특정 프로젝트를 삭제합니다."
+    )
     @DeleteMapping("/projects/{projectId}")
     public ApiResponse<?> deleteProject(
             @AuthenticationPrincipal
@@ -246,9 +272,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 프로젝트 임시 저장
-     */
+    @Operation(
+            summary = "기업 프로젝트 임시 저장",
+            description = "로그인한 기업이 작성 중인 프로젝트 정보를 임시 저장합니다."
+    )
     @PostMapping("/project-drafts")
     public ApiResponse<CompanyProjectIdResponse> createProjectDraft(
             @AuthenticationPrincipal
@@ -270,24 +297,20 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 임시 저장 프로젝트 수정
-     */
-    @PatchMapping("/project-drafts/{draftId}")
+    @Operation(
+            summary = "임시 저장 프로젝트 수정",
+            description = "로그인한 기업의 임시 저장 프로젝트 정보를 수정합니다."
+    )
+    @PatchMapping("/project-drafts")
     public ApiResponse<CompanyProjectIdResponse> updateProjectDraft(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long draftId,
-
-            @RequestBody
-            CompanyProjectRequestDTO request
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            //@PathVariable Long draftId,
+            @RequestBody CompanyProjectRequestDTO request
     ) {
         CompanyProjectIdResponse response =
                 companyWorkspaceService.updateProjectDraft(
                         userDetails.getId(),
-                        draftId,
+                        //draftId,
                         request
                 );
 
@@ -298,21 +321,23 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 임시 저장 프로젝트 상세 조회
-     */
-    @GetMapping("/project-drafts/{draftId}")
+
+    @Operation(
+            summary = "임시 저장 프로젝트 상세 조회",
+            description = "로그인한 기업의 임시 저장 프로젝트 상세 정보를 조회합니다."
+    )
+    @GetMapping("/project-drafts")
     public ApiResponse<CompanyProjectDraftResponse> getProjectDraft(
             @AuthenticationPrincipal
-            CustomUserDetails userDetails,
+            CustomUserDetails userDetails
 
-            @PathVariable
-            Long draftId
+//            @PathVariable
+//            Long draftId
     ) {
         CompanyProjectDraftResponse response =
                 companyWorkspaceService.getProjectDraft(
-                        userDetails.getId(),
-                        draftId
+                        userDetails.getId()
+                        //draftId
                 );
 
         return apiResponseFactory.success(
@@ -322,9 +347,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 결과물 및 피드백 상세 조회
-     */
+    @Operation(
+            summary = "프로젝트 결과물 및 피드백 상세 조회",
+            description = "로그인한 기업이 특정 프로젝트의 결과물 제출 내역과 피드백 상세 정보를 조회합니다."
+    )
     @GetMapping("/projects/{projectId}/submissions/{submissionId}")
     public ApiResponse<ProjectInspectionWrapperDTO> getProjectReviewDetail(
             @AuthenticationPrincipal
@@ -350,23 +376,30 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 결과물 피드백 등록
-     */
+
+
+    @Operation(
+            summary = "프로젝트 제출 기준 충족 처리",
+            description = "로그인한 기업이 특정 프로젝트의 제출 기준을 충족한 것으로 처리합니다."
+    )
+    @PostMapping("/projects/{projectId}/criteria/{criteriaId}")
+    public ApiResponse<?> checkCriteria(@PathVariable Long projectId,
+                                        @PathVariable long criteriaId,
+                                        @AuthenticationPrincipal CustomUserDetails customUserDetails){
+        companyWorkspaceService.checkCriteria(projectId, customUserDetails.getId(), criteriaId);
+        return apiResponseFactory.success("프로젝트 기준 충족 버튼을 클릭하는데 성공했습니다.", customUserDetails);
+    }
+
+    @Operation(
+            summary = "프로젝트 결과물 피드백 등록",
+            description = "로그인한 기업이 특정 프로젝트 결과물에 피드백을 등록합니다."
+    )
     @PostMapping("/projects/{projectId}/submissions/{submissionId}/feedback")
     public ApiResponse<ProjectInspectionWrapperDTO> registerFeedback(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId,
-
-            @PathVariable
-            Long submissionId,
-
-            @Valid
-            @RequestBody
-            CompanyFeedbackRequestDTO request
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long projectId,
+            @PathVariable Long submissionId,
+            @Valid @RequestBody CompanyFeedbackRequestDTO request
     ) {
         ProjectInspectionWrapperDTO response =
                 companyWorkspaceService.registerFeedBack(
@@ -383,9 +416,10 @@ public class CompanyWorkspaceController {
     }
 
 
-    /**
-     * 프로젝트 참여 크루 선정
-     */
+    @Operation(
+            summary = "프로젝트 참여 크루 선정",
+            description = "로그인한 기업이 특정 프로젝트 지원자 중 참여할 크루를 선정합니다."
+    )
     @PostMapping(
             "/projects/{projectId}/applications/{applicationId}/select"
     )
@@ -413,9 +447,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 프로젝트 평가 등록
-     */
+    @Operation(
+            summary = "프로젝트 참여 크루 평가 등록",
+            description = "로그인한 기업이 특정 프로젝트에 참여한 크루의 평가를 등록합니다."
+    )
     @PostMapping("/projects/{projectId}/evaluation")
     public ApiResponse<CompanyProjectEvaluationResponse> evaluateProject(
             @AuthenticationPrincipal
@@ -442,9 +477,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 기존 기업 정산 목록 조회
-     */
+    @Operation(
+            summary = "기업 정산 목록 조회",
+            description = "로그인한 기업의 프로젝트 정산 목록을 조회합니다. 정산 상태를 조건으로 적용할 수 있습니다."
+    )
     @GetMapping("/settlements")
     public ApiResponse<List<CompanySettlementResponse>> getSettlements(
             @AuthenticationPrincipal
@@ -466,9 +502,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 정산 예정 지급일 수정
-     */
+    @Operation(
+            summary = "정산 예정 지급일 수정",
+            description = "로그인한 기업이 특정 정산 건의 예정 지급일을 수정합니다."
+    )
     @PatchMapping(
             "/settlements/{settlementId}/expected-payment-date"
     )
@@ -499,9 +536,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 정산 완료 처리
-     */
+    @Operation(
+            summary = "기업 정산 완료 처리",
+            description = "로그인한 기업이 특정 정산 건을 지급 완료로 처리합니다."
+    )
     @PatchMapping("/settlements/{settlementId}/complete")
     public ApiResponse<CompanySettlementCompleteResponse>
     completeSettlement(
@@ -529,9 +567,10 @@ public class CompanyWorkspaceController {
         );
     }
 
-    /**
-     * 기업 정산 관리 현황 조회
-     */
+    @Operation(
+            summary = "기업 정산 관리 현황 조회",
+            description = "로그인한 기업의 정산 관리 현황을 조회합니다. 정산 상태, 기간 조건과 페이지네이션을 적용할 수 있습니다."
+    )
     @GetMapping("/adjustment")
     public ApiResponse<SubsidyStatusResponse>
     getCompanySubsidyStatus(

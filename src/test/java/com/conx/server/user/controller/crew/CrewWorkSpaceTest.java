@@ -15,7 +15,6 @@ import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.ProjectApplicationForCompanyWrapperDTO;
 import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
 import com.conx.server.user.dto.crew.response.*;
@@ -53,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@ActiveProfiles("local")
 public class CrewWorkSpaceTest {
     @Autowired
     private CrewRepository crewRepository;
@@ -61,6 +60,18 @@ public class CrewWorkSpaceTest {
     @Transactional
     String loginSetting() throws Exception {
         LoginRequestDTO req = new LoginRequestDTO("kimdoes2143@naver.com", "1q2w3e4r!!");
+        MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return mvcResult.getResponse().getHeader("Authorization");
+    }
+
+    @Transactional
+    String loginReturnToken() throws Exception {
+        LoginRequestDTO req = new LoginRequestDTO("cccccc@gmail.com", "1q2w3e4r!!");
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -199,7 +210,7 @@ public class CrewWorkSpaceTest {
 
         List<ProjectWrapperForLandingPageDTO> landingResponse = response.payload();
 
-        assertThat(landingResponse.size()).isEqualTo(2);
+        assertThat(landingResponse.size()).isEqualTo(14);
     }
 
     @Test
@@ -211,7 +222,7 @@ public class CrewWorkSpaceTest {
         mockMvc.perform(get("/api/v1/projects?page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(2));
+                .andExpect(jsonPath("$.payload.content.length()").value(6));
     }
 
     @Test
@@ -225,7 +236,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(1));
+                .andExpect(jsonPath("$.payload.content.length()").value(2));
     }
 
     @Test
@@ -239,7 +250,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(1));
+                .andExpect(jsonPath("$.payload.content.length()").value(6));
     }
 
     @Test
@@ -253,7 +264,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(2));
+                .andExpect(jsonPath("$.payload.content.length()").value(3));
     }
 
     @Test
@@ -267,7 +278,7 @@ public class CrewWorkSpaceTest {
                         "&page=0&size=6")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.content.length()").value(2));
+                .andExpect(jsonPath("$.payload.content.length()").value(6));
     }
 
     @Test
@@ -658,9 +669,9 @@ public class CrewWorkSpaceTest {
         assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
 
         assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(2);
         assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(1);
         assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
 
         assertThat(resultDTO.evaluation().overall()).isEqualTo(0.0);
@@ -728,9 +739,9 @@ public class CrewWorkSpaceTest {
         assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
 
         assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(1);
-        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(2);
         assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(1);
         assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
 
         assertThat(resultDTO.todoProjects()).isEmpty();
@@ -751,7 +762,7 @@ public class CrewWorkSpaceTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(post("/api/v1/projects/2/applications")
+        mockMvc.perform(post("/api/v1/projects/3/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -822,9 +833,9 @@ public class CrewWorkSpaceTest {
         assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
 
         assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(1);
+        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(3);
         assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(1);
         assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
 
         assertThat(resultDTO.todoProjects()).isEmpty();
@@ -854,7 +865,7 @@ public class CrewWorkSpaceTest {
 
         long applicationId = applicationResponse.payload().applicationId();
 
-        mockMvc.perform(post("/api/v1/projects/2/applications")
+        mockMvc.perform(post("/api/v1/projects/3/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -921,9 +932,9 @@ public class CrewWorkSpaceTest {
         assertThat(resultDTO.totalSubsidy()).isEqualTo(0);
 
         assertThat(projectInfoDTO.appliedProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(1);
+        assertThat(projectInfoDTO.progressProjectAmount()).isEqualTo(3);
         assertThat(projectInfoDTO.executionCompletedProjectAmount()).isEqualTo(0);
-        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(0);
+        assertThat(projectInfoDTO.submissionCompletedProjectAmount()).isEqualTo(1);
         assertThat(projectInfoDTO.settlementCompletedProjectAmount()).isEqualTo(0);
 
         assertThat(resultDTO.todoProjects()).isEmpty();
@@ -955,7 +966,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 progressDashboard.projectInfo()
                         .progressProjectAmount()
-        ).isEqualTo(1);
+        ).isEqualTo(3);
 
         assertThat(
                 progressDashboard.projectInfo()
@@ -965,7 +976,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 progressDashboard.projectInfo()
                         .submissionCompletedProjectAmount()
-        ).isEqualTo(0);
+        ).isEqualTo(1);
 
         assertThat(
                 progressDashboard.projectInfo()
@@ -1010,7 +1021,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 inspectionDashboard.projectInfo()
                         .progressProjectAmount()
-        ).isEqualTo(0);
+        ).isEqualTo(2);
 
         assertThat(
                 inspectionDashboard.projectInfo()
@@ -1020,7 +1031,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 inspectionDashboard.projectInfo()
                         .submissionCompletedProjectAmount()
-        ).isEqualTo(1);
+        ).isEqualTo(2);
 
         assertThat(
                 inspectionDashboard.projectInfo()
@@ -1049,7 +1060,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 waitingResultDashboard.projectInfo()
                         .progressProjectAmount()
-        ).isEqualTo(0);
+        ).isEqualTo(2);
 
         assertThat(
                 waitingResultDashboard.projectInfo()
@@ -1059,7 +1070,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 waitingResultDashboard.projectInfo()
                         .submissionCompletedProjectAmount()
-        ).isEqualTo(1);
+        ).isEqualTo(2);
 
         assertThat(
                 waitingResultDashboard.projectInfo()
@@ -1087,7 +1098,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 adjustingDashboard.projectInfo()
                         .submissionCompletedProjectAmount()
-        ).isEqualTo(1);
+        ).isEqualTo(2);
 
         assertThat(
                 adjustingDashboard.projectInfo()
@@ -1198,7 +1209,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 paidDashboard.projectInfo()
                         .progressProjectAmount()
-        ).isEqualTo(0);
+        ).isEqualTo(2);
 
         assertThat(
                 paidDashboard.projectInfo()
@@ -1208,7 +1219,7 @@ public class CrewWorkSpaceTest {
         assertThat(
                 paidDashboard.projectInfo()
                         .submissionCompletedProjectAmount()
-        ).isEqualTo(0);
+        ).isEqualTo(1);
 
         assertThat(
                 paidDashboard.projectInfo()
@@ -1228,7 +1239,7 @@ public class CrewWorkSpaceTest {
     @Transactional
     @DisplayName("초기 크루 워크스페이스")
     void initialsCrewWorkSpace() throws Exception {
-        String token = loginSetting();
+        String token = loginReturnToken();
 
         MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/workSpace")
                         .header("Authorization", token))
@@ -1250,7 +1261,7 @@ public class CrewWorkSpaceTest {
     @Transactional
     @DisplayName("프로젝트 지원 후 워크스페이스")
     void workSpaceAfterApplication() throws Exception {
-        String token = loginSetting();
+        String token = loginReturnToken();
 
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
@@ -1261,7 +1272,7 @@ public class CrewWorkSpaceTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(post("/api/v1/projects/2/applications")
+        mockMvc.perform(post("/api/v1/projects/3/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -1287,7 +1298,7 @@ public class CrewWorkSpaceTest {
     @Transactional
     @DisplayName("프로젝트 선정 후 크루 워크스페이스")
     void workSpaceAfterSelected() throws Exception {
-        String token = loginSetting();
+        String token = loginReturnToken();
 
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
@@ -1308,7 +1319,7 @@ public class CrewWorkSpaceTest {
         long applicationId = applicationResponse.payload().applicationId();
 
 
-        mockMvc.perform(post("/api/v1/projects/2/applications")
+        mockMvc.perform(post("/api/v1/projects/3/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -1358,7 +1369,7 @@ public class CrewWorkSpaceTest {
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
 
-        assertThat(responseDTO.projects().size()).isEqualTo(1);
+        assertThat(responseDTO.projects().size()).isEqualTo(5);
         assertThat(responseDTO.projects().get(0).projectId()).isEqualTo(1L);
         assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.PROGRESS);
     }
@@ -1369,7 +1380,7 @@ public class CrewWorkSpaceTest {
     void workSpaceForUnSelectedProject() throws Exception {
         String token = loginSetting();
 
-        mockMvc.perform(get("/api/v1/crews/workSpace/2")
+        mockMvc.perform(get("/api/v1/crews/workSpace/1")
                         .header("Authorization", token))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status")
@@ -1400,7 +1411,7 @@ public class CrewWorkSpaceTest {
 
         long applicationId = applicationResponse.payload().applicationId();
 
-        mockMvc.perform(post("/api/v1/projects/2/applications")
+        mockMvc.perform(post("/api/v1/projects/3/applications")
                         .header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -1451,7 +1462,7 @@ public class CrewWorkSpaceTest {
 
         CrewWorkSpaceResponseDTO responseDTO = response.payload();
 
-        assertThat(responseDTO.projects().size()).isEqualTo(1);
+        assertThat(responseDTO.projects().size()).isEqualTo(5);
         assertThat(responseDTO.projects().get(0).projectId()).isEqualTo(1L);
         assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.INSPECTION);
     }
@@ -1501,7 +1512,7 @@ public class CrewWorkSpaceTest {
         long secondApplicationId =
                 applyProjectAndGetApplicationId(
                         crewToken,
-                        2L
+                        3L
                 );
 
         /*
@@ -1686,7 +1697,7 @@ public class CrewWorkSpaceTest {
 
         applyProjectAndGetApplicationId(
                 crewToken,
-                2L
+                3L
         );
 
         /*
@@ -1706,7 +1717,7 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.payload.totalElements")
-                                .value(1)
+                                .value(0)
                 );
 
         /*
@@ -1726,7 +1737,7 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.payload.totalElements")
-                                .value(1)
+                                .value(2)
                 );
 
         /*
