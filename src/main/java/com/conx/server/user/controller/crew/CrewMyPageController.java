@@ -158,7 +158,7 @@ public class CrewMyPageController {
     @PostMapping("/portfolio")
     public ApiResponse<CrewPortfolioResponseDTO> registerPortfolio(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestBody CrewPortfolioRequestDTO req
+            @Valid @RequestBody CrewPortfolioRequestDTO req
     ) {
         CrewPortfolioResponseDTO response = crewMyPageService.registerPortfolio(
                 customUserDetails.getId(), req
@@ -186,13 +186,12 @@ public class CrewMyPageController {
 
     @Operation(
             summary = "크루 포트폴리오 삭제",
-            description = "로그인한 크루가 자신이 소유한 포트폴리오를 삭제합니다. 현재 Controller 선언상 요청 본문이 필수이지만 본문 값은 삭제 처리에 사용되지 않습니다."
+            description = "로그인한 크루가 자신이 소유한 포트폴리오를 삭제합니다. 삭제할 포트폴리오 ID를 경로 변수로 전달합니다."
     )
     @DeleteMapping("/portfolio/{portfolioId}")
     public ApiResponse<?> deletePortfolio(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable Long portfolioId,
-            @RequestBody ModifyCrewPortfolioRequestDTO req
+            @PathVariable Long portfolioId
     ) {
         crewMyPageService.deletePortfolio(customUserDetails.getId(), portfolioId);
         return apiResponseFactory.success("크루 포트폴리오 삭제에 성공했습니다.", customUserDetails);
