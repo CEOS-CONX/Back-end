@@ -5,6 +5,7 @@ import com.conx.server.user.domain.crew.Crew;
 import java.time.LocalDate;
 
 public record CrewInfoForProjectApplicationDTO(
+        long crewId,
         String crewName,
         String managerName,
         LocalDate editedTime,
@@ -12,6 +13,7 @@ public record CrewInfoForProjectApplicationDTO(
 ) {
     public static CrewInfoForProjectApplicationDTO create(Crew crew){
         return new CrewInfoForProjectApplicationDTO(
+                crew.getId(),
                 crew.getCrewName(), crew.getManagerName(),
                 crew.getUpdatedAt().toLocalDate(), true
         );

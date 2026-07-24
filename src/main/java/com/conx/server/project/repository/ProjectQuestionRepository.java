@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public interface ProjectQuestionRepository extends JpaRepository<ProjectQuestion, Long> {
@@ -26,4 +27,6 @@ public interface ProjectQuestionRepository extends JpaRepository<ProjectQuestion
             Long questionId,
             Long projectId
     );
+
+    Page<ProjectQuestion> findAllByProjectIdAndWriterIdAndWriterRoleInOrderByIdDesc(long projectId, Long writerId, Collection<UserRole> writerRoles, Pageable pageable);
 }

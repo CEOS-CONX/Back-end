@@ -17,6 +17,9 @@ public record ProjectBrowseDetailResponse(
         boolean isImminent,
         int dayBeforeDeadline,
 
+        boolean isBookmarked,
+        boolean isApplied,
+
         Long projectId,
         List<String> projectImage,
         String projectName,
@@ -56,7 +59,9 @@ public record ProjectBrowseDetailResponse(
 ) {
     public static ProjectBrowseDetailResponse from(Project project,
                                                    List<FileResponseDTO> files,
-                                                   Page<ProjectQuestionResponse> question) {
+                                                   Page<ProjectQuestionResponse> question,
+                                                   boolean isApplied,
+                                                   boolean isBookmarked) {
         int dayBeforeDeadline = (int) ChronoUnit.DAYS.between(
                 LocalDate.now(),
                 project.getRecruitDeadLine()
@@ -65,6 +70,9 @@ public record ProjectBrowseDetailResponse(
         return new ProjectBrowseDetailResponse(
                 dayBeforeDeadline >= 0 && dayBeforeDeadline <= 3,
                 dayBeforeDeadline,
+
+                isApplied,
+                isBookmarked,
 
                 project.getId(),
                 project.getProjectImage(),
