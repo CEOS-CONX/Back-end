@@ -189,6 +189,7 @@ class ProjectQuestionControllerTest {
         // given
         ProjectQuestionCreateRequest request =
                 new ProjectQuestionCreateRequest(
+                        "제목1234",
                         "질문 내용입니다.",
                         true
                 );
@@ -253,6 +254,7 @@ class ProjectQuestionControllerTest {
         // given
         ProjectQuestionCreateRequest request =
                 new ProjectQuestionCreateRequest(
+                        "제목1234",
                         " ",
                         false
                 );
