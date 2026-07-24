@@ -71,7 +71,8 @@ public class ProjectQuestionService {
                     writerRole,
                     crew.getCrewName(),
                     request.content(),
-                    request.secret()
+                    request.secret(),
+                    request.subject()
             );
         } else if (writerRole == UserRole.COMPANY) {
             Company company = userFinder.findActiveCompany(userDetails.getId());
@@ -82,7 +83,8 @@ public class ProjectQuestionService {
                     writerRole,
                     company.getCompanyName(),
                     request.content(),
-                    request.secret()
+                    request.secret(),
+                    request.subject()
             );
         } else {
             throw new CustomException(

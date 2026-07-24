@@ -1,5 +1,7 @@
 package com.conx.server.project.dto.response;
 
+import com.conx.server.global.security.userDetails.CustomUserDetails;
+import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectQuestion;
 import com.conx.server.user.dto.UserRole;
 
@@ -8,6 +10,8 @@ import java.time.LocalDateTime;
 public record ProjectQuestionResponse(
         Long questionId,
         Long projectId,
+
+        String questionName,
         Long writerId,
         UserRole writerRole,
         String writerName,
@@ -28,6 +32,7 @@ public record ProjectQuestionResponse(
         return new ProjectQuestionResponse(
                 question.getId(),
                 question.getProject().getId(),
+                canView ? question.getSubject() : SECRET_CONTENT,
                 question.getWriterId(),
                 question.getWriterRole(),
                 question.getWriterName(),

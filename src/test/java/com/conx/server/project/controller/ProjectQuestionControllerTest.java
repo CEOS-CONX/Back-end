@@ -137,6 +137,7 @@ class ProjectQuestionControllerTest {
                 new ProjectQuestionDetailResponse(
                         QUESTION_ID,
                         PROJECT_ID,
+                        "제목입니다.",
                         USER_ID,
                         UserRole.CREW,
                         "김크루",
@@ -189,6 +190,7 @@ class ProjectQuestionControllerTest {
         // given
         ProjectQuestionCreateRequest request =
                 new ProjectQuestionCreateRequest(
+                        "제목1234",
                         "질문 내용입니다.",
                         true
                 );
@@ -200,6 +202,7 @@ class ProjectQuestionControllerTest {
                 new ProjectQuestionDetailResponse(
                         QUESTION_ID,
                         PROJECT_ID,
+                        "제목입니다.",
                         USER_ID,
                         UserRole.CREW,
                         "김크루",
@@ -253,6 +256,7 @@ class ProjectQuestionControllerTest {
         // given
         ProjectQuestionCreateRequest request =
                 new ProjectQuestionCreateRequest(
+                        "제목1234",
                         " ",
                         false
                 );
@@ -285,6 +289,7 @@ class ProjectQuestionControllerTest {
                 new ProjectQuestionDetailResponse(
                         QUESTION_ID,
                         PROJECT_ID,
+                        "제목입니다",
                         USER_ID,
                         UserRole.CREW,
                         "김크루",

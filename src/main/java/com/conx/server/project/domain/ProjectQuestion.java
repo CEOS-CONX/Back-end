@@ -36,7 +36,10 @@ public class ProjectQuestion extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserRole writerRole;
 
+
     private String writerName;
+
+    private String subject;
 
     @Lob
     private String content;
@@ -54,7 +57,8 @@ public class ProjectQuestion extends BaseEntity {
             UserRole writerRole,
             String writerName,
             String content,
-            boolean secret
+            boolean secret,
+            String subject
     ) {
         this.project = project;
         this.writerId = writerId;
@@ -62,6 +66,7 @@ public class ProjectQuestion extends BaseEntity {
         this.writerName = writerName;
         this.content = content;
         this.secret = secret;
+        this.subject = subject;
     }
 
     public static ProjectQuestion create(
@@ -70,9 +75,10 @@ public class ProjectQuestion extends BaseEntity {
             UserRole writerRole,
             String writerName,
             String content,
-            boolean secret
+            boolean secret,
+            String subject
     ) {
-        return new ProjectQuestion(project, writerId, writerRole, writerName, content, secret);
+        return new ProjectQuestion(project, writerId, writerRole, writerName, content, secret, subject);
     }
 
     public void answer(String answerContent) {
