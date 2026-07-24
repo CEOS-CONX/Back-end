@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public record ProjectQuestionDetailResponse(
         Long questionId,
         Long projectId,
+        String subject,
         Long writerId,
         UserRole writerRole,
         String writerName,
@@ -23,6 +24,7 @@ public record ProjectQuestionDetailResponse(
         return new ProjectQuestionDetailResponse(
                 question.getId(),
                 question.getProject().getId(),
+                question.getSubject(),
                 question.getWriterId(),
                 question.getWriterRole(),
                 question.getWriterName(),
