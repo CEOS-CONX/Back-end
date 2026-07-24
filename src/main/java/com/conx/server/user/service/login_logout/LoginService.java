@@ -49,6 +49,10 @@ public class LoginService {
     public LoginServiceResponseDTO login(LoginRequestDTO req){
         User user = userFinder.findByEmail(req.email());
 
+        if(!user.isLoginable()){
+            throw new CustomException(ErrorCode.INVALID_USER_TYPE);
+        }
+
         if (!passwordEncoder.matches(req.password(), user.getPassword())){
             throw new CustomException(ErrorCode.PASSWORD_UNMATCHED);
         }
@@ -103,6 +107,8 @@ public class LoginService {
             user = userFinder.findActiveCrew(userId);
         } else if(roles.contains(UserRole.COMPANY.getRole())) {
             user = userFinder.findActiveCompany(userId);
+        } else if(roles.contains(UserRole.ADMIN.getRole())) {
+            user = userFinder.findAdmin(userId);
         } else {
             throw new CustomAuthenticationException(ErrorCode.INVALID_USER_TYPE);
         }

@@ -64,8 +64,7 @@ public class CompanyWorkspaceService {
     private final UserFinder userFinder;
     private final FileRepository fileRepository;
     private final FileService fileService;
-    private final ProjectInspectionFeedbackRepository
-            projectInspectionFeedbackRepository;
+    private final ProjectInspectionFeedbackRepository projectInspectionFeedbackRepository;
     private final EvaluationRepository evaluationRepository;
     private final CrewProjectTodoService crewProjectTodoService;
     private final ProjectSubmissionCriteriaRepository projectSubmissionCriteriaRepository;

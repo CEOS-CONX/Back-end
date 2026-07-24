@@ -24,7 +24,7 @@ public record ProjectBrowseResponse(
         boolean incentive
 ) {
 
-    public static ProjectBrowseResponse from(Project project, boolean isBookmarked) {
+    public static ProjectBrowseResponse from(Project project, boolean isCrew, boolean isBookmarked) {
         int dayBeforeDeadline = (int) ChronoUnit.DAYS.between(
                 LocalDate.now(),
                 project.getRecruitDeadLine()
@@ -32,19 +32,37 @@ public record ProjectBrowseResponse(
 
         boolean isImminent = dayBeforeDeadline >= 0 && dayBeforeDeadline <= 3;
 
-        return new ProjectBrowseResponse(
-                isImminent,
-                isBookmarked,
-                project.getId(),
-                project.getProjectImage(),
-                project.getProjectName(),
-                project.getCompany().getCompanyName(),
-                project.getCompany().getIndustry(),
-                project.getProjectType(),
-                project.getProjectStartDate(),
-                project.getProjectDeadline(),
-                project.getSubsidy(),
-                project.isIncentive()
-        );
+        if (isCrew){
+            return new ProjectBrowseResponse(
+                    isImminent,
+                    isBookmarked,
+                    project.getId(),
+                    project.getProjectImage(),
+                    project.getProjectName(),
+                    project.getCompany().getCompanyName(),
+                    project.getCompany().getIndustry(),
+                    project.getProjectType(),
+                    project.getProjectStartDate(),
+                    project.getProjectDeadline(),
+                    project.getSubsidy(),
+                    project.isIncentive()
+            );
+
+        } else {
+            return new ProjectBrowseResponse(
+                    isImminent,
+                    false,
+                    project.getId(),
+                    project.getProjectImage(),
+                    project.getProjectName(),
+                    project.getCompany().getCompanyName(),
+                    project.getCompany().getIndustry(),
+                    project.getProjectType(),
+                    project.getProjectStartDate(),
+                    project.getProjectDeadline(),
+                    project.getSubsidy(),
+                    project.isIncentive()
+            );
+        }
     }
 }
