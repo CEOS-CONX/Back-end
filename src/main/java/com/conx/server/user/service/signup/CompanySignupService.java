@@ -5,6 +5,7 @@ import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.consent.PersonalInformationConsent;
 import com.conx.server.user.domain.consent.PromotionalMessageConsent;
 import com.conx.server.user.domain.company.Company;
+import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.dto.signupRequest.SignupRequestDTO;
 import com.conx.server.user.dto.signupRequest.UpdateCompanyUserDTO;
 import com.conx.server.user.repository.CompanyRepository;
@@ -66,7 +67,7 @@ public class CompanySignupService {
 
         req.validateIndustry();
 
-        Company company = companyRepository.findByEmail(req.email()).orElseThrow(
+        Company company = companyRepository.findByEmailAndStatus(req.email(), UserStatus.PENDING).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
 

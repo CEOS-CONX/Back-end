@@ -16,6 +16,7 @@ import com.conx.server.project.dto.response.ProjectBrowseResponse;
 import com.conx.server.project.dto.response.ProjectQuestionResponse;
 import com.conx.server.project.repository.ProjectQuestionRepository;
 import com.conx.server.project.repository.ProjectRepository;
+import com.conx.server.user.domain.User;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.UserRole;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -71,19 +73,36 @@ public class ProjectBrowseService {
                     endDate,
                     browseSort,
                     pageable
-            ).map(p -> ProjectBrowseResponse.from(p,false));
+            ).map(p -> ProjectBrowseResponse.from(p, false,false));
         } else {
-            Crew c = userFinder.findActiveCrew(customUserDetails.getId());
+            boolean isCrew =  customUserDetails.getAuthorities().stream().map(
+                    GrantedAuthority::getAuthority).anyMatch("ROLE_CREW"::equals);
 
-            return findProjects(
-                    normalizedKeyword,
-                    category,
-                    projectType,
-                    startDate,
-                    endDate,
-                    browseSort,
-                    pageable
-            ).map(p -> ProjectBrowseResponse.from(p, isBookmarked(p, c)));
+            if (isCrew){
+                Crew c = userFinder.findActiveCrew(customUserDetails.getId());
+
+                return findProjects(
+                        normalizedKeyword,
+                        category,
+                        projectType,
+                        startDate,
+                        endDate,
+                        browseSort,
+                        pageable
+                ).map(p -> ProjectBrowseResponse.from(p, true, isBookmarked(p, c)));
+            } else {
+                return findProjects(
+                        normalizedKeyword,
+                        category,
+                        projectType,
+                        startDate,
+                        endDate,
+                        browseSort,
+                        pageable
+                ).map(p -> ProjectBrowseResponse.from(p, false, false));
+            }
+
+
         }
     }
 
@@ -128,8 +147,9 @@ public class ProjectBrowseService {
                 && project.getCompany().getId() == userDetails.getId();
     }
 
-    private boolean isAdmin(UserRole userRole) {
-        return userRole == UserRole.ADMIN;
+    private boolean isAdmin(Collection<? extends GrantedAuthority> authorities) {
+        return authorities.stream().map(
+                GrantedAuthority::getAuthority).anyMatch("ROLE_ADMIN"::equals);
     }
 
     private boolean canViewSecret(
@@ -139,7 +159,7 @@ public class ProjectBrowseService {
     ) {
         UserRole userRole = getUserRole(userDetails);
 
-        return isAdmin(userRole)
+        return isAdmin(userDetails.getAuthorities())
                 || isWriter(question, userDetails, userRole)
                 || isProjectCompany(project, userDetails, userRole);
     }

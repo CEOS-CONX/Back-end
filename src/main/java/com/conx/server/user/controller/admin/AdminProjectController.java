@@ -28,9 +28,7 @@ public class AdminProjectController {
     public ApiResponse<AdminProjectContractCompleteResponse> completeContract(
             @PathVariable Long projectId
     ) {
-        AdminProjectContractCompleteResponse response =
-                adminProjectService.completeContract(projectId);
-
+        AdminProjectContractCompleteResponse response = adminProjectService.completeContract(projectId);
         return apiResponseFactory.success(response, null);
     }
 }

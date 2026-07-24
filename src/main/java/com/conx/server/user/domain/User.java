@@ -50,4 +50,8 @@ public abstract class User extends BaseEntity {
     public void withdrawUser() {
         this.status = UserStatus.WITHDRAW;
     }
+
+    public boolean isLoginable() {
+        this.status = UserStatus.ACTIVE;
+    }
 }

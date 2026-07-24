@@ -82,7 +82,7 @@ public class TokenProvider implements InitializingBean {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .expiration(new Date(new Date().getTime() + expiration))
-                .claim("auth", authorities)
+                .claim("role", authorities)
                 .issuedAt(new Date())
                 .signWith(key)
                 .compact();

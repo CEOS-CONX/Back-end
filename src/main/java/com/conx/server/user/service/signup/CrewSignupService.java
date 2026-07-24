@@ -2,6 +2,7 @@ package com.conx.server.user.service.signup;
 
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
+import com.conx.server.global.token.TokenProvider;
 import com.conx.server.user.domain.consent.PersonalInformationConsent;
 import com.conx.server.user.domain.consent.PromotionalMessageConsent;
 import com.conx.server.user.domain.crew.Crew;
@@ -30,6 +31,7 @@ public class CrewSignupService {
     private final PromotionalMessageConsentRepository promotionalMessageConsentRepository;
     private final EvaluationRepository evaluationRepository;
     private final CrewEvaluationRepository crewEvaluationRepository;
+    private final TokenProvider tokenProvider;
 
     /**
      * 회원가입 1단계
@@ -42,44 +44,24 @@ public class CrewSignupService {
     @Transactional
     public void userSetting(SignupRequestDTO req) {
         req.passwordDoubleChecking();
-        sendingVerificationNumberService.checkVerification(
-                req.email()
-        );
+        sendingVerificationNumberService.checkVerification(req.email());
 
-        String password = encoder.encode(
-                req.password()
-        );
+        String password = encoder.encode(req.password());
 
         Crew crew = Crew.create(
-                req.email(),
-                password
+                req.email(), password
         );
+
+
+        PersonalInformationConsent personalInformationConsent = PersonalInformationConsent.create(crew, req.options().personalInformation());
+        PromotionalMessageConsent promotionalMessageConsent = PromotionalMessageConsent.create(crew, req.options().sendingPromoteMessage());
 
         crewRepository.save(crew);
-
-        PersonalInformationConsent personalInformationConsent =
-                PersonalInformationConsent.create(
-                        crew,
-                        req.options().personalInformation()
-                );
-
-        PromotionalMessageConsent promotionalMessageConsent =
-                PromotionalMessageConsent.create(
-                        crew,
-                        req.options().sendingPromoteMessage()
-                );
-
-        personalInformationConsentRepository.save(
-                personalInformationConsent
-        );
-
-        promotionalMessageConsentRepository.save(
-                promotionalMessageConsent
-        );
+        personalInformationConsentRepository.save(personalInformationConsent);
+        promotionalMessageConsentRepository.save(promotionalMessageConsent);
     }
 
     /**
-
      * 초기 세팅이 완료된 사용자의 추가정보(브랜드명, 담당자명 등...)를 세팅합니다.
      *
      * 에러케이스
