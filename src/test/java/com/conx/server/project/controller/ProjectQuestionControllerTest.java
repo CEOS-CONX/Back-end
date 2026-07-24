@@ -137,6 +137,7 @@ class ProjectQuestionControllerTest {
                 new ProjectQuestionDetailResponse(
                         QUESTION_ID,
                         PROJECT_ID,
+                        "제목입니다.",
                         USER_ID,
                         UserRole.CREW,
                         "김크루",
@@ -201,6 +202,7 @@ class ProjectQuestionControllerTest {
                 new ProjectQuestionDetailResponse(
                         QUESTION_ID,
                         PROJECT_ID,
+                        "제목입니다.",
                         USER_ID,
                         UserRole.CREW,
                         "김크루",
@@ -287,6 +289,7 @@ class ProjectQuestionControllerTest {
                 new ProjectQuestionDetailResponse(
                         QUESTION_ID,
                         PROJECT_ID,
+                        "제목입니다",
                         USER_ID,
                         UserRole.CREW,
                         "김크루",
