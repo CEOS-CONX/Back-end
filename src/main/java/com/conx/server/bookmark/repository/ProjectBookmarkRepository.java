@@ -31,4 +31,6 @@ public interface ProjectBookmarkRepository extends JpaRepository<ProjectBookmark
     );
 
     boolean existsByCrewAndProject(Crew crew, Project project);
+
+    boolean existsByProjectIdAndCrewId(long projectId, long crewId);
 }

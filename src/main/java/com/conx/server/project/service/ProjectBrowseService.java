@@ -14,6 +14,7 @@ import com.conx.server.project.dto.ProjectBrowseSort;
 import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
 import com.conx.server.project.dto.response.ProjectBrowseResponse;
 import com.conx.server.project.dto.response.ProjectQuestionResponse;
+import com.conx.server.project.repository.ProjectApplicationRepository;
 import com.conx.server.project.repository.ProjectQuestionRepository;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.crew.Crew;
@@ -40,6 +41,7 @@ public class ProjectBrowseService {
     private final UserFinder userFinder;
     private final FileRepository fileRepository;
     private final ProjectQuestionRepository projectQuestionRepository;
+    private final ProjectApplicationRepository projectApplicationRepository;
 
     @Transactional(readOnly = true)
     protected boolean isBookmarked(Project p, Crew c){
@@ -97,39 +99,41 @@ public class ProjectBrowseService {
         throw new CustomException(ErrorCode.FORBIDDEN);
     }
 
-    private UserRole getUserRole(
+    private List<UserRole> getUserRole(
             CustomUserDetails userDetails
     ) {
         return userDetails.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
                 .map(this::findUserRole)
-                .findFirst()
-                .orElseThrow(() ->
-                        new CustomException(ErrorCode.FORBIDDEN)
-                );
+                .toList();
     }
 
     private boolean isWriter(
             ProjectQuestion question,
             CustomUserDetails userDetails,
-            UserRole userRole
+            List<UserRole> userRole
     ) {
-        return question.getWriterRole() == userRole
+        return userRole.stream().anyMatch(
+                r -> question.getWriterRole().equals(r))
                 && question.getWriterId().equals(userDetails.getId());
     }
 
     private boolean isProjectCompany(
             Project project,
             CustomUserDetails userDetails,
-            UserRole userRole
+            List<UserRole> userRole
     ) {
-        return userRole == UserRole.COMPANY
+        return userRole.stream().anyMatch(r -> r.equals(UserRole.COMPANY))
                 && project.getCompany().getId() == userDetails.getId();
     }
 
-    private boolean isAdmin(UserRole userRole) {
-        return userRole == UserRole.ADMIN;
+    private boolean isAdmin(List<UserRole> userRole) {
+        return userRole.stream().anyMatch(r -> r.equals(UserRole.ADMIN));
+    }
+
+    private boolean isCrew(List<UserRole> userRole) {
+        return userRole.stream().anyMatch(r -> r.equals(UserRole.CREW));
     }
 
     private boolean canViewSecret(
@@ -137,7 +141,7 @@ public class ProjectBrowseService {
             Project project,
             CustomUserDetails userDetails
     ) {
-        UserRole userRole = getUserRole(userDetails);
+        List<UserRole> userRole = getUserRole(userDetails);
 
         return isAdmin(userRole)
                 || isWriter(question, userDetails, userRole)
@@ -171,16 +175,12 @@ public class ProjectBrowseService {
         List<FileResponseDTO> fileResponseDTOS = files.stream().map(FileResponseDTO::from).toList();
 
         Pageable pageable = PageRequest.of(page, size);
-        UserRole userRole = getUserRole(userDetails);
+        List<UserRole> userRole = getUserRole(userDetails);
 
         Page<ProjectQuestion> questions;
 
         if (mine) {
-            if(userDetails == null) {
-                throw new CustomException(ErrorCode.FORBIDDEN);
-            }
-
-            questions = projectQuestionRepository.findAllByProjectIdAndWriterIdAndWriterRoleOrderByIdDesc(
+            questions = projectQuestionRepository.findAllByProjectIdAndWriterIdAndWriterRoleInOrderByIdDesc(
                             project.getId(), userDetails.getId(), userRole, pageable);
         } else {
             questions = projectQuestionRepository.findAllByProjectIdOrderByIdDesc(project.getId(),pageable);
@@ -191,7 +191,19 @@ public class ProjectBrowseService {
             return ProjectQuestionResponse.from(question, canView);
         });
 
-        return ProjectBrowseDetailResponse.from(project, fileResponseDTOS, questionResponses);
+        if (isCrew(getUserRole(userDetails))){
+            boolean isApplied = projectApplicationRepository.existsByProjectIdAndCrewId(projectId, userDetails.getId());
+            boolean isBookmarked = projectBookmarkRepository.existsByProjectIdAndCrewId(projectId, userDetails.getId());
+
+            return ProjectBrowseDetailResponse.from(project, fileResponseDTOS, questionResponses,
+                    isApplied, isBookmarked);
+       } else {
+            boolean isApplied = false;
+            boolean isBookmarked = false;
+
+            return ProjectBrowseDetailResponse.from(project, fileResponseDTOS, questionResponses,
+                    isApplied, isBookmarked);
+        }
     }
 
     private Page<Project> findProjects(
