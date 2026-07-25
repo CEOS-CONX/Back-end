@@ -276,7 +276,6 @@ class CompanyMyPageControllerTest {
     void updateName() throws Exception {
         CompanyNameUpdateRequest request =
                 new CompanyNameUpdateRequest(
-                        "current-password",
                         "새 담당자"
                 );
 
@@ -318,7 +317,6 @@ class CompanyMyPageControllerTest {
     void updateJob() throws Exception {
         CompanyJobUpdateRequest request =
                 new CompanyJobUpdateRequest(
-                        "current-password",
                         "브랜드 매니저"
                 );
 
@@ -360,7 +358,6 @@ class CompanyMyPageControllerTest {
     void updateRepresentativePhone() throws Exception {
         CompanyRepresentativePhoneUpdateRequest request =
                 new CompanyRepresentativePhoneUpdateRequest(
-                        "current-password",
                         "02-9876-5432"
                 );
 
@@ -405,7 +402,6 @@ class CompanyMyPageControllerTest {
     void updateRepresentativeEmail() throws Exception {
         CompanyRepresentativeEmailUpdateRequest request =
                 new CompanyRepresentativeEmailUpdateRequest(
-                        "current-password",
                         "new-contact@company.com"
                 );
 

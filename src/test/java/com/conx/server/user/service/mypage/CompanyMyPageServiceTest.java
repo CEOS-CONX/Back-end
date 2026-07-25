@@ -7,6 +7,10 @@ import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.company.request.CompanyEmailUpdateRequest;
 import com.conx.server.user.dto.company.request.CompanyEmailVerificationConfirmRequest;
 import com.conx.server.user.dto.company.request.CompanyEmailVerificationSendRequest;
+import com.conx.server.user.dto.company.request.CompanyJobUpdateRequest;
+import com.conx.server.user.dto.company.request.CompanyNameUpdateRequest;
+import com.conx.server.user.dto.company.request.CompanyRepresentativeEmailUpdateRequest;
+import com.conx.server.user.dto.company.request.CompanyRepresentativePhoneUpdateRequest;
 import com.conx.server.user.dto.company.response.CompanyAccountResponse;
 import com.conx.server.user.dto.company.response.CompanyEmailVerificationConfirmResponse;
 import com.conx.server.user.service.common.CompanyEmailVerificationService;
@@ -68,6 +72,120 @@ class CompanyMyPageServiceTest {
 
     @InjectMocks
     private CompanyMyPageService companyMyPageService;
+
+    @Test
+    @DisplayName("비밀번호 확인 없이 기업 계정 이름을 수정한다")
+    void updateNameWithoutPassword() {
+        CompanyNameUpdateRequest request =
+                new CompanyNameUpdateRequest(
+                        "새 담당자"
+                );
+
+        given(userFinder.findActiveCompany(COMPANY_ID))
+                .willReturn(company);
+
+        CompanyAccountResponse response =
+                companyMyPageService.updateName(
+                        COMPANY_ID,
+                        request
+                );
+
+        verify(company)
+                .changeManagerName("새 담당자");
+
+        verifyNoInteractions(passwordEncoder);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(
+                response
+        );
+    }
+
+    @Test
+    @DisplayName("비밀번호 확인 없이 기업 담당자 직무를 수정한다")
+    void updateJobWithoutPassword() {
+        CompanyJobUpdateRequest request =
+                new CompanyJobUpdateRequest(
+                        "브랜드 매니저"
+                );
+
+        given(userFinder.findActiveCompany(COMPANY_ID))
+                .willReturn(company);
+
+        CompanyAccountResponse response =
+                companyMyPageService.updateJob(
+                        COMPANY_ID,
+                        request
+                );
+
+        verify(company)
+                .changeJob("브랜드 매니저");
+
+        verifyNoInteractions(passwordEncoder);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(
+                response
+        );
+    }
+
+    @Test
+    @DisplayName("비밀번호 확인 없이 기업 대표 전화번호를 수정한다")
+    void updateRepresentativePhoneWithoutPassword() {
+        CompanyRepresentativePhoneUpdateRequest request =
+                new CompanyRepresentativePhoneUpdateRequest(
+                        "02-9876-5432"
+                );
+
+        given(userFinder.findActiveCompany(COMPANY_ID))
+                .willReturn(company);
+
+        CompanyAccountResponse response =
+                companyMyPageService
+                        .updateRepresentativePhone(
+                                COMPANY_ID,
+                                request
+                        );
+
+        verify(company)
+                .changeRepresentativePhone(
+                        "02-9876-5432"
+                );
+
+        verifyNoInteractions(passwordEncoder);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(
+                response
+        );
+    }
+
+    @Test
+    @DisplayName("비밀번호 확인 없이 기업 대표 이메일을 수정한다")
+    void updateRepresentativeEmailWithoutPassword() {
+        CompanyRepresentativeEmailUpdateRequest request =
+                new CompanyRepresentativeEmailUpdateRequest(
+                        "new-contact@company.com"
+                );
+
+        given(userFinder.findActiveCompany(COMPANY_ID))
+                .willReturn(company);
+
+        CompanyAccountResponse response =
+                companyMyPageService
+                        .updateRepresentativeEmail(
+                                COMPANY_ID,
+                                request
+                        );
+
+        verify(company)
+                .changeRepresentativeEmail(
+                        "new-contact@company.com"
+                );
+
+        verifyNoInteractions(passwordEncoder);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(
+                response
+        );
+    }
 
     @Test
     @DisplayName("현재 비밀번호를 확인하고 새 이메일로 인증번호를 발송한다")

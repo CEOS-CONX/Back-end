@@ -98,7 +98,7 @@ public class CompanyMyPageController {
 
     @Operation(
             summary = "기업 담당자 이름 수정",
-            description = "현재 비밀번호를 확인한 후 담당자 이름을 변경합니다. currentPassword와 공백이 아닌 name을 모두 입력해야 합니다."
+            description = "로그인한 기업의 담당자 이름을 변경합니다. 공백이 아닌 name을 입력해야 합니다."
     )
     @PatchMapping("/account/name")
     public ApiResponse<CompanyAccountResponse> updateName(
@@ -120,7 +120,7 @@ public class CompanyMyPageController {
 
     @Operation(
             summary = "기업 담당자 직무 수정",
-            description = "현재 비밀번호를 확인한 후 담당자의 직무를 변경합니다. currentPassword와 공백이 아닌 job을 모두 입력해야 합니다."
+            description = "로그인한 기업 담당자의 직무를 변경합니다. 공백이 아닌 job을 입력해야 합니다."
     )
     @PatchMapping("/account/job")
     public ApiResponse<CompanyAccountResponse> updateJob(
@@ -142,7 +142,7 @@ public class CompanyMyPageController {
 
     @Operation(
             summary = "기업 대표 전화번호 수정",
-            description = "현재 비밀번호를 확인한 후 기업의 대표 전화번호를 변경합니다. currentPassword와 공백이 아닌 representativePhone을 모두 입력해야 합니다."
+            description = "로그인한 기업의 대표 전화번호를 변경합니다. 공백이 아닌 representativePhone을 입력해야 합니다."
     )
     @PatchMapping("/account/representative-phone")
     public ApiResponse<CompanyAccountResponse>
@@ -166,7 +166,7 @@ public class CompanyMyPageController {
 
     @Operation(
             summary = "기업 대표 이메일 수정",
-            description = "현재 비밀번호를 확인한 후 기업의 공용 대표 이메일을 변경합니다. 로그인 이메일 변경 API가 아니며, currentPassword와 representativeEmail을 모두 입력해야 합니다."
+            description = "로그인한 기업의 공용 대표 이메일을 변경합니다. 로그인 이메일 변경 API가 아니며, 공백이 아닌 representativeEmail을 입력해야 합니다."
     )
     @PatchMapping("/account/representative-email")
     public ApiResponse<CompanyAccountResponse>
