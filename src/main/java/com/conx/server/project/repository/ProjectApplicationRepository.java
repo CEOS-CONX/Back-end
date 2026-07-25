@@ -63,7 +63,8 @@ public interface ProjectApplicationRepository
                 application.id,
                 project.projectType,
                 application.createdAt,
-                application.status
+                application.status,
+                application.motivation
             )
             from ProjectApplication application
             join application.project project
@@ -81,7 +82,8 @@ public interface ProjectApplicationRepository
                 application.id,
                 project.projectType,
                 application.createdAt,
-                application.status
+                application.status,
+                application.motivation
             )
             from ProjectApplication application
             join application.project project

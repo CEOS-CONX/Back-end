@@ -783,6 +783,11 @@ public class CrewWorkSpaceTest {
         CrewApplicationStatusResponseDTO resultDTO = response.payload();
 
         assertThat(resultDTO.applications().size()).isEqualTo(2);
+        assertThat(resultDTO.applications())
+                .allSatisfy(application ->
+                        assertThat(application.motivation())
+                                .isEqualTo(req.motivation())
+                );
     }
 
     @Test
@@ -906,6 +911,16 @@ public class CrewWorkSpaceTest {
 
         assertThat(resultDTO1.applications().size()).isEqualTo(1);
         assertThat(resultDTO2.applications().size()).isEqualTo(1);
+        assertThat(
+                resultDTO1.applications()
+                        .get(0)
+                        .motivation()
+        ).isEqualTo(req.motivation());
+        assertThat(
+                resultDTO2.applications()
+                        .get(0)
+                        .motivation()
+        ).isEqualTo(req.motivation());
     }
 
     @Test
