@@ -5,6 +5,7 @@ import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
+import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.ProjectStatusFilter;
@@ -100,7 +101,7 @@ public class CompanyWorkspaceController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) ProjectStatusFilter status,
             @RequestParam(required = false) Industry category,
-            @RequestParam(required = false) CrewType crewType,
+            @RequestParam(required = false) ProjectType projectType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @PageableDefault(
@@ -116,7 +117,7 @@ public class CompanyWorkspaceController {
                         keyword,
                         status,
                         category,
-                        crewType,
+                        projectType,
                         startDate,
                         endDate,
                         pageable

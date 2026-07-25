@@ -60,8 +60,7 @@ public class CrewMyPageController {
     ) {
         CrewProfileResponse response =
                 crewMyPageService.getProfile(
-                        userDetails.getId()
-                );
+                        userDetails.getId());
 
         return apiResponseFactory.success(
                 "크루 프로필 조회에 성공했습니다.",

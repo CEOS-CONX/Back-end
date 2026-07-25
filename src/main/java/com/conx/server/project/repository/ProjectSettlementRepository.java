@@ -1,5 +1,6 @@
 package com.conx.server.project.repository;
 
+import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.enums.CrewPaymentStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
@@ -431,4 +432,6 @@ public interface ProjectSettlementRepository
 
             Pageable pageable
     );
+
+    ProjectSettlement findByProject(Project project);
 }

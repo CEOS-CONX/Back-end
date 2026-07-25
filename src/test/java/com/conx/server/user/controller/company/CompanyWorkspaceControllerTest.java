@@ -194,7 +194,7 @@ class CompanyWorkspaceControllerTest {
                         eq("프로젝트"),
                         isNull(),
                         eq(Industry.IT),
-                        eq(CrewType.CLUB),
+                        eq(ProjectType.APPTEST),
                         eq(startDate),
                         eq(endDate),
                         any(Pageable.class)
@@ -211,7 +211,7 @@ class CompanyWorkspaceControllerTest {
                         get("/api/v1/companies/me/projects")
                                 .param("keyword", "프로젝트")
                                 .param("category", "IT")
-                                .param("crewType", "CLUB")
+                                .param("projectType", "APPTEST")
                                 .param("startDate", startDate.toString())
                                 .param("endDate", endDate.toString())
                                 .param("page", "0")
@@ -243,7 +243,7 @@ class CompanyWorkspaceControllerTest {
                 eq("프로젝트"),
                 isNull(),
                 eq(Industry.IT),
-                eq(CrewType.CLUB),
+                eq(ProjectType.APPTEST),
                 eq(startDate),
                 eq(endDate),
                 any(Pageable.class)

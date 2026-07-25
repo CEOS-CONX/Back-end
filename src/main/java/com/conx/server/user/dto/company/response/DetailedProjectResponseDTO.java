@@ -1,7 +1,9 @@
 package com.conx.server.user.dto.company.response;
 
 import com.conx.server.project.domain.Project;
+import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.ProjectSubmissionCriteria;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.response.ResultFormResponse;
 import com.conx.server.project.dto.response.SubmissionCriteriaResponseDTO;
@@ -19,6 +21,10 @@ public record DetailedProjectResponseDTO(
         String managerName,
         String managerEmail,
 
+        //정산
+        long subsidy,
+        ProjectSettlementStatus settlementStatus,
+
         Long crewId,
         String crewImageLink,
         String crewName,
@@ -34,7 +40,10 @@ public record DetailedProjectResponseDTO(
         //제출기준
         List<SubmissionCriteriaResponseDTO> criteria
 ) {
-    public static DetailedProjectResponseDTO create(Project project){
+    /**
+     * 프로젝트에 선정된 크루가 없다면 ProjectSettlement가 null입니다.
+     */
+    public static DetailedProjectResponseDTO create(Project project, ProjectSettlement settlement){
         LocalDate crewSelectedDate = project.getCrewSelectedDate();
         LocalDate projectStartDate = project.getProjectStartDate();
         LocalDate projectEndDate = project.getProjectDeadline();
@@ -48,6 +57,9 @@ public record DetailedProjectResponseDTO(
                     project.getBrandName(),
                     project.getManagerName(),
                     project.getManagerEmail(),
+
+                    project.getSubsidy(),
+                    settlement.getStatus(),
 
                     project.getSelectedCrew().getId(),
                     project.getSelectedCrew().getProfileImage(),
@@ -64,6 +76,9 @@ public record DetailedProjectResponseDTO(
                     project.getBrandName(),
                     project.getManagerName(),
                     project.getManagerEmail(),
+
+                    project.getSubsidy(),
+                    null,
 
                     null,
                     null,

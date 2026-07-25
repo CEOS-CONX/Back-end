@@ -26,7 +26,7 @@ public enum ProjectStatus {
     //정산 중
 
     ADJUSTED,
-    //지금 완료
+    //지급 완료
 
     DONE,
     //완전 완료

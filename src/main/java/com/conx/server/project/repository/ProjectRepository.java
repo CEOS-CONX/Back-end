@@ -47,7 +47,7 @@ public interface ProjectRepository
                   )
                   and (:statuses is null or p.status in :statuses)
                   and (:category is null or p.industry = :category)
-                  and (:crewType is null or p.crewType = :crewType)
+                  and (:crewType is null or p.projectType = :projectType)
                   and (:startDate is null or p.projectStartDate >= :startDate)
                   and (:endDate is null or p.projectDeadline <= :endDate)
                 order by p.id desc
@@ -64,7 +64,7 @@ public interface ProjectRepository
                   )
                   and (:statuses is null or p.status in :statuses)
                   and (:category is null or p.industry = :category)
-                  and (:crewType is null or p.crewType = :crewType)
+                  and (:crewType is null or p.projectType = :projectType)
                   and (:startDate is null or p.projectStartDate >= :startDate)
                   and (:endDate is null or p.projectDeadline <= :endDate)
                 """
@@ -74,7 +74,7 @@ public interface ProjectRepository
             @Param("keyword") String keyword,
             @Param("statuses") List<ProjectStatus> statuses,
             @Param("category") Industry category,
-            @Param("crewType") CrewType crewType,
+            @Param("projectType") ProjectType projectType,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             Pageable pageable

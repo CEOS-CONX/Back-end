@@ -9,11 +9,7 @@ import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.notification.service.notificationFactory.NotificationFacadeService;
 import com.conx.server.project.domain.*;
-import com.conx.server.project.domain.enums.CrewProjectTodoType;
-import com.conx.server.project.domain.enums.ProjectApplicationStatus;
-import com.conx.server.project.domain.enums.ProjectSettlementStatus;
-import com.conx.server.project.domain.enums.ProjectStatus;
-import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
+import com.conx.server.project.domain.enums.*;
 import com.conx.server.project.repository.*;
 import com.conx.server.project.service.CrewProjectTodoService;
 import com.conx.server.user.domain.company.Company;
@@ -167,14 +163,14 @@ public class CompanyWorkspaceService {
      */
     @Transactional(readOnly = true)
     public Page<CompanyWorkspaceProjectResponse> getProjects(
-            Long companyId, String keyword, ProjectStatusFilter status, Industry category, CrewType crewType, LocalDate startDate, LocalDate endDate, Pageable pageable
+            Long companyId, String keyword, ProjectStatusFilter status, Industry category, ProjectType projectType, LocalDate startDate, LocalDate endDate, Pageable pageable
     ) {
         Company company = userFinder.findActiveCompany(companyId);
 
         List<ProjectStatus> statuses = (status != null) ? status.getStatuses() : null;
 
         return projectRepository.findCompanyProjectsByFilter(company.getId(), normalizeKeyword(keyword),
-                        statuses, category, crewType, startDate, endDate, pageable)
+                        statuses, category, projectType, startDate, endDate, pageable)
                 .map(CompanyWorkspaceProjectResponse::from);
     }
 
@@ -223,9 +219,11 @@ public class CompanyWorkspaceService {
                         projectId
                 );
 
+        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
+
         DetailedProjectResponseDTO common =
                 DetailedProjectResponseDTO.create(
-                        project
+                        project, settlement
                 );
 
         if (project.isRecruiting()) {
@@ -596,9 +594,11 @@ public class CompanyWorkspaceService {
                         submissionId
                 );
 
+        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
+
         DetailedProjectResponseDTO common =
                 DetailedProjectResponseDTO.create(
-                        project
+                        project, settlement
                 );
 
         List<FileResponseDTO> submissionFiles =
@@ -713,9 +713,11 @@ public class CompanyWorkspaceService {
                 CrewProjectTodoType.SETTLEMENT_CONFIRMATION
         );
 
+        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
+
         DetailedProjectResponseDTO common =
                 DetailedProjectResponseDTO.create(
-                        project
+                        project, settlement
                 );
 
         List<FileResponseDTO> submissionFiles =
