@@ -4,9 +4,14 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.crew.request.CrewNameUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewPasswordUpdateRequest;
 import com.conx.server.user.dto.crew.request.CrewPortfolioRequestDTO;
 import com.conx.server.user.dto.crew.request.CrewProfileUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewRepresentativeEmailUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewRepresentativePhoneUpdateRequest;
 import com.conx.server.user.dto.crew.request.ModifyCrewPortfolioRequestDTO;
+import com.conx.server.user.dto.crew.response.CrewAccountResponse;
 import com.conx.server.user.dto.crew.response.CrewPortfolioResponseDTO;
 import com.conx.server.user.dto.crew.response.CrewProfileResponse;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
@@ -86,7 +91,7 @@ public class CrewProfileTest {
     void getCrewPersonalInformation() throws Exception {
         String crewToken = loginSetting();
 
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/me")
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/me/profile")
                         .header("Authorization", crewToken))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -131,7 +136,7 @@ public class CrewProfileTest {
                 null                     // files
         );
 
-        mockMvc.perform(patch("/api/v1/crews/me")
+        mockMvc.perform(patch("/api/v1/crews/me/profile")
                         .header("Authorization", crewToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -139,7 +144,7 @@ public class CrewProfileTest {
                 .andReturn();
 
 
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/me")
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/me/profile")
                         .header("Authorization", crewToken))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -154,6 +159,266 @@ public class CrewProfileTest {
         assertThat(responseDTO.crewId()).isEqualTo(1);
         assertThat(responseDTO.email()).isEqualTo("kimdoes2143@naver.com");
         assertThat(responseDTO.schools()).isEqualTo(List.of("홍익대학교"));
+    }
+
+
+    @Test
+    @Transactional
+    @DisplayName("기존 크루 프로필 경로도 조회할 수 있다")
+    void getCrewProfileUsingLegacyPath() throws Exception {
+        String crewToken = loginSetting();
+
+        mockMvc.perform(
+                        get("/api/v1/crews/me")
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루 계정 정보를 조회한다")
+    void getCrewAccount() throws Exception {
+        String crewToken = loginSetting();
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                get("/api/v1/crews/me/account")
+                                        .header(
+                                                "Authorization",
+                                                crewToken
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<CrewAccountResponse> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<CrewAccountResponse>
+                                >() {
+                        }
+                );
+
+        CrewAccountResponse responseDTO =
+                response.payload();
+
+        assertThat(responseDTO.email())
+                .isEqualTo("kimdoes2143@naver.com");
+
+        JsonNode payload =
+                objectMapper.readTree(
+                                mvcResult.getResponse()
+                                        .getContentAsString()
+                        )
+                        .path("payload");
+
+        assertThat(payload.has("password"))
+                .isFalse();
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("현재 비밀번호 없이 크루 이름을 수정한다")
+    void updateCrewNameWithoutPassword() throws Exception {
+        String crewToken = loginSetting();
+
+        CrewNameUpdateRequest request =
+                new CrewNameUpdateRequest(
+                        "수정된 담당자"
+                );
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                patch(
+                                        "/api/v1/crews/me/account/name"
+                                )
+                                        .header(
+                                                "Authorization",
+                                                crewToken
+                                        )
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        request
+                                                )
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<CrewAccountResponse> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<CrewAccountResponse>
+                                >() {
+                        }
+                );
+
+        assertThat(response.payload().name())
+                .isEqualTo("수정된 담당자");
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("현재 비밀번호 없이 크루 대표 전화번호를 수정한다")
+    void updateCrewRepresentativePhoneWithoutPassword()
+            throws Exception {
+        String crewToken = loginSetting();
+
+        CrewRepresentativePhoneUpdateRequest request =
+                new CrewRepresentativePhoneUpdateRequest(
+                        "02-1234-5678"
+                );
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                patch(
+                                        "/api/v1/crews/me/account/representative-phone"
+                                )
+                                        .header(
+                                                "Authorization",
+                                                crewToken
+                                        )
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        request
+                                                )
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<CrewAccountResponse> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<CrewAccountResponse>
+                                >() {
+                        }
+                );
+
+        assertThat(
+                response.payload()
+                        .representativePhone()
+        ).isEqualTo("02-1234-5678");
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("현재 비밀번호 없이 크루 대표 이메일을 수정한다")
+    void updateCrewRepresentativeEmailWithoutPassword()
+            throws Exception {
+        String crewToken = loginSetting();
+
+        CrewRepresentativeEmailUpdateRequest request =
+                new CrewRepresentativeEmailUpdateRequest(
+                        "crew-contact@conx.com"
+                );
+
+        MvcResult mvcResult =
+                mockMvc.perform(
+                                patch(
+                                        "/api/v1/crews/me/account/representative-email"
+                                )
+                                        .header(
+                                                "Authorization",
+                                                crewToken
+                                        )
+                                        .contentType(
+                                                MediaType.APPLICATION_JSON
+                                        )
+                                        .content(
+                                                objectMapper.writeValueAsString(
+                                                        request
+                                                )
+                                        )
+                        )
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        ApiResponse<CrewAccountResponse> response =
+                objectMapper.readValue(
+                        mvcResult.getResponse()
+                                .getContentAsString(),
+                        new TypeReference<
+                                ApiResponse<CrewAccountResponse>
+                                >() {
+                        }
+                );
+
+        assertThat(
+                response.payload()
+                        .representativeEmail()
+        ).isEqualTo("crew-contact@conx.com");
+
+        assertThat(response.payload().email())
+                .isEqualTo("kimdoes2143@naver.com");
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("현재 비밀번호를 확인한 뒤 크루 비밀번호를 수정한다")
+    void updateCrewPassword() throws Exception {
+        String crewToken = loginSetting();
+
+        CrewPasswordUpdateRequest request =
+                new CrewPasswordUpdateRequest(
+                        "1q2w3e4r!!",
+                        "2w3e4r5t!!",
+                        "2w3e4r5t!!"
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/crews/me/account/password"
+                        )
+                                .header(
+                                        "Authorization",
+                                        crewToken
+                                )
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                request
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
+
+        LoginRequestDTO loginRequest =
+                new LoginRequestDTO(
+                        "kimdoes2143@naver.com",
+                        "2w3e4r5t!!"
+                );
+
+        mockMvc.perform(
+                        post("/api/v1/login")
+                                .contentType(
+                                        MediaType.APPLICATION_JSON
+                                )
+                                .content(
+                                        objectMapper.writeValueAsString(
+                                                loginRequest
+                                        )
+                                )
+                )
+                .andExpect(status().isOk());
     }
 
     @Test
