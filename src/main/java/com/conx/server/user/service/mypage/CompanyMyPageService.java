@@ -119,11 +119,6 @@ public class CompanyMyPageService {
         Company company =
                 userFinder.findActiveCompany(companyId);
 
-        verifyCurrentPassword(
-                company,
-                request.currentPassword()
-        );
-
         validateRequiredValue(request.name());
 
         company.changeManagerName(request.name());
@@ -139,11 +134,6 @@ public class CompanyMyPageService {
         Company company =
                 userFinder.findActiveCompany(companyId);
 
-        verifyCurrentPassword(
-                company,
-                request.currentPassword()
-        );
-
         validateRequiredValue(request.job());
 
         company.changeJob(request.job());
@@ -158,11 +148,6 @@ public class CompanyMyPageService {
     ) {
         Company company =
                 userFinder.findActiveCompany(companyId);
-
-        verifyCurrentPassword(
-                company,
-                request.currentPassword()
-        );
 
         validateRequiredValue(
                 request.representativePhone()
@@ -182,11 +167,6 @@ public class CompanyMyPageService {
     ) {
         Company company =
                 userFinder.findActiveCompany(companyId);
-
-        verifyCurrentPassword(
-                company,
-                request.currentPassword()
-        );
 
         validateRequiredValue(
                 request.representativeEmail()
