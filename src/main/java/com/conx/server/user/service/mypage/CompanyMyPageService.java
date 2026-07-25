@@ -85,6 +85,10 @@ public class CompanyMyPageService {
                         company.getHomepageLink()
                 ),
                 getOrDefault(
+                        request.urlName(),
+                        company.getUrlName()
+                ),
+                getOrDefault(
                         request.additionalFileLink(),
                         company.getAdditionalFileLink()
                 ),

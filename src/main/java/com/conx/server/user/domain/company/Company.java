@@ -49,6 +49,8 @@ public class Company extends User {
 
     private String homepageLink;
 
+    private String urlName;
+
     /**
      * 기업 공용 연락처
      */
@@ -97,6 +99,7 @@ public class Company extends User {
             String customIndustry,
             String companyIntroduction,
             String homepageLink,
+            String urlName,
             String additionalFileLink,
             String profileImageLink,
             String businessRegistrationNumber
@@ -107,6 +110,7 @@ public class Company extends User {
         this.customIndustry = customIndustry;
         this.companyIntroduction = companyIntroduction;
         this.homepageLink = homepageLink;
+        this.urlName = urlName;
         this.additionalFileLink = additionalFileLink;
         this.profileImage = profileImageLink;
         this.businessRegistrationNumber =

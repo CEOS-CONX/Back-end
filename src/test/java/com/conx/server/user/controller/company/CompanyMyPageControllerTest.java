@@ -134,7 +134,8 @@ class CompanyMyPageControllerTest {
                         "123-45-67890",
                         "profile-image.png",
                         "additional-file-link",
-                        "https://company.com"
+                        "https://company.com",
+                        "회사 홈페이지"
                 );
 
         given(companyMyPageService.getProfile(COMPANY_ID))
@@ -158,6 +159,8 @@ class CompanyMyPageControllerTest {
                         .value("profile-image.png"))
                 .andExpect(jsonPath("$.payload.website")
                         .value("https://company.com"))
+                .andExpect(jsonPath("$.payload.urlName")
+                        .value("회사 홈페이지"))
                 .andExpect(jsonPath("$.payload.customIndustry")
                         .doesNotExist())
                 .andExpect(jsonPath("$.payload.homepageLink")
@@ -181,6 +184,7 @@ class CompanyMyPageControllerTest {
                         "new-profile-image.png",
                         "new-additional-file-link",
                         "https://new-company.com",
+                        "새 회사 홈페이지",
                         "987-65-43210"
                 );
 
@@ -193,7 +197,8 @@ class CompanyMyPageControllerTest {
                         "987-65-43210",
                         "new-profile-image.png",
                         "new-additional-file-link",
-                        "https://new-company.com"
+                        "https://new-company.com",
+                        "새 회사 홈페이지"
                 );
 
         given(
@@ -221,6 +226,8 @@ class CompanyMyPageControllerTest {
                         .value("987-65-43210"))
                 .andExpect(jsonPath("$.payload.website")
                         .value("https://new-company.com"))
+                .andExpect(jsonPath("$.payload.urlName")
+                        .value("새 회사 홈페이지"))
                 .andExpect(jsonPath("$.hasNotification")
                         .value(false));
 

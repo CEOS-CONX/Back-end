@@ -11,7 +11,8 @@ public record CompanyProfileResponse(
         String businessRegistrationNumber,
         String profileImage,
         String additionalFileLink,
-        String website
+        String website,
+        String urlName
 ) {
 
     public static CompanyProfileResponse from(Company company) {
@@ -23,7 +24,8 @@ public record CompanyProfileResponse(
                 company.getBusinessRegistrationNumber(),
                 company.getProfileImage(),
                 company.getAdditionalFileLink(),
-                company.getHomepageLink()
+                company.getHomepageLink(),
+                company.getUrlName()
         );
     }
 }
