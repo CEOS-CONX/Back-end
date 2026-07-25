@@ -85,33 +85,33 @@ public interface CrewRepository
     );
 
     @Query("""
-        select new com.conx.server.landingPage.dto.CrewWrapperForLandingPageDTO(
-            c.id,
-            c.profileImage,
-            c.crewName,
-            c.crewIntroduction,
-            c.interestingIndustry,
-            c.crewType,
-            coalesce(avg(e.mean), 0.0),
-            c.totalSubsidy
-        )
-        from Crew c
-        left join Evaluation e on e.crew = c
-        where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
-        group by
-            c.id,
-            c.profileImage,
-            c.crewName,
-            c.crewIntroduction,
-            c.interestingIndustry,
-            c.crewType,
-            c.totalSubsidy,
-            c.totalProjectCount
-        order by
-            coalesce(avg(e.mean), 0.0) desc,
-            c.totalProjectCount desc,
-            c.crewName asc
-    """)
+    select new com.conx.server.landingPage.dto.CrewWrapperForLandingPageDTO(
+        c.id,
+        c.profileImage,
+        c.crewName,
+        c.crewIntroduction,
+        c.interestingIndustry,
+        c.crewType,
+        coalesce(avg(e.mean), 0.0),
+        c.totalProjectCount
+    )
+    from Crew c
+    left join Evaluation e on e.crew = c
+    where c.status = com.conx.server.user.domain.types.UserStatus.ACTIVE
+    group by
+        c.id,
+        c.profileImage,
+        c.crewName,
+        c.crewIntroduction,
+        c.interestingIndustry,
+        c.crewType,
+        c.totalSubsidy,
+        c.totalProjectCount
+    order by
+        coalesce(avg(e.mean), 0.0) desc,
+        c.totalProjectCount desc,
+        c.crewName asc
+""")
     List<CrewWrapperForLandingPageDTO>
     findAllActiveCrewsWithEvaluation();
 

@@ -76,7 +76,7 @@ public record CrewBrowseDetailResponse(
                     bookmarked,
 
                     point,
-                    crew.getTotalSubsidy()
+                    crew.getTotalProjectCount()
             );
         }
 
@@ -106,7 +106,7 @@ public record CrewBrowseDetailResponse(
                 bookmarked,
 
                 point,
-                crew.getTotalSubsidy()
+                crew.getTotalProjectCount()
         );
     }
 
