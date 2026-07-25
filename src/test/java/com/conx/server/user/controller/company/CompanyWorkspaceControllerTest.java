@@ -211,7 +211,7 @@ class CompanyWorkspaceControllerTest {
                         get("/api/v1/companies/me/projects")
                                 .param("keyword", "프로젝트")
                                 .param("category", "IT")
-                                .param("crewType", "CLUB")
+                                .param("projectType", "APPTEST")
                                 .param("startDate", startDate.toString())
                                 .param("endDate", endDate.toString())
                                 .param("page", "0")
