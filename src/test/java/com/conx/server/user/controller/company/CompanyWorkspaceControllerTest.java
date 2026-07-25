@@ -194,7 +194,7 @@ class CompanyWorkspaceControllerTest {
                         eq("프로젝트"),
                         isNull(),
                         eq(Industry.IT),
-                        eq(CrewType.CLUB),
+                        eq(ProjectType.APPTEST),
                         eq(startDate),
                         eq(endDate),
                         any(Pageable.class)
@@ -243,7 +243,7 @@ class CompanyWorkspaceControllerTest {
                 eq("프로젝트"),
                 isNull(),
                 eq(Industry.IT),
-                eq(CrewType.CLUB),
+                eq(ProjectType.APPTEST),
                 eq(startDate),
                 eq(endDate),
                 any(Pageable.class)

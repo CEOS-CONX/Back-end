@@ -39,7 +39,7 @@ public record ProjectBrowseResponse(
                 project.getProjectImage(),
                 project.getProjectName(),
                 project.getCompany().getCompanyName(),
-                project.getCompany().getIndustry(),
+                project.getIndustry(),
                 project.getProjectType(),
                 project.getProjectStartDate(),
                 project.getProjectDeadline(),

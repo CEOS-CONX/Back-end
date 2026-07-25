@@ -550,7 +550,8 @@ public class CrewWorkSpaceService {
             );
         }
 
-        DetailedProjectResponseDTO common = DetailedProjectResponseDTO.create(project);
+        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
+        DetailedProjectResponseDTO common = DetailedProjectResponseDTO.create(project, settlement);
         Pageable pageable = PageRequest.of(
                         Math.max(page, 0),
                         Math.max(size, 1),
