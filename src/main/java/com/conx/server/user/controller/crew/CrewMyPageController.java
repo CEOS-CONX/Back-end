@@ -3,26 +3,32 @@ package com.conx.server.user.controller.crew;
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
 import com.conx.server.global.security.userDetails.CustomUserDetails;
+import com.conx.server.user.dto.crew.CrewProjectHistorySort;
+import com.conx.server.user.dto.crew.request.CrewEmailUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewEmailVerificationConfirmRequest;
+import com.conx.server.user.dto.crew.request.CrewEmailVerificationSendRequest;
+import com.conx.server.user.dto.crew.request.CrewNameUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewPasswordUpdateRequest;
 import com.conx.server.user.dto.crew.request.CrewPortfolioRequestDTO;
 import com.conx.server.user.dto.crew.request.CrewProfileUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewRepresentativeEmailUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewRepresentativePhoneUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewRepresentativeProjectsUpdateRequest;
 import com.conx.server.user.dto.crew.request.ModifyCrewPortfolioRequestDTO;
+import com.conx.server.user.dto.crew.response.CrewAccountResponse;
 import com.conx.server.user.dto.crew.response.CrewBookmarkedProjectResponse;
+import com.conx.server.user.dto.crew.response.CrewEmailVerificationConfirmResponse;
 import com.conx.server.user.dto.crew.response.CrewPortfolioResponseDTO;
 import com.conx.server.user.dto.crew.response.CrewProfileResponse;
-import com.conx.server.user.service.mypage.CrewMyPageService;
-import com.conx.server.user.dto.crew.CrewProjectHistorySort;
-import com.conx.server.user.dto.crew.request.CrewRepresentativeProjectsUpdateRequest;
 import com.conx.server.user.dto.crew.response.CrewProjectHistoryResponse;
 import com.conx.server.user.dto.crew.response.CrewRepresentativeProjectCandidateResponse;
+import com.conx.server.user.service.mypage.CrewMyPageService;
 import io.swagger.v3.oas.annotations.Operation;
-
-import java.util.List;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -32,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,9 +51,9 @@ public class CrewMyPageController {
 
     @Operation(
             summary = "내 크루 프로필 조회",
-            description = "로그인한 크루가 자신의 프로필, 링크, 소개 파일, 포트폴리오와 대표 프로젝트를 조회합니다. CREW 권한이 필요합니다."
+            description = "로그인한 크루가 자신의 프로필, 링크, 소개 파일, 포트폴리오와 대표 프로젝트를 조회합니다. 기존 /api/v1/crews/me 경로도 호환을 위해 지원합니다."
     )
-    @GetMapping
+    @GetMapping({"", "/profile"})
     public ApiResponse<CrewProfileResponse> getProfile(
             @AuthenticationPrincipal
             CustomUserDetails userDetails
@@ -64,9 +72,9 @@ public class CrewMyPageController {
 
     @Operation(
             summary = "내 크루 프로필 수정",
-            description = "로그인한 크루의 프로필을 부분 수정합니다. 단일 값과 목록이 null이면 기존 값을 유지하고, schools·advantages·specialties·links·files에 빈 배열을 보내면 해당 목록을 모두 삭제합니다."
+            description = "로그인한 크루의 프로필을 부분 수정합니다. 단일 값과 목록이 null이면 기존 값을 유지하고, schools·advantages·specialties·links·files에 빈 배열을 보내면 해당 목록을 모두 삭제합니다. 기존 /api/v1/crews/me 경로도 호환을 위해 지원합니다."
     )
-    @PatchMapping
+    @PatchMapping({"", "/profile"})
     public ApiResponse<CrewProfileResponse> updateProfile(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
@@ -83,6 +91,209 @@ public class CrewMyPageController {
 
         return apiResponseFactory.success(
                 "크루 프로필 수정에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 계정 정보 조회",
+            description = "로그인한 크루의 이름, 계정 이메일, 대표 전화번호와 대표 이메일을 조회합니다. 비밀번호는 응답에 포함하지 않습니다."
+    )
+    @GetMapping("/account")
+    public ApiResponse<CrewAccountResponse> getAccount(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails
+    ) {
+        CrewAccountResponse response =
+                crewMyPageService.getAccount(
+                        userDetails.getId()
+                );
+
+        return apiResponseFactory.success(
+                "크루 계정 정보 조회에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 이름 수정",
+            description = "로그인한 크루의 담당자 이름을 수정합니다. 현재 비밀번호 확인은 필요하지 않습니다."
+    )
+    @PatchMapping("/account/name")
+    public ApiResponse<CrewAccountResponse> updateName(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @Valid
+            @RequestBody
+            CrewNameUpdateRequest request
+    ) {
+        CrewAccountResponse response =
+                crewMyPageService.updateName(
+                        userDetails.getId(),
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "크루 이름 수정에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 대표 전화번호 수정",
+            description = "로그인한 크루의 대표 전화번호를 수정합니다. 현재 비밀번호 확인은 필요하지 않습니다."
+    )
+    @PatchMapping("/account/representative-phone")
+    public ApiResponse<CrewAccountResponse> updateRepresentativePhone(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @Valid
+            @RequestBody
+            CrewRepresentativePhoneUpdateRequest request
+    ) {
+        CrewAccountResponse response =
+                crewMyPageService.updateRepresentativePhone(
+                        userDetails.getId(),
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "크루 대표 전화번호 수정에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 대표 이메일 수정",
+            description = "로그인한 크루의 대표 이메일을 수정합니다. 로그인에 사용하는 계정 이메일은 변경되지 않으며 현재 비밀번호 확인은 필요하지 않습니다."
+    )
+    @PatchMapping("/account/representative-email")
+    public ApiResponse<CrewAccountResponse> updateRepresentativeEmail(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @Valid
+            @RequestBody
+            CrewRepresentativeEmailUpdateRequest request
+    ) {
+        CrewAccountResponse response =
+                crewMyPageService.updateRepresentativeEmail(
+                        userDetails.getId(),
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "크루 대표 이메일 수정에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 비밀번호 수정",
+            description = "현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다. 새 비밀번호와 확인 값이 일치해야 하며, 변경 후 기존 Refresh Token을 삭제합니다."
+    )
+    @PatchMapping("/account/password")
+    public ApiResponse<CrewAccountResponse> updatePassword(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @Valid
+            @RequestBody
+            CrewPasswordUpdateRequest request
+    ) {
+        CrewAccountResponse response =
+                crewMyPageService.updatePassword(
+                        userDetails.getId(),
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "크루 비밀번호 수정에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 계정 이메일 변경 인증번호 발송",
+            description = "현재 비밀번호를 확인한 뒤 새 계정 이메일로 6자리 인증번호를 발송합니다. 인증번호는 5분간 유효합니다."
+    )
+    @PostMapping("/account/email/verifications")
+    public ApiResponse<?> sendEmailChangeVerification(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @Valid
+            @RequestBody
+            CrewEmailVerificationSendRequest request
+    ) {
+        crewMyPageService.sendEmailChangeVerification(
+                userDetails.getId(),
+                request
+        );
+
+        return apiResponseFactory.success(
+                "크루 계정 이메일 변경 인증번호 발송에 성공했습니다.",
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 계정 이메일 변경 인증번호 확인",
+            description = "새 계정 이메일로 발송된 인증번호를 확인하고 최종 이메일 변경에 사용할 일회성 인증 토큰을 발급합니다."
+    )
+    @PostMapping("/account/email/verifications/confirm")
+    public ApiResponse<CrewEmailVerificationConfirmResponse>
+    confirmEmailChangeVerification(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @Valid
+            @RequestBody
+            CrewEmailVerificationConfirmRequest request
+    ) {
+        CrewEmailVerificationConfirmResponse response =
+                crewMyPageService
+                        .confirmEmailChangeVerification(
+                                userDetails.getId(),
+                                request
+                        );
+
+        return apiResponseFactory.success(
+                "크루 계정 이메일 변경 인증에 성공했습니다.",
+                response,
+                userDetails
+        );
+    }
+
+    @Operation(
+            summary = "내 크루 계정 이메일 수정",
+            description = "현재 비밀번호와 이메일 인증 토큰을 확인한 뒤 로그인에 사용하는 계정 이메일을 변경합니다. 변경 후 기존 Refresh Token을 삭제합니다."
+    )
+    @PatchMapping("/account/email")
+    public ApiResponse<CrewAccountResponse> updateEmail(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @Valid
+            @RequestBody
+            CrewEmailUpdateRequest request
+    ) {
+        CrewAccountResponse response =
+                crewMyPageService.updateEmail(
+                        userDetails.getId(),
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "크루 계정 이메일 수정에 성공했습니다.",
                 response,
                 userDetails
         );
@@ -157,14 +368,23 @@ public class CrewMyPageController {
     )
     @PostMapping("/portfolio")
     public ApiResponse<CrewPortfolioResponseDTO> registerPortfolio(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @Valid @RequestBody CrewPortfolioRequestDTO req
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+            @Valid
+            @RequestBody
+            CrewPortfolioRequestDTO request
     ) {
-        CrewPortfolioResponseDTO response = crewMyPageService.registerPortfolio(
-                customUserDetails.getId(), req
-        );
+        CrewPortfolioResponseDTO response =
+                crewMyPageService.registerPortfolio(
+                        customUserDetails.getId(),
+                        request
+                );
 
-        return apiResponseFactory.success("크루 포트폴리오 등록에 성공했습니다.", response, customUserDetails);
+        return apiResponseFactory.success(
+                "크루 포트폴리오 등록에 성공했습니다.",
+                response,
+                customUserDetails
+        );
     }
 
     @Operation(
@@ -173,15 +393,27 @@ public class CrewMyPageController {
     )
     @PatchMapping("/portfolio/{portfolioId}")
     public ApiResponse<CrewPortfolioResponseDTO> modifyPortfolio(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable Long portfolioId,
-            @RequestBody ModifyCrewPortfolioRequestDTO req
-    ) {
-        CrewPortfolioResponseDTO response = crewMyPageService.modifyPortfolio(
-                customUserDetails.getId(), portfolioId, req
-        );
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
 
-        return apiResponseFactory.success("크루 포트폴리오 수정에 성공했습니다.", response, customUserDetails);
+            @PathVariable
+            Long portfolioId,
+
+            @RequestBody
+            ModifyCrewPortfolioRequestDTO request
+    ) {
+        CrewPortfolioResponseDTO response =
+                crewMyPageService.modifyPortfolio(
+                        customUserDetails.getId(),
+                        portfolioId,
+                        request
+                );
+
+        return apiResponseFactory.success(
+                "크루 포트폴리오 수정에 성공했습니다.",
+                response,
+                customUserDetails
+        );
     }
 
     @Operation(
@@ -190,11 +422,21 @@ public class CrewMyPageController {
     )
     @DeleteMapping("/portfolio/{portfolioId}")
     public ApiResponse<?> deletePortfolio(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable Long portfolioId
+            @AuthenticationPrincipal
+            CustomUserDetails customUserDetails,
+
+            @PathVariable
+            Long portfolioId
     ) {
-        crewMyPageService.deletePortfolio(customUserDetails.getId(), portfolioId);
-        return apiResponseFactory.success("크루 포트폴리오 삭제에 성공했습니다.", customUserDetails);
+        crewMyPageService.deletePortfolio(
+                customUserDetails.getId(),
+                portfolioId
+        );
+
+        return apiResponseFactory.success(
+                "크루 포트폴리오 삭제에 성공했습니다.",
+                customUserDetails
+        );
     }
 
     @Operation(

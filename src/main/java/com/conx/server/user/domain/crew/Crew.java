@@ -43,6 +43,8 @@ public class Crew extends User {
 
     private String managerPhoneNumber;
 
+    private String representativeEmail;
+
     private String job;
 
     private String profileImage;
@@ -154,6 +156,26 @@ public class Crew extends User {
         this.catchphrase = catchphrase;
         this.crewIntroduction = crewIntroduction;
         this.interestingIndustry = interestingIndustry;
+    }
+
+    public void changeManagerName(
+            String managerName
+    ) {
+        this.managerName = managerName;
+    }
+
+    public void changeManagerPhoneNumber(
+            String managerPhoneNumber
+    ) {
+        this.managerPhoneNumber =
+                managerPhoneNumber;
+    }
+
+    public void changeRepresentativeEmail(
+            String representativeEmail
+    ) {
+        this.representativeEmail =
+                representativeEmail;
     }
 
     public void replaceSchools(

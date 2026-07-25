@@ -13,13 +13,22 @@ import com.conx.server.user.domain.crew.CrewRepresentativeProject;
 import com.conx.server.user.domain.crew.Evaluation;
 import com.conx.server.user.domain.crew.Portfolio;
 import com.conx.server.user.dto.crew.CrewProjectHistorySort;
+import com.conx.server.user.dto.crew.request.CrewEmailUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewEmailVerificationConfirmRequest;
+import com.conx.server.user.dto.crew.request.CrewEmailVerificationSendRequest;
 import com.conx.server.user.dto.crew.request.CrewFileRequest;
 import com.conx.server.user.dto.crew.request.CrewLinkRequest;
+import com.conx.server.user.dto.crew.request.CrewNameUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewPasswordUpdateRequest;
 import com.conx.server.user.dto.crew.request.CrewPortfolioRequestDTO;
 import com.conx.server.user.dto.crew.request.CrewProfileUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewRepresentativeEmailUpdateRequest;
+import com.conx.server.user.dto.crew.request.CrewRepresentativePhoneUpdateRequest;
 import com.conx.server.user.dto.crew.request.CrewRepresentativeProjectsUpdateRequest;
 import com.conx.server.user.dto.crew.request.ModifyCrewPortfolioRequestDTO;
+import com.conx.server.user.dto.crew.response.CrewAccountResponse;
 import com.conx.server.user.dto.crew.response.CrewBookmarkedProjectResponse;
+import com.conx.server.user.dto.crew.response.CrewEmailVerificationConfirmResponse;
 import com.conx.server.user.dto.crew.response.CrewFileResponse;
 import com.conx.server.user.dto.crew.response.CrewLinkResponse;
 import com.conx.server.user.dto.crew.response.CrewPortfolioResponseDTO;
@@ -31,6 +40,7 @@ import com.conx.server.user.repository.CrewLinkRepository;
 import com.conx.server.user.repository.CrewRepresentativeProjectRepository;
 import com.conx.server.user.repository.EvaluationRepository;
 import com.conx.server.user.repository.PortfolioRepository;
+import com.conx.server.user.service.common.CrewEmailVerificationService;
 import com.conx.server.user.service.common.UserFinder;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +48,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,6 +94,10 @@ public class CrewMyPageService {
     private final EvaluationRepository evaluationRepository;
     private final CrewRepresentativeProjectRepository
             crewRepresentativeProjectRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final CrewEmailVerificationService
+            crewEmailVerificationService;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional(readOnly = true)
     public CrewProfileResponse getProfile(
@@ -179,6 +195,208 @@ public class CrewMyPageService {
         );
 
         return createProfileResponse(crew);
+    }
+
+    @Transactional(readOnly = true)
+    public CrewAccountResponse getAccount(
+            Long crewId
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        return CrewAccountResponse.from(crew);
+    }
+
+    @Transactional
+    public CrewAccountResponse updateName(
+            Long crewId,
+            CrewNameUpdateRequest request
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        validateRequiredValue(request.name());
+
+        crew.changeManagerName(request.name());
+
+        return CrewAccountResponse.from(crew);
+    }
+
+    @Transactional
+    public CrewAccountResponse updateRepresentativePhone(
+            Long crewId,
+            CrewRepresentativePhoneUpdateRequest request
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        validateRequiredValue(
+                request.representativePhone()
+        );
+
+        crew.changeManagerPhoneNumber(
+                request.representativePhone()
+        );
+
+        return CrewAccountResponse.from(crew);
+    }
+
+    @Transactional
+    public CrewAccountResponse updateRepresentativeEmail(
+            Long crewId,
+            CrewRepresentativeEmailUpdateRequest request
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        validateRequiredValue(
+                request.representativeEmail()
+        );
+
+        crew.changeRepresentativeEmail(
+                request.representativeEmail()
+        );
+
+        return CrewAccountResponse.from(crew);
+    }
+
+    @Transactional
+    public CrewAccountResponse updatePassword(
+            Long crewId,
+            CrewPasswordUpdateRequest request
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        verifyCurrentPassword(
+                crew,
+                request.currentPassword()
+        );
+
+        validateRequiredValue(
+                request.newPassword()
+        );
+
+        if (!Objects.equals(
+                request.newPassword(),
+                request.newPasswordConfirmation()
+        )) {
+            throw new CustomException(
+                    ErrorCode.PASSWORD_DOUBLE_CHECK_FAILED
+            );
+        }
+
+        crew.changePassword(
+                passwordEncoder.encode(
+                        request.newPassword()
+                )
+        );
+
+        deleteRefreshToken(crew);
+
+        return CrewAccountResponse.from(crew);
+    }
+
+    /**
+     * 새 계정 이메일로 인증번호를 발송한다.
+     */
+    @Transactional(readOnly = true)
+    public void sendEmailChangeVerification(
+            Long crewId,
+            CrewEmailVerificationSendRequest request
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        verifyCurrentPassword(
+                crew,
+                request.currentPassword()
+        );
+
+        String newEmail =
+                normalizeEmail(request.newEmail());
+
+        validateEmailChange(
+                crew,
+                newEmail
+        );
+
+        crewEmailVerificationService
+                .sendVerificationCode(
+                        crew.getId(),
+                        newEmail
+                );
+    }
+
+    /**
+     * 새 이메일 인증번호를 확인하고 변경용 토큰을 발급한다.
+     */
+    @Transactional(readOnly = true)
+    public CrewEmailVerificationConfirmResponse
+    confirmEmailChangeVerification(
+            Long crewId,
+            CrewEmailVerificationConfirmRequest request
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        String newEmail =
+                normalizeEmail(request.newEmail());
+
+        validateEmailChange(
+                crew,
+                newEmail
+        );
+
+        String verificationToken =
+                crewEmailVerificationService
+                        .confirmVerificationCode(
+                                crew.getId(),
+                                newEmail,
+                                request.code()
+                        );
+
+        return new CrewEmailVerificationConfirmResponse(
+                verificationToken
+        );
+    }
+
+    /**
+     * 인증 완료된 새 이메일로 계정 이메일을 변경한다.
+     */
+    @Transactional
+    public CrewAccountResponse updateEmail(
+            Long crewId,
+            CrewEmailUpdateRequest request
+    ) {
+        Crew crew =
+                userFinder.findActiveCrew(crewId);
+
+        verifyCurrentPassword(
+                crew,
+                request.currentPassword()
+        );
+
+        String newEmail =
+                normalizeEmail(request.newEmail());
+
+        validateEmailChange(
+                crew,
+                newEmail
+        );
+
+        crewEmailVerificationService
+                .consumeVerificationToken(
+                        crew.getId(),
+                        newEmail,
+                        request.verificationToken()
+                );
+
+        crew.changeEmail(newEmail);
+
+        deleteRefreshToken(crew);
+
+        return CrewAccountResponse.from(crew);
     }
 
     @Transactional(readOnly = true)
@@ -502,6 +720,71 @@ public class CrewMyPageService {
                         )
                 )
                 .toList();
+    }
+
+    private void verifyCurrentPassword(
+            Crew crew,
+            String currentPassword
+    ) {
+        if (currentPassword == null ||
+                !passwordEncoder.matches(
+                        currentPassword,
+                        crew.getPassword()
+                )) {
+            throw new CustomException(
+                    ErrorCode.PASSWORD_UNMATCHED
+            );
+        }
+    }
+
+    private void validateEmailChange(
+            Crew crew,
+            String newEmail
+    ) {
+        validateRequiredValue(newEmail);
+
+        if (crew.getEmail().equalsIgnoreCase(newEmail)) {
+            throw new CustomException(
+                    ErrorCode.EMAIL_SAME_AS_CURRENT
+            );
+        }
+
+        if (userFinder.existUserByEmail(newEmail)) {
+            throw new CustomException(
+                    ErrorCode.EMAIL_ALREADY_IN_USE
+            );
+        }
+    }
+
+    private String normalizeEmail(
+            String email
+    ) {
+        if (email == null) {
+            return null;
+        }
+
+        return email.trim();
+    }
+
+    private void deleteRefreshToken(
+            Crew crew
+    ) {
+        redisTemplate.delete(
+                "refreshToken:"
+                        + crew.getRole().getRole()
+                        + ":"
+                        + crew.getId()
+        );
+    }
+
+    private void validateRequiredValue(
+            String value
+    ) {
+        if (value == null || value.isBlank()) {
+            throw new CustomException(
+                    ErrorCode.UNFILLED_BLANK
+            );
+        }
     }
 
     private void validateRepresentativeProjectIds(

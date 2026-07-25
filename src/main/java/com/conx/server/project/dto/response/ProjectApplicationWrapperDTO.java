@@ -11,6 +11,7 @@ public record ProjectApplicationWrapperDTO(
 
         ProjectType projectType,
         LocalDateTime applyDate,
-        ProjectApplicationStatus status
+        ProjectApplicationStatus status,
+        String motivation
 ) {
 }
