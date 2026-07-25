@@ -15,6 +15,8 @@ public record CompanyProfileUpdateRequest(
         @JsonAlias("homepageLink")
         String website,
 
+        String urlName,
+
         String businessRegistrationNumber
 ) {
 }
