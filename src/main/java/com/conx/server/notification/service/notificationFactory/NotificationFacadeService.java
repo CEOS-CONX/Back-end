@@ -6,6 +6,7 @@ import com.conx.server.notification.repository.NotificationRepository;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectApplication;
 import com.conx.server.project.domain.ProjectQuestion;
+import com.conx.server.project.domain.ProjectSubmission;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -51,9 +52,25 @@ public class NotificationFacadeService {
         notificationRepository.save(notification);
     }
 
+    public void saveNotificationAboutResultUploaded(
+            ProjectSubmission submission
+    ){
+        Notification notification =
+                NotificationFactory.resultUploaded(submission);
+        notificationRepository.save(notification);
+    }
+
     //프로젝트에 선정됨(크루용)
     public void saveNotificationAboutSelectedProject(Project project){
         Notification notification = NotificationFactory.selected(project);
+        notificationRepository.save(notification);
+    }
+
+    public void saveNotificationAboutSelectedProject(
+            ProjectApplication projectApplication
+    ){
+        Notification notification =
+                NotificationFactory.selected(projectApplication);
         notificationRepository.save(notification);
     }
 
@@ -69,7 +86,7 @@ public class NotificationFacadeService {
         notificationRepository.saveAll(notifications);
     }
 
-    //정산이 완료됨(크류용)
+    //정산이 완료됨(크루용)
     public void saveNotificationAboutAdjustmentDone(Project project){
         Notification notification = NotificationFactory.adjustmentDone(project);
         notificationRepository.save(notification);

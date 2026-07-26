@@ -93,7 +93,7 @@ public class ProjectQuestionService {
         }
 
         ProjectQuestion savedQuestion = projectQuestionRepository.save(question);
-        notificationFacadeService.questionRegistered(question);
+        notificationFacadeService.questionRegistered(savedQuestion);
 
         return ProjectQuestionDetailResponse.from(savedQuestion);
     }
