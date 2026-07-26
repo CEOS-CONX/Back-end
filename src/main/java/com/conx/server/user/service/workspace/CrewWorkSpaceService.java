@@ -553,13 +553,13 @@ public class CrewWorkSpaceService {
         ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
         DetailedProjectResponseDTO common = DetailedProjectResponseDTO.create(project, settlement);
         Pageable pageable = PageRequest.of(
-                        Math.max(page, 0),
-                        Math.max(size, 1),
-                        Sort.by(
-                                Sort.Direction.DESC,
-                                "createdAt"
-                        )
-                );
+                Math.max(page, 0),
+                Math.max(size, 1),
+                Sort.by(
+                        Sort.Direction.DESC,
+                        "createdAt"
+                )
+        );
 
         Page<InspectionInfoInOneLineDTO> submissions =
                 projectSubmissionRepository
@@ -614,9 +614,14 @@ public class CrewWorkSpaceService {
                 request.content(), request.fileLinks(), request.links());
 
         project.submitProjectResult();
-        projectSubmissionRepository.save(submission);
+        ProjectSubmission savedSubmission =
+                projectSubmissionRepository.save(
+                        submission
+                );
         crewProjectTodoService.completeSubmissionTodo(crew, project);
-        notificationFacadeService.saveNotificationAboutResultUploaded(project);
+        notificationFacadeService.saveNotificationAboutResultUploaded(
+                savedSubmission
+        );
     }
 
 

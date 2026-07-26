@@ -559,7 +559,7 @@ public class CompanyWorkspaceService {
 
         notificationFacadeService
                 .saveNotificationAboutSelectedProject(
-                        project
+                        selectedApplication
                 );
 
         return CompanyProjectApplicationSelectResponse.of(
@@ -1180,10 +1180,10 @@ public class CompanyWorkspaceService {
 
         List<File> files = fileRequests.stream().map(
                 fileRequest -> { HeadObjectResponse head = fileService.getHeadObject(
-                                                    fileRequest.fileLinks());
-                                return File.create(fileRequest.originalName(), head, fileRequest.fileLinks(), fileRequest.explanation());
-                                }
-                        ).toList();
+                        fileRequest.fileLinks());
+                    return File.create(fileRequest.originalName(), head, fileRequest.fileLinks(), fileRequest.explanation());
+                }
+        ).toList();
 
         if (!files.isEmpty()) {
             fileRepository.saveAll(

@@ -15,7 +15,13 @@ public record NotificationWrapperDTO(
         boolean isRead,
 
         LocalDateTime arriveTime,
-        String sender
+        String sender,
+
+        Long projectId,
+        Long questionId,
+        Long applicationId,
+        Long submissionId,
+        Long settlementId
 ) {
     public static NotificationWrapperDTO create(Notification n){
         return new NotificationWrapperDTO(
@@ -24,7 +30,12 @@ public record NotificationWrapperDTO(
                 n.getMessage(),
                 n.isRead(),
                 n.getCreatedAt(),
-                n.getSender()
+                n.getSender(),
+                n.getProjectId(),
+                n.getQuestionId(),
+                n.getApplicationId(),
+                n.getSubmissionId(),
+                n.getSettlementId()
         );
     }
 
