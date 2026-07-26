@@ -7,12 +7,14 @@ import com.conx.server.project.domain.ResultFormRequestDTO;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.project.dto.response.AdditionalLinkResponse;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.ProjectStatusFilter;
 import com.conx.server.user.dto.company.request.CompanyProjectRequestDTO;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
 import com.conx.server.user.dto.company.request.CompanySettlementExpectedPaymentDateRequest;
+import com.conx.server.user.dto.company.response.CompanyProjectDraftResponse;
 import com.conx.server.user.dto.company.response.CompanyProjectIdResponse;
 import com.conx.server.user.service.workspace.CompanyWorkspaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -568,7 +570,53 @@ class CompanyWorkspaceControllerTest {
     @Test
     @DisplayName("임시 저장 프로젝트를 조회한다")
     void getProjectDraft() throws Exception {
-        Long draftId = 200L;
+        CompanyProjectDraftResponse response =
+                new CompanyProjectDraftResponse(
+                        200L,
+                        List.of("project-image.png"),
+
+                        "테스트 브랜드",
+                        "담당자",
+                        "manager@test.com",
+
+                        "테스트 프로젝트",
+                        "프로젝트 설명",
+                        Industry.IT,
+
+                        ProjectType.APPTEST,
+                        List.of(),
+
+                        LocalDate.of(2026, 6, 30),
+                        LocalDate.of(2026, 7, 1),
+                        LocalDate.of(2026, 7, 31),
+                        LocalDate.of(2026, 8, 5),
+
+                        CrewType.CLUB,
+                        5,
+                        "필요 역량",
+                        "우대 조건",
+
+                        100000L,
+                        true,
+                        "인센티브 조건",
+
+                        List.of(),
+                        List.of(
+                                new AdditionalLinkResponse(
+                                        "홈페이지",
+                                        "https://example.com",
+                                        "참고 링크입니다."
+                                )
+                        ),
+
+                        ProjectStatus.DRAFT
+                );
+
+        given(
+                companyWorkspaceService.getProjectDraft(
+                        COMPANY_ID
+                )
+        ).willReturn(response);
 
         mockMvc.perform(
                         get(
@@ -582,11 +630,33 @@ class CompanyWorkspaceControllerTest {
                                 .value(
                                         "임시저장 프로젝트 조회에 성공했습니다."
                                 )
+                )
+                .andExpect(
+                        jsonPath("$.payload.industry")
+                                .value("IT")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.additionalLinks[0].linkName"
+                        ).value("홈페이지")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.additionalLinks[0].link"
+                        ).value("https://example.com")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.additionalLinks[0].explanation"
+                        ).value("참고 링크입니다.")
+                )
+                .andExpect(
+                        jsonPath("$.payload.links")
+                                .doesNotExist()
                 );
 
         verify(companyWorkspaceService).getProjectDraft(
                 COMPANY_ID
-                //draftId
         );
     }
 
