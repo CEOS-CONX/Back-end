@@ -16,4 +16,16 @@ public class AdditionalLinksWrapper {
     public static AdditionalLinksWrapper from(AdditionalLinksRequestDTO req){
         return new AdditionalLinksWrapper(req.linkName(), req.link(), req.explanation());
     }
+
+    public String getLinkName() {
+        return linkName;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
 }

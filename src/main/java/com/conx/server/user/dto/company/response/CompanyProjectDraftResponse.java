@@ -1,12 +1,13 @@
 package com.conx.server.user.dto.company.response;
 
 import com.conx.server.domain.file.dto.FileResponseDTO;
-import com.conx.server.project.domain.AdditionalLinksWrapper;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.project.dto.response.AdditionalLinkResponse;
 import com.conx.server.project.dto.response.ResultFormResponse;
 import com.conx.server.user.domain.types.CrewType;
+import com.conx.server.user.domain.types.Industry;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +22,7 @@ public record CompanyProjectDraftResponse(
 
         String projectName,
         String projectExplanation,
+        Industry industry,
 
         ProjectType projectType,
         List<ResultFormResponse> resultForm,
@@ -40,7 +42,7 @@ public record CompanyProjectDraftResponse(
         String incentiveCondition,
 
         List<FileResponseDTO> files,
-        List<AdditionalLinksWrapper> links,
+        List<AdditionalLinkResponse> additionalLinks,
 
         ProjectStatus status
 ) {
@@ -49,6 +51,13 @@ public record CompanyProjectDraftResponse(
             Project project,
             List<FileResponseDTO> files
     ) {
+        List<AdditionalLinkResponse> additionalLinks =
+                project.getLinks() == null
+                        ? List.of()
+                        : project.getLinks().stream()
+                        .map(AdditionalLinkResponse::from)
+                        .toList();
+
         return new CompanyProjectDraftResponse(
                 project.getId(),
                 project.getProjectImage(),
@@ -59,6 +68,7 @@ public record CompanyProjectDraftResponse(
 
                 project.getProjectName(),
                 project.getProjectExplanation(),
+                project.getIndustry(),
 
                 project.getProjectType(),
                 project.getResultForm().stream()
@@ -80,7 +90,7 @@ public record CompanyProjectDraftResponse(
                 project.getIncentiveCondition(),
 
                 files,
-                project.getLinks(),
+                additionalLinks,
 
                 project.getStatus()
         );
