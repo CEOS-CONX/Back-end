@@ -443,8 +443,7 @@ public class CrewMyPageController {
             description = "로그인한 크루가 북마크한 프로젝트를 페이지 단위로 조회합니다. page 기본값은 0, size 기본값은 10이며 별도의 필터와 정렬 조건은 없습니다."
     )
     @GetMapping("/bookmarked-projects")
-    public ApiResponse<Page<CrewBookmarkedProjectResponse>>
-    getBookmarkedProjects(
+    public ApiResponse<Page<CrewBookmarkedProjectResponse>> getBookmarkedProjects(
             @AuthenticationPrincipal
             CustomUserDetails userDetails,
 

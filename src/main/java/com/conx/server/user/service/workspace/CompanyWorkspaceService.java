@@ -219,6 +219,10 @@ public class CompanyWorkspaceService {
                         projectId
                 );
 
+        if (!project.getCompany().equals(company)){
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
         ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
 
         DetailedProjectResponseDTO common =

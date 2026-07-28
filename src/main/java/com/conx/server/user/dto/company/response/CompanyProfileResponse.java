@@ -4,6 +4,7 @@ import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.types.Industry;
 
 public record CompanyProfileResponse(
+        long companyId,
         String companyName,
         String companyIntroduction,
         String brandName,
@@ -17,6 +18,7 @@ public record CompanyProfileResponse(
 
     public static CompanyProfileResponse from(Company company) {
         return new CompanyProfileResponse(
+                company.getId(),
                 company.getCompanyName(),
                 company.getCompanyIntroduction(),
                 company.getBrandName(),

@@ -52,6 +52,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,14 +67,11 @@ import static com.conx.server.global.common.GetOrDefault.getOrDefault;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class CrewMyPageService {
 
-    private static final long MAX_CREW_FILE_SIZE =
-            52_428_800L;
+    private static final long MAX_CREW_FILE_SIZE = 52_428_800L;
 
-    private static final int MAX_REPRESENTATIVE_PROJECT_SIZE =
-            3;
+    private static final int MAX_REPRESENTATIVE_PROJECT_SIZE = 3;
 
-    private static final int MAX_CANDIDATE_PAGE_SIZE =
-            20;
+    private static final int MAX_CANDIDATE_PAGE_SIZE = 20;
 
     private static final List<ProjectStatus>
             REPRESENTATIVE_PROJECT_STATUSES =
@@ -92,11 +90,9 @@ public class CrewMyPageService {
     private final CrewFileRepository crewFileRepository;
     private final ProjectRepository projectRepository;
     private final EvaluationRepository evaluationRepository;
-    private final CrewRepresentativeProjectRepository
-            crewRepresentativeProjectRepository;
+    private final CrewRepresentativeProjectRepository crewRepresentativeProjectRepository;
     private final PasswordEncoder passwordEncoder;
-    private final CrewEmailVerificationService
-            crewEmailVerificationService;
+    private final CrewEmailVerificationService crewEmailVerificationService;
     private final StringRedisTemplate redisTemplate;
 
     @Transactional(readOnly = true)
@@ -121,9 +117,7 @@ public class CrewMyPageService {
                 request.catchphrase()
         );
 
-        validateFiles(
-                request.files()
-        );
+        validateFiles(request.files());
 
         crew.modifyMyPageProfile(
                 getOrDefault(
@@ -212,10 +206,7 @@ public class CrewMyPageService {
             Long crewId,
             CrewNameUpdateRequest request
     ) {
-        Crew crew =
-                userFinder.findActiveCrew(crewId);
-
-        validateRequiredValue(request.name());
+        Crew crew = userFinder.findActiveCrew(crewId);
 
         crew.changeManagerName(request.name());
 
@@ -230,10 +221,6 @@ public class CrewMyPageService {
         Crew crew =
                 userFinder.findActiveCrew(crewId);
 
-        validateRequiredValue(
-                request.representativePhone()
-        );
-
         crew.changeManagerPhoneNumber(
                 request.representativePhone()
         );
@@ -246,16 +233,9 @@ public class CrewMyPageService {
             Long crewId,
             CrewRepresentativeEmailUpdateRequest request
     ) {
-        Crew crew =
-                userFinder.findActiveCrew(crewId);
+        Crew crew = userFinder.findActiveCrew(crewId);
 
-        validateRequiredValue(
-                request.representativeEmail()
-        );
-
-        crew.changeRepresentativeEmail(
-                request.representativeEmail()
-        );
+        crew.changeRepresentativeEmail(request.representativeEmail());
 
         return CrewAccountResponse.from(crew);
     }
@@ -271,10 +251,6 @@ public class CrewMyPageService {
         verifyCurrentPassword(
                 crew,
                 request.currentPassword()
-        );
-
-        validateRequiredValue(
-                request.newPassword()
         );
 
         if (!Objects.equals(
@@ -452,12 +428,11 @@ public class CrewMyPageService {
         Crew crew =
                 userFinder.findActiveCrew(crewId);
 
-        List<Long> projectIds =
-                request.projectIds();
+        List<Long> projectIds = request.projectIds();
 
-        validateRepresentativeProjectIds(
-                projectIds
-        );
+        if (new HashSet<>(projectIds).size() != projectIds.size()) {
+            throw new CustomException(ErrorCode.REPRESENTATIVE_PROJECT_DUPLICATED);
+        }
 
         /*
          * 빈 배열이면 대표 프로젝트를 모두 해제합니다.
@@ -741,8 +716,6 @@ public class CrewMyPageService {
             Crew crew,
             String newEmail
     ) {
-        validateRequiredValue(newEmail);
-
         if (crew.getEmail().equalsIgnoreCase(newEmail)) {
             throw new CustomException(
                     ErrorCode.EMAIL_SAME_AS_CURRENT
@@ -777,59 +750,11 @@ public class CrewMyPageService {
         );
     }
 
-    private void validateRequiredValue(
-            String value
-    ) {
-        if (value == null || value.isBlank()) {
-            throw new CustomException(
-                    ErrorCode.UNFILLED_BLANK
-            );
-        }
-    }
-
-    private void validateRepresentativeProjectIds(
-            List<Long> projectIds
-    ) {
-        if (projectIds == null) {
-            throw new CustomException(
-                    ErrorCode.INVALID_INPUT_VALUE
-            );
-        }
-
-        if (
-                projectIds.size()
-                        > MAX_REPRESENTATIVE_PROJECT_SIZE
-        ) {
-            throw new CustomException(
-                    ErrorCode.REPRESENTATIVE_PROJECT_LIMIT_EXCEEDED
-            );
-        }
-
-        if (
-                projectIds.stream()
-                        .anyMatch(Objects::isNull)
-        ) {
-            throw new CustomException(
-                    ErrorCode.REPRESENTATIVE_PROJECT_NOT_AVAILABLE
-            );
-        }
-
-        if (
-                new HashSet<>(projectIds).size()
-                        != projectIds.size()
-        ) {
-            throw new CustomException(
-                    ErrorCode.REPRESENTATIVE_PROJECT_DUPLICATED
-            );
-        }
-    }
-
     private Sort createProjectSort(
             CrewProjectHistorySort sort
     ) {
         if (
-                sort
-                        == CrewProjectHistorySort.OLDEST
+                sort == CrewProjectHistorySort.OLDEST
         ) {
             return Sort.by(
                     Sort.Order.asc("createdAt"),
@@ -859,9 +784,7 @@ public class CrewMyPageService {
                 requests.stream()
                         .filter(request ->
                                 request != null
-                                        && hasText(
-                                        request.url()
-                                )
+                                        && StringUtils.hasText(request.url())
                         )
                         .map(request ->
                                 CrewLink.create(
@@ -893,10 +816,7 @@ public class CrewMyPageService {
         List<CrewFile> files =
                 requests.stream()
                         .filter(request ->
-                                request != null
-                                        && hasText(
-                                        request.url()
-                                )
+                                request != null && StringUtils.hasText(request.url())
                         )
                         .map(request ->
                                 CrewFile.create(
@@ -943,10 +863,10 @@ public class CrewMyPageService {
                                         || request.size() < 0
                                         || request.size()
                                         > MAX_CREW_FILE_SIZE
-                                        || !hasText(
+                                        || !StringUtils.hasText(
                                         request.fileName()
                                 )
-                                        || !hasText(
+                                        || ! StringUtils.hasText(
                                         request.url()
                                 )
                         );
@@ -956,12 +876,5 @@ public class CrewMyPageService {
                     ErrorCode.INVALID_INPUT_VALUE
             );
         }
-    }
-
-    private boolean hasText(
-            String value
-    ) {
-        return value != null
-                && !value.isBlank();
     }
 }
