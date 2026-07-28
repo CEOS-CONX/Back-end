@@ -145,8 +145,7 @@ public class CompanyMyPageController {
             description = "로그인한 기업의 대표 전화번호를 변경합니다. 공백이 아닌 representativePhone을 입력해야 합니다."
     )
     @PatchMapping("/account/representative-phone")
-    public ApiResponse<CompanyAccountResponse>
-    updateRepresentativePhone(
+    public ApiResponse<CompanyAccountResponse> updateRepresentativePhone(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody CompanyRepresentativePhoneUpdateRequest request
     ) {

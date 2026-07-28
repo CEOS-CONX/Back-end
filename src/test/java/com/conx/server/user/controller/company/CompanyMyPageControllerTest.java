@@ -127,6 +127,7 @@ class CompanyMyPageControllerTest {
     void getProfile() throws Exception {
         CompanyProfileResponse response =
                 new CompanyProfileResponse(
+                        COMPANY_ID,
                         "테스트 기업",
                         "기업 소개입니다.",
                         "테스트 브랜드",
@@ -190,6 +191,7 @@ class CompanyMyPageControllerTest {
 
         CompanyProfileResponse response =
                 new CompanyProfileResponse(
+                        COMPANY_ID,
                         "수정 기업",
                         "수정된 기업 소개입니다.",
                         "수정 브랜드",
