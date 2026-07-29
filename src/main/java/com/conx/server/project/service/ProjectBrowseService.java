@@ -102,6 +102,10 @@ public class ProjectBrowseService {
     private List<UserRole> getUserRole(
             CustomUserDetails userDetails
     ) {
+        if (userDetails == null) {
+            return List.of();
+        }
+
         return userDetails.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)
@@ -114,7 +118,8 @@ public class ProjectBrowseService {
             CustomUserDetails userDetails,
             List<UserRole> userRole
     ) {
-        return userRole.stream().anyMatch(
+        return userDetails != null
+                && userRole.stream().anyMatch(
                 r -> question.getWriterRole().equals(r))
                 && question.getWriterId().equals(userDetails.getId());
     }
@@ -124,7 +129,8 @@ public class ProjectBrowseService {
             CustomUserDetails userDetails,
             List<UserRole> userRole
     ) {
-        return userRole.stream().anyMatch(r -> r.equals(UserRole.COMPANY))
+        return userDetails != null
+                && userRole.stream().anyMatch(r -> r.equals(UserRole.COMPANY))
                 && project.getCompany().getId() == userDetails.getId();
     }
 
@@ -179,9 +185,11 @@ public class ProjectBrowseService {
 
         Page<ProjectQuestion> questions;
 
-        if (mine) {
+        if (mine && userDetails != null) {
             questions = projectQuestionRepository.findAllByProjectIdAndWriterIdAndWriterRoleInOrderByIdDesc(
-                            project.getId(), userDetails.getId(), userRole, pageable);
+                    project.getId(), userDetails.getId(), userRole, pageable);
+        } else if (mine) {
+            questions = Page.empty(pageable);
         } else {
             questions = projectQuestionRepository.findAllByProjectIdOrderByIdDesc(project.getId(),pageable);
         }
@@ -191,13 +199,13 @@ public class ProjectBrowseService {
             return ProjectQuestionResponse.from(question, canView);
         });
 
-        if (isCrew(getUserRole(userDetails))){
+        if (isCrew(userRole)){
             boolean isApplied = projectApplicationRepository.existsByProjectIdAndCrewId(projectId, userDetails.getId());
             boolean isBookmarked = projectBookmarkRepository.existsByProjectIdAndCrewId(projectId, userDetails.getId());
 
             return ProjectBrowseDetailResponse.from(project, fileResponseDTOS, questionResponses,
                     isApplied, isBookmarked);
-       } else {
+        } else {
             boolean isApplied = false;
             boolean isBookmarked = false;
 

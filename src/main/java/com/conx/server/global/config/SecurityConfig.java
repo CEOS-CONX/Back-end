@@ -160,11 +160,11 @@ public class SecurityConfig {
                                 "/api/v1/projects/*/bookmarks"
                         ).hasRole("CREW")
 
-                        // 프로젝트 상세는 로그인만 하면 접근 가능
+                        // 프로젝트 상세는 비로그인 접근 허용
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/projects/*"
-                        ).authenticated()
+                        ).permitAll()
 
                         // 크루 대표 프로젝트 전체보기
                         .requestMatchers(
@@ -172,11 +172,11 @@ public class SecurityConfig {
                                 "/api/v1/crews/*/projects"
                         ).authenticated()
 
-                        // 크루 상세도 로그인만 하면 접근 가능
+                        // 크루 상세는 비로그인 접근 허용
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/crews/*"
-                        ).authenticated()
+                        ).permitAll()
 
                         .anyRequest()
                         .authenticated()
