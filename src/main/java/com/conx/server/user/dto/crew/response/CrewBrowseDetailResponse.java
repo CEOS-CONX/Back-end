@@ -45,41 +45,6 @@ public record CrewBrowseDetailResponse(
             List<CrewPortfolioResponseDTO> portfolios,
             List<CrewProjectHistoryResponse> representativeProjects
     ) {
-        /*
-         * 상세 정보를 공개하지 않은 크루는
-         * 상세 입력값을 null로 반환합니다.
-         */
-        if (!hasPublicDetail) {
-            return new CrewBrowseDetailResponse(
-                    crew.getId(),
-                    crew.getProfileImage(),
-                    crew.getCrewName(),
-                    crew.getCrewType(),
-                    crew.getCustomCrewType(),
-
-                    null,
-                    null,
-                    null,
-                    crew.getInterestingIndustry(),
-
-                    null,
-                    null,
-                    null,
-                    null,
-
-                    null,
-                    null,
-                    null,
-                    null,
-
-                    false,
-                    bookmarked,
-
-                    point,
-                    crew.getTotalProjectCount()
-            );
-        }
-
         return new CrewBrowseDetailResponse(
                 crew.getId(),
                 crew.getProfileImage(),
@@ -102,7 +67,7 @@ public record CrewBrowseDetailResponse(
                 safeList(portfolios),
                 safeList(representativeProjects),
 
-                true,
+                hasPublicDetail,
                 bookmarked,
 
                 point,
