@@ -23,6 +23,7 @@ public record DetailedProjectResponseDTO(
 
         //정산
         long subsidy,
+        Long projectSettlementId,
         ProjectSettlementStatus settlementStatus,
 
         Long crewId,
@@ -59,6 +60,7 @@ public record DetailedProjectResponseDTO(
                     project.getManagerEmail(),
 
                     project.getSubsidy(),
+                    settlement.getId(),
                     settlement.getStatus(),
 
                     project.getSelectedCrew().getId(),
@@ -78,6 +80,7 @@ public record DetailedProjectResponseDTO(
                     project.getManagerEmail(),
 
                     project.getSubsidy(),
+                    null,
                     null,
 
                     null,
