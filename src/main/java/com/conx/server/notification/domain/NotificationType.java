@@ -2,7 +2,7 @@ package com.conx.server.notification.domain;
 
 public enum NotificationType {
     MAIL("%s"), //CONX를 통해 작성한 메일 도착 알림. 메일 제목이 들어갈 예정
-    CLOSE_TO_END_OF_RECRUITING("%s 프로젝트 모집이 %d일 뒤 마감됩니다."), //프로젝트 마감기한 임박. 프로젝트 이름과 마감까지 남은 날짜
+    CLOSE_TO_END_OF_RECRUITING("%s 모집이 %d일 뒤 마감됩니다."), //프로젝트 마감기한 임박. 프로젝트 이름과 마감까지 남은 날짜
 
     //기업용 알림
     RESULT_UPLOADED("%s에 최종결과물이 등록되었습니다."), //크루의 최종결과물 등록, 프로젝트 이름
@@ -19,7 +19,7 @@ public enum NotificationType {
 
     PROJECT_CLOSE_TO_END("%s 프로젝트를 %d일 뒤까지 수행해야합니다."),
 
-    RESULT_UPLOAD_CLOSE_TO_END("%s 프로젝트 결과제출이 %d일 뒤 마감됩니다."), //프로젝트 제출기한 마감 전, 프로젝트 이름과 마감까지 남은 날짜
+    RESULT_UPLOAD_CLOSE_TO_END("%s 결과제출이 %d일 뒤 마감됩니다."), //프로젝트 제출기한 마감 전, 프로젝트 이름과 마감까지 남은 날짜
 
     LATE_FOR_SUBMIT_DEADLINE("%s에 결과제출 기한이 %d일 초과되었습니다."); //프로젝트 마감기한 오버, 상동
 
