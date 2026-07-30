@@ -126,6 +126,21 @@ public class ProjectSettlement extends BaseEntity {
     }
 
     /**
+     * 실제 정산 완료 처리
+     */
+    public void markAsUnPaid() {
+        if (!isPaid()) {
+            throw new CustomException(
+                    ErrorCode.SETTLEMENT_ALREADY_PAID
+            );
+        }
+
+        this.status = ProjectSettlementStatus.WAITING;
+
+        this.paymentDate = null;
+    }
+
+    /**
      * 크루 지급 확인 상태 변경
      *
      * 실제 정산 상태 및 실제 정산일과는

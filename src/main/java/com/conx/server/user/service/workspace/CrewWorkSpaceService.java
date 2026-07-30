@@ -8,13 +8,7 @@ import com.conx.server.project.domain.CrewProjectTodo;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.ProjectSettlement;
 import com.conx.server.project.domain.ProjectSubmission;
-import com.conx.server.project.domain.enums.CrewPaymentStatus;
-import com.conx.server.project.domain.enums.CrewProjectTodoStatus;
-import com.conx.server.project.domain.enums.ProjectApplicationStatus;
-import com.conx.server.project.domain.enums.ProjectSettlementStatus;
-import com.conx.server.project.domain.enums.ProjectStatus;
-import com.conx.server.project.domain.enums.ProjectSubmissionStatus;
-import com.conx.server.project.domain.enums.ProjectType;
+import com.conx.server.project.domain.enums.*;
 import com.conx.server.project.dto.ApplicationBrowseFilter;
 import com.conx.server.project.dto.response.DetailedProjectWrapperForCrewWorkSpaceDTO;
 import com.conx.server.project.dto.response.ProjectApplicationWrapperDTO;
@@ -24,12 +18,11 @@ import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.project.repository.ProjectSettlementRepository;
 import com.conx.server.project.repository.ProjectSubmissionRepository;
 import com.conx.server.project.service.CrewProjectTodoService;
+import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.domain.types.Industry;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.DetailedProjectResponseDTO;
-import com.conx.server.user.dto.company.response.InspectionInfoInOneLineDTO;
-import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
+import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
+import com.conx.server.user.dto.company.response.*;
 import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceProjectStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceSort;
@@ -517,6 +510,43 @@ public class CrewWorkSpaceService {
 
         return new CrewWorkSpaceResponseDTO(
                 projectDTOs
+        );
+    }
+
+    /**
+     * 정산 완료 처리
+     */
+    @Transactional
+    public CompanySettlementCompleteResponse completeSettlement(
+            Long crewId,
+            Long settlementId
+    ) {
+        Crew crew = userFinder.findActiveCrew(crewId);
+
+        ProjectSettlement settlement = projectSettlementRepository.findByIdAndCrew(settlementId, crew).orElseThrow(
+                () -> new CustomException(ErrorCode.SETTLEMENT_NOT_FOUND)
+        );
+
+        if (settlement.getStatus() == ProjectSettlementStatus.PAID) {
+            settlement.markAsUnPaid();
+            Project project = settlement.getProject();
+            project.unEnd();
+
+            crewProjectTodoRepository.deleteByProject(project);
+        } else {
+            settlement.markAsPaid(LocalDate.now());
+            Project project = settlement.getProject();
+            project.end();
+
+            crewProjectTodoService.completeIfExists(
+                    settlement.getCrew(),
+                    project,
+                    CrewProjectTodoType.SETTLEMENT_CONFIRMATION
+            );
+        }
+
+        return CompanySettlementCompleteResponse.from(
+                settlement
         );
     }
 

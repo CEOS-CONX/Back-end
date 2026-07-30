@@ -434,4 +434,6 @@ public interface ProjectSettlementRepository
     );
 
     ProjectSettlement findByProject(Project project);
+
+    Optional<ProjectSettlement> findByIdAndCrew(Long id, Crew crew);
 }

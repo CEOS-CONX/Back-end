@@ -4,6 +4,7 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
+import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.request.ProjectApplicationRequest;
 import com.conx.server.project.dto.response.CrewInfoForProjectApplicationDTO;
@@ -13,6 +14,7 @@ import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
+import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
 import com.conx.server.user.dto.company.response.CompanySettlementResponse;
 import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
 import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
@@ -37,6 +39,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.time.LocalDate;
@@ -417,6 +421,71 @@ public class CrewWorkSpaceTest {
         assertThat(applicationResponse.applications().get(0).status()).isEqualTo(ProjectApplicationStatus.SELECTED);
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.CONTRACT_PENDING);
         assertThat(response2.hasNotification()).isEqualTo(true);
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루가 지급완료처리")
+    void completeSettlement() throws Exception {
+
+        String crewToken = loginSetting();
+        String companyToken = loginSetting_Company();
+
+        CompanySettlementResponse settlement =
+                createWaitingSettlement(
+                        crewToken,
+                        companyToken
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header("Authorization", crewToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.settlementStatus").value("PAID"))
+                .andExpect(jsonPath("$.payload.projectStatus").value("DONE"))
+                .andExpect(jsonPath("$.payload.settlementDate").exists());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루가 정산완료 토글처리")
+    void cancelSettlementCompletion() throws Exception {
+
+        String crewToken = loginSetting();
+        String companyToken = loginSetting_Company();
+
+        CompanySettlementResponse settlement =
+                createWaitingSettlement(
+                        crewToken,
+                        companyToken
+                );
+
+        // PAID
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header("Authorization", crewToken)
+                )
+                .andExpect(status().isOk());
+
+        // 다시 클릭 → UNPAID
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header("Authorization", crewToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.settlementStatus").value("WAITING"))
+                .andExpect(jsonPath("$.payload.projectStatus").value("INSPECTION"))
+                .andExpect(jsonPath("$.payload.settlementDate").doesNotExist());
     }
 
     @Transactional

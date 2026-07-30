@@ -474,37 +474,6 @@ public class CompanyWorkspaceController {
     }
 
     @Operation(
-            summary = "기업 정산 완료 처리",
-            description = "로그인한 기업이 특정 정산 건을 지급 완료로 처리합니다."
-    )
-    @PatchMapping("/settlements/{settlementId}/complete")
-    public ApiResponse<CompanySettlementCompleteResponse>
-    completeSettlement(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long settlementId,
-
-            @Valid
-            @RequestBody
-            CompanySettlementCompleteRequest request
-    ) {
-        CompanySettlementCompleteResponse response =
-                companyWorkspaceService.completeSettlement(
-                        userDetails.getId(),
-                        settlementId,
-                        request
-                );
-
-        return apiResponseFactory.success(
-                "정산 지급 완료 처리에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
-    @Operation(
             summary = "기업 정산 관리 현황 조회",
             description = "로그인한 기업의 정산 관리 현황을 조회합니다. 정산 상태, 기간 조건과 페이지네이션을 적용할 수 있습니다."
     )

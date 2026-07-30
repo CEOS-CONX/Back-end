@@ -6,6 +6,8 @@ import com.conx.server.project.domain.enums.CrewPaymentStatus;
 import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.user.domain.types.Industry;
+import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
+import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
 import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
 import com.conx.server.user.dto.crew.CrewTodoProgressStatus;
 import com.conx.server.user.dto.crew.CrewWorkspaceProjectStatus;
@@ -139,6 +141,32 @@ public class CrewWorkSpaceController {
     ){
         CrewWorkSpaceResponseDTO response = crewWorkSpaceService.getCrewWorkSpace(customUserDetails);
         return apiResponseFactory.success(response, customUserDetails);
+    }
+
+    @Operation(
+            summary = "크루 정산 완료 처리",
+            description = "로그인한 크루가 프로젝트를 지급 완료로 처리합니다."
+    )
+    @PatchMapping("/settlements/{settlementId}/complete")
+    public ApiResponse<CompanySettlementCompleteResponse>
+    completeSettlement(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @PathVariable
+            Long settlementId
+    ) {
+        CompanySettlementCompleteResponse response =
+                crewWorkSpaceService.completeSettlement(
+                        userDetails.getId(),
+                        settlementId
+                );
+
+        return apiResponseFactory.success(
+                "정산 지급 완료 처리에 성공했습니다.",
+                response,
+                userDetails
+        );
     }
 
     /**

@@ -773,52 +773,6 @@ public class CompanyWorkspaceService {
         );
     }
 
-    /**
-     * 정산 완료 처리
-     */
-    @Transactional
-    public CompanySettlementCompleteResponse completeSettlement(
-            Long companyId,
-            Long settlementId,
-            CompanySettlementCompleteRequest request
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        ProjectSettlement settlement =
-                findCompanySettlementForUpdate(
-                        company.getId(),
-                        settlementId
-                );
-
-        if (settlement.getStatus() == ProjectSettlementStatus.PAID) {
-            throw new CustomException(
-                    ErrorCode.SETTLEMENT_ALREADY_PAID
-            );
-        }
-
-        Project project =
-                settlement.getProject();
-
-        settlement.markAsPaid(
-                request.settlementDate()
-        );
-
-        project.end();
-
-        crewProjectTodoService.completeIfExists(
-                settlement.getCrew(),
-                project,
-                CrewProjectTodoType.SETTLEMENT_CONFIRMATION
-        );
-
-        return CompanySettlementCompleteResponse.from(
-                settlement
-        );
-    }
-
     private void createSettlementIfNotExists(
             Project project
     ) {
