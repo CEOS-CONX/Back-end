@@ -14,10 +14,7 @@ import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
-import com.conx.server.user.dto.company.response.CompanySettlementCompleteResponse;
-import com.conx.server.user.dto.company.response.CompanySettlementResponse;
-import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
-import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
+import com.conx.server.user.dto.company.response.*;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
 import com.conx.server.user.dto.crew.response.*;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
@@ -1254,27 +1251,16 @@ public class CrewWorkSpaceTest {
          * ProjectSettlement PAID
          * Project DONE
          */
-        CompanySettlementCompleteRequest completeRequest =
-                new CompanySettlementCompleteRequest(
-                        LocalDate.of(2026, 7, 14)
-                );
+        long settlementId = getSettlementId(crewToken);
 
         mockMvc.perform(
                         patch(
-                                "/api/v1/companies/me/settlements/{settlementId}/complete",
-                                settlement.settlementId()
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlementId
                         )
                                 .header(
                                         "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                completeRequest
-                                        )
+                                        crewToken
                                 )
                 )
                 .andExpect(status().isOk());
@@ -2180,31 +2166,15 @@ public class CrewWorkSpaceTest {
          * 6. 정산 완료
          * SETTLEMENT_CONFIRMATION Todo 완료
          */
-        CompanySettlementCompleteRequest completeRequest =
-                new CompanySettlementCompleteRequest(
-                        LocalDate.of(
-                                2026,
-                                7,
-                                15
-                        )
-                );
-
+        long settlementId = getSettlementId(crewToken);
         mockMvc.perform(
                         patch(
-                                "/api/v1/companies/me/settlements/{settlementId}/complete",
-                                settlement.settlementId()
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlementId
                         )
                                 .header(
                                         "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                completeRequest
-                                        )
+                                        crewToken
                                 )
                 )
                 .andExpect(status().isOk());
@@ -2463,22 +2433,15 @@ public class CrewWorkSpaceTest {
          * 정산 지급 완료
          * WAITING → PAID
          */
+        long settlementId = getSettlementId(crewToken);
         mockMvc.perform(
                         patch(
-                                "/api/v1/companies/me/settlements/{settlementId}/complete",
-                                settlement.settlementId()
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlementId
                         )
                                 .header(
                                         "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                completeRequest
-                                        )
+                                        crewToken
                                 )
                 )
                 .andExpect(status().isOk());
@@ -2829,34 +2792,15 @@ public class CrewWorkSpaceTest {
         /*
          * 기업이 정산 지급 완료
          */
-        LocalDate settlementDate =
-                LocalDate.of(
-                        2026,
-                        7,
-                        15
-                );
-
-        CompanySettlementCompleteRequest completeRequest =
-                new CompanySettlementCompleteRequest(
-                        settlementDate
-                );
-
+        long settlementId = getSettlementId(crewToken);
         mockMvc.perform(
                         patch(
-                                "/api/v1/companies/me/settlements/{settlementId}/complete",
-                                settlement.settlementId()
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlementId
                         )
                                 .header(
                                         "Authorization",
-                                        companyToken
-                                )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper.writeValueAsString(
-                                                completeRequest
-                                        )
+                                        crewToken
                                 )
                 )
                 .andExpect(status().isOk());
@@ -2889,13 +2833,6 @@ public class CrewWorkSpaceTest {
                         jsonPath(
                                 "$.payload.content[0].settlementStatus"
                         ).value("PAID")
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.payload.content[0].settlementDate"
-                        ).value(
-                                settlementDate.toString()
-                        )
                 );
 
         /*
@@ -2918,6 +2855,20 @@ public class CrewWorkSpaceTest {
                                 "$.payload.totalElements"
                         ).value(0)
                 );
+    }
+
+    long getSettlementId(String crewToken) throws Exception {
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/projects/workSpace/1")
+                .header("Authorization", crewToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ApiResponse<ProjectStatusResponseDTO> response = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(), new TypeReference<ApiResponse<ProjectStatusResponseDTO>>() {}
+        );
+
+        DetailedProjectResponseDTO de = response.payload().common();
+        return de.projectSettlementId();
     }
 }
 
