@@ -145,4 +145,6 @@ public interface CrewProjectTodoRepository
 
             Pageable pageable
     );
+
+    void deleteByProject(Project project);
 }

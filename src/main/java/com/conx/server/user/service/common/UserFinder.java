@@ -40,6 +40,21 @@ public class UserFinder {
                 );
     }
 
+    @Transactional
+    public User findActiveUserByEmail(String email) {
+        return companyRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
+                .map(User.class::cast)
+                .orElseGet(() ->
+                        crewRepository.findByEmailAndStatus(email, UserStatus.ACTIVE)
+                                .map(User.class::cast)
+                                .orElseGet(() ->
+                                        adminRepository.findByEmailAndStatus(email, UserStatus.ACTIVE).orElseThrow(() ->
+                                                new CustomException(ErrorCode.USER_NOT_FOUND)
+                                        )
+                                )
+                );
+    }
+
     @Transactional(readOnly = true)
     public boolean existUserByEmail(String email) {
         if(companyRepository.existsByEmail(email)){

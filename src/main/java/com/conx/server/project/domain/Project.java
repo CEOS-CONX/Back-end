@@ -81,6 +81,7 @@ public class Project extends BaseEntity {
         this.links = copyList(links);
         this.status = status;
         this.views = views;
+        this.previousStatus = ProjectStatus.RECRUITING;
     }
 
     @Id
@@ -197,6 +198,7 @@ public class Project extends BaseEntity {
             new ArrayList<>();
 
     private ProjectStatus status;
+    private ProjectStatus previousStatus;
 
     private int views;
 
@@ -454,21 +456,18 @@ public class Project extends BaseEntity {
     }
 
     public void completeContract() {
-        this.status =
-                ProjectStatus.PROGRESS;
+        this.status = ProjectStatus.PROGRESS;
+        this.previousStatus = ProjectStatus.PROGRESS;
     }
 
     public void afterProjectDeadline() {
-        this.status =
-                ProjectStatus.WAITING_RESULT;
+        this.status = ProjectStatus.WAITING_RESULT;
+        this.previousStatus = ProjectStatus.WAITING_RESULT;
     }
 
-    /*
-     * 결과물 제출 완료 상태 전이.
-     * 수정 요청 및 승인 API는 제거하지만, 제출 완료 시각과 기존 상태 집계를 위해 유지한다.
-     */
     public void submitProjectResult() {
         this.status = ProjectStatus.INSPECTION;
+        this.previousStatus = ProjectStatus.INSPECTION;
         this.resultSubmittedDate = LocalDate.now();
     }
 
@@ -478,11 +477,17 @@ public class Project extends BaseEntity {
         }
 
         this.status = ProjectStatus.ADJUSTING;
+        this.previousStatus = ProjectStatus.ADJUSTING;
     }
 
     public void end() {
         this.projectEndedDate = LocalDate.now();
         this.status = ProjectStatus.DONE;
+    }
+
+    public void unEnd(){
+        this.projectEndedDate = null;
+        this.status = previousStatus;
     }
 
     public void expire() {

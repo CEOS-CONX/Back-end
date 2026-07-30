@@ -26,6 +26,7 @@ public record DetailedProjectResponseDTO(
         Long projectSettlementId,
         ProjectSettlementStatus settlementStatus,
 
+        //크루
         Long crewId,
         String crewImageLink,
         String crewName,

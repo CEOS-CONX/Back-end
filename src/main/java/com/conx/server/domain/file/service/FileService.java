@@ -58,7 +58,19 @@ public class FileService {
 
     private String createFileKey(String originalFileName) {
         String uuid = UUID.randomUUID().toString();
-        return "uploads/" + uuid + "-" + originalFileName;
+        String ext = extractExtension(originalFileName);
+        return "uploads/" + uuid + ext;
+    }
+
+    private String extractExtension(String fileName) {
+        if (fileName == null) {
+            return "";
+        }
+        int idx = fileName.lastIndexOf('.');
+        if (idx < 0 || idx == fileName.length() - 1) {
+            return "";
+        }
+        return fileName.substring(idx);
     }
 
     private String createFileUrl(String fileKey) {
@@ -106,7 +118,6 @@ public class FileService {
         s3Client.deleteObject(request);
     }
 
-    //TODO: AWS 자격증명
     public HeadObjectResponse getHeadObject(String presignedUrl){
         String key = extractKey(presignedUrl);
 

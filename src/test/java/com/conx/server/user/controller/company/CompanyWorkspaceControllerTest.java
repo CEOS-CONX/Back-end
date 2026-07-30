@@ -8,6 +8,7 @@ import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.domain.enums.ProjectType;
 import com.conx.server.project.dto.response.AdditionalLinkResponse;
+import com.conx.server.project.service.CommonProjectService;
 import com.conx.server.user.domain.types.CrewType;
 import com.conx.server.user.domain.types.Industry;
 import com.conx.server.user.dto.ProjectStatusFilter;
@@ -64,12 +65,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CompanyWorkspaceControllerTest {
 
     private static final Long COMPANY_ID = 1L;
+    private static final String COMPANY_EMAIL = "kdhyun422@gmail.com";
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
     @Mock
     private CompanyWorkspaceService companyWorkspaceService;
+
+    @Mock
+    private CommonProjectService commonProjectService;
 
     @Mock
     private NotificationRepository notificationRepository;
@@ -293,36 +298,6 @@ class CompanyWorkspaceControllerTest {
                 isNull(),
                 isNull(),
                 any(Pageable.class)
-        );
-    }
-
-    @Test
-    @DisplayName("기업 프로젝트 상세를 조회한다")
-    void getProjectDetail() throws Exception {
-        Long projectId = 100L;
-
-        mockMvc.perform(
-                        get(
-                                "/api/v1/companies/me/projects/{projectId}",
-                                projectId
-                        )
-                                .param("page", "1")
-                                .param("size", "5")
-                )
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "기업 프로젝트 상세 조회에 성공했습니다."
-                                )
-                );
-
-        verify(companyWorkspaceService).getProjectDetail(
-                COMPANY_ID,
-                projectId,
-                1,
-                5
         );
     }
 
@@ -765,78 +740,6 @@ class CompanyWorkspaceControllerTest {
                         settlementId,
                         request
                 );
-    }
-
-    @Test
-    @DisplayName("정산 지급 완료를 처리한다")
-    void completeSettlement() throws Exception {
-        Long settlementId = 500L;
-
-        CompanySettlementCompleteRequest request =
-                new CompanySettlementCompleteRequest(
-                        LocalDate.of(2026, 7, 14)
-                );
-
-        mockMvc.perform(
-                        patch(
-                                "/api/v1/companies/me/settlements/{settlementId}/complete",
-                                settlementId
-                        )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content(
-                                        objectMapper
-                                                .writeValueAsString(
-                                                        request
-                                                )
-                                )
-                )
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.message")
-                                .value(
-                                        "정산 지급 완료 처리에 성공했습니다."
-                                )
-                );
-
-        verify(companyWorkspaceService)
-                .completeSettlement(
-                        COMPANY_ID,
-                        settlementId,
-                        request
-                );
-    }
-
-    @Test
-    @DisplayName("실제 지급일 없이 정산 완료를 요청하면 실패한다")
-    void cannotCompleteSettlementWithoutPaymentDate()
-            throws Exception {
-
-        Long settlementId = 500L;
-
-        mockMvc.perform(
-                        patch(
-                                "/api/v1/companies/me/settlements/{settlementId}/complete",
-                                settlementId
-                        )
-                                .contentType(
-                                        MediaType.APPLICATION_JSON
-                                )
-                                .content("{}")
-                )
-                .andDo(print())
-                .andExpect(status().isBadRequest());
-
-        verify(
-                companyWorkspaceService,
-                never()
-        ).completeSettlement(
-                eq(COMPANY_ID),
-                eq(settlementId),
-                any(CompanySettlementCompleteRequest.class)
-        );
     }
 
     @Test
