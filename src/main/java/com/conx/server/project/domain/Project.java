@@ -463,10 +463,6 @@ public class Project extends BaseEntity {
                 ProjectStatus.WAITING_RESULT;
     }
 
-    /*
-     * 결과물 제출 완료 상태 전이.
-     * 수정 요청 및 승인 API는 제거하지만, 제출 완료 시각과 기존 상태 집계를 위해 유지한다.
-     */
     public void submitProjectResult() {
         this.status = ProjectStatus.INSPECTION;
         this.resultSubmittedDate = LocalDate.now();

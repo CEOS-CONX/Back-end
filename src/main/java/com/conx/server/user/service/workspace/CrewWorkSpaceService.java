@@ -521,64 +521,6 @@ public class CrewWorkSpaceService {
     }
 
     /**
-     * 기존 프로젝트 상세 워크스페이스 조회
-     */
-    @Transactional(readOnly = true)
-    public ProjectStatusResponseDTO getProjectDetail(
-            Long crewId,
-            Long projectId,
-            int page,
-            int size
-    ) {
-        Crew crew = userFinder.findActiveCrew(crewId);
-
-        Project project =
-                findCrewWorkspaceProject(
-                        crew,
-                        projectId
-                );
-
-        if (project.isDone()) {
-            throw new CustomException(
-                    ErrorCode.PROJECT_ALREADY_END
-            );
-        }
-
-        if (project.isBeforeSigningContract()) {
-            throw new CustomException(
-                    ErrorCode.PROJECT_CONTRACT_UNSIGNED
-            );
-        }
-
-        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
-        DetailedProjectResponseDTO common = DetailedProjectResponseDTO.create(project, settlement);
-        Pageable pageable = PageRequest.of(
-                Math.max(page, 0),
-                Math.max(size, 1),
-                Sort.by(
-                        Sort.Direction.DESC,
-                        "createdAt"
-                )
-        );
-
-        Page<InspectionInfoInOneLineDTO> submissions =
-                projectSubmissionRepository
-                        .findAllByProjectIdAndStatusNotOrderByIdDesc(
-                                project.getId(),
-                                ProjectSubmissionStatus.DRAFT,
-                                pageable
-                        )
-                        .map(
-                                InspectionInfoInOneLineDTO::create
-                        );
-
-        return ProjectStatusResponseDTO.create(
-                common,
-                submissions
-        );
-    }
-
-    /**
      * 결과물 제출
      */
     @Transactional
@@ -614,10 +556,8 @@ public class CrewWorkSpaceService {
                 request.content(), request.fileLinks(), request.links());
 
         project.submitProjectResult();
-        ProjectSubmission savedSubmission =
-                projectSubmissionRepository.save(
-                        submission
-                );
+        ProjectSubmission savedSubmission = projectSubmissionRepository.save(submission);
+
         crewProjectTodoService.completeSubmissionTodo(crew, project);
         notificationFacadeService.saveNotificationAboutResultUploaded(
                 savedSubmission

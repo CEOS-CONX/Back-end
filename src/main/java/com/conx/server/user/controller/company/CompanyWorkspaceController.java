@@ -156,39 +156,6 @@ public class CompanyWorkspaceController {
     }
 
     @Operation(
-            summary = "기업 프로젝트 상세 조회",
-            description = "로그인한 기업이 등록한 특정 프로젝트의 상세 정보를 조회합니다. page와 size로 포함된 목록의 조회 범위를 지정할 수 있습니다."
-    )
-    @GetMapping("/projects/{projectId}")
-    public ApiResponse<CompanyWorkspaceProjectDetailResponse> getProjectDetail(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId,
-
-            @RequestParam(defaultValue = "0")
-            int page,
-
-            @RequestParam(defaultValue = "5")
-            int size
-    ) {
-        CompanyWorkspaceProjectDetailResponse response =
-                companyWorkspaceService.getProjectDetail(
-                        userDetails.getId(),
-                        projectId,
-                        page,
-                        size
-                );
-
-        return apiResponseFactory.success(
-                "기업 프로젝트 상세 조회에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
-    @Operation(
             summary = "기업 프로젝트 등록",
             description = "로그인한 기업이 새로운 프로젝트를 등록합니다. 요청 본문으로 프로젝트 정보를 전달하고 isDraft 값으로 임시 저장 여부를 지정합니다."
     )
@@ -347,37 +314,6 @@ public class CompanyWorkspaceController {
                 userDetails
         );
     }
-
-    @Operation(
-            summary = "프로젝트 결과물 및 피드백 상세 조회",
-            description = "로그인한 기업이 특정 프로젝트의 결과물 제출 내역과 피드백 상세 정보를 조회합니다."
-    )
-    @GetMapping("/projects/{projectId}/submissions/{submissionId}")
-    public ApiResponse<ProjectInspectionWrapperDTO> getProjectReviewDetail(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
-
-            @PathVariable
-            Long projectId,
-
-            @PathVariable
-            Long submissionId
-    ) {
-        ProjectInspectionWrapperDTO response =
-                companyWorkspaceService.getProjectReviewDetail(
-                        userDetails.getId(),
-                        projectId,
-                        submissionId
-                );
-
-        return apiResponseFactory.success(
-                "상세 결과물 공유내역 조회에 성공했습니다.",
-                response,
-                userDetails
-        );
-    }
-
-
 
     @Operation(
             summary = "프로젝트 제출 기준 충족 처리",

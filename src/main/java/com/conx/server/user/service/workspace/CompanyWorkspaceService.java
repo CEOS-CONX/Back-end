@@ -199,83 +199,6 @@ public class CompanyWorkspaceService {
     }
 
     /**
-     * 기업 프로젝트 상세 조회
-     */
-    @Transactional(readOnly = true)
-    public CompanyWorkspaceProjectDetailResponse getProjectDetail(
-            Long companyId,
-            Long projectId,
-            int page,
-            int size
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        Project project =
-                findCompanyProject(
-                        company.getId(),
-                        projectId
-                );
-
-        if (!project.getCompany().equals(company)){
-            throw new CustomException(ErrorCode.FORBIDDEN);
-        }
-
-        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
-
-        DetailedProjectResponseDTO common =
-                DetailedProjectResponseDTO.create(
-                        project, settlement
-                );
-
-        if (project.isRecruiting()) {
-            List<CompanyWorkSpaceForProjectApplicationDTO> applications =
-                    projectApplicationRepository
-                            .findAllByProject(
-                                    project
-                            )
-                            .stream()
-                            .map(
-                                    CompanyWorkSpaceForProjectApplicationDTO::from
-                            )
-                            .toList();
-
-            return ProjectApplicationForCompanyWrapperDTO.from(
-                    common,
-                    applications
-            );
-        }
-
-        Pageable pageable =
-                PageRequest.of(
-                        Math.max(page, 0),
-                        Math.max(size, 1),
-                        Sort.by(
-                                Sort.Direction.DESC,
-                                "createdAt"
-                        )
-                );
-
-        Page<InspectionInfoInOneLineDTO> submissions =
-                projectSubmissionRepository
-                        .findAllByProjectIdAndStatusNotOrderByIdDesc(
-                                project.getId(),
-                                ProjectSubmissionStatus.DRAFT,
-                                pageable
-                        )
-                        .map(
-                                InspectionInfoInOneLineDTO::create
-                        );
-
-        return ProjectStatusResponseDTO.create(
-                common,
-                submissions
-        );
-    }
-
-    /**
      * 프로젝트 등록
      */
     @Transactional
@@ -573,96 +496,6 @@ public class CompanyWorkspaceService {
     }
 
     /**
-     * 결과물 및 피드백 상세 조회
-     */
-    @Transactional(readOnly = true)
-    public ProjectInspectionWrapperDTO getProjectReviewDetail(
-            Long companyId,
-            Long projectId,
-            Long submissionId
-    ) {
-        Company company =
-                userFinder.findActiveCompany(
-                        companyId
-                );
-
-        Project project =
-                findCompanyProject(
-                        company.getId(),
-                        projectId
-                );
-
-        ProjectSubmission submission =
-                findVisibleSubmission(
-                        project.getId(),
-                        submissionId
-                );
-
-        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
-
-        DetailedProjectResponseDTO common =
-                DetailedProjectResponseDTO.create(
-                        project, settlement
-                );
-
-        List<FileResponseDTO> submissionFiles =
-                fileRepository
-                        .findByUrlIn(
-                                submission.getFileLinks()
-                        )
-                        .stream()
-                        .map(
-                                FileResponseDTO::from
-                        )
-                        .toList();
-
-        ProjectSubmissionWrapperDTO submissionDTO =
-                ProjectSubmissionWrapperDTO.from(
-                        submission,
-                        submissionFiles,
-                        submission.getAdditionalLinks()
-                );
-
-        ProjectInspectionFeedback feedback =
-                projectInspectionFeedbackRepository
-                        .findBySubmission(
-                                submission
-                        );
-
-        if (feedback == null) {
-            return ProjectInspectionWrapperDTO.from(
-                    common,
-                    submissionDTO,
-                    null
-            );
-        }
-
-        List<FileResponseDTO> feedbackFiles =
-                fileRepository
-                        .findByUrlIn(
-                                feedback.getFileLinks()
-                        )
-                        .stream()
-                        .map(
-                                FileResponseDTO::from
-                        )
-                        .toList();
-
-        ProjectFeedBackWrapperDTO feedbackDTO =
-                ProjectFeedBackWrapperDTO.from(
-                        feedback,
-                        feedbackFiles,
-                        feedback.getAdditionalLinks()
-                );
-
-        return ProjectInspectionWrapperDTO.from(
-                common,
-                submissionDTO,
-                feedbackDTO
-        );
-    }
-
-    /**
      * 결과물 피드백 등록
      *
      * 최신 기획에서 수정 요청·승인 기능은 제거되었으므로
@@ -679,22 +512,11 @@ public class CompanyWorkspaceService {
                         companyId
                 );
 
-        ProjectSubmission submission =
-                projectSubmissionRepository
-                        .findById(
-                                submissionId
-                        )
-                        .orElseThrow(
-                                () -> new CustomException(
-                                        ErrorCode.SUBMISSION_NOT_FOUND
-                                )
-                        );
+        ProjectSubmission submission = projectSubmissionRepository.findById(submissionId).orElseThrow(
+                () -> new CustomException(ErrorCode.SUBMISSION_NOT_FOUND));
 
-        if (!submission.getProject().getCompany().equals(company)
-        ) {
-            throw new CustomException(
-                    ErrorCode.FORBIDDEN
-            );
+        if (!submission.getProject().getCompany().equals(company)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
         }
 
         if (!submission.canRegisterFeedback()) {
@@ -709,7 +531,6 @@ public class CompanyWorkspaceService {
         submission.setFeedback();
 
         Project project = submission.getProject();
-        project.completeInspection();
 
         crewProjectTodoService.createIfAbsent(
                 findPartnerCrew(project),
@@ -980,12 +801,6 @@ public class CompanyWorkspaceService {
 
         Project project =
                 settlement.getProject();
-
-        if (project.getStatus() != ProjectStatus.ADJUSTING) {
-            throw new CustomException(
-                    ErrorCode.INVALID_PROJECT_STATUS
-            );
-        }
 
         settlement.markAsPaid(
                 request.settlementDate()

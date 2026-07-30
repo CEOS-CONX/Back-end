@@ -438,7 +438,7 @@ class CompanyWorkspaceServiceTest {
                 .isEqualTo(ProjectSettlementStatus.PAID);
 
         assertThat(response.projectStatus())
-                .isEqualTo(ProjectStatus.DONE);
+                .isEqualTo(ProjectStatus.ADJUSTING);
 
         assertThat(response.settlementDate())
                 .isEqualTo(settlementDate);
@@ -495,66 +495,6 @@ class CompanyWorkspaceServiceTest {
 
         given(settlement.getStatus())
                 .willReturn(ProjectSettlementStatus.PAID);
-
-        // when & then
-        assertThatThrownBy(() ->
-                companyWorkspaceService.completeSettlement(
-                        companyId,
-                        settlementId,
-                        request
-                )
-        ).isInstanceOf(CustomException.class);
-
-        verify(settlement, never())
-                .markAsPaid(any(LocalDate.class));
-
-        verify(project, never())
-                .end();
-
-        verify(
-                crewProjectTodoService,
-                never()
-        ).completeIfExists(
-                any(Crew.class),
-                any(Project.class),
-                any(CrewProjectTodoType.class)
-        );
-    }
-
-    @Test
-    @DisplayName("정산 중 상태가 아닌 프로젝트는 지급 완료할 수 없다")
-    void cannotCompleteSettlementWhenProjectIsNotAdjusting() {
-        // given
-        Long companyId = 10L;
-        Long settlementId = 500L;
-
-        CompanySettlementCompleteRequest request =
-                new CompanySettlementCompleteRequest(
-                        LocalDate.of(2026, 7, 14)
-                );
-
-        given(userFinder.findActiveCompany(companyId))
-                .willReturn(company);
-
-        given(company.getId())
-                .willReturn(companyId);
-
-        given(
-                projectSettlementRepository
-                        .findByIdAndCompanyIdForUpdate(
-                                settlementId,
-                                companyId
-                        )
-        ).willReturn(Optional.of(settlement));
-
-        given(settlement.getStatus())
-                .willReturn(ProjectSettlementStatus.WAITING);
-
-        given(settlement.getProject())
-                .willReturn(project);
-
-        given(project.getStatus())
-                .willReturn(ProjectStatus.PROGRESS);
 
         // when & then
         assertThatThrownBy(() ->

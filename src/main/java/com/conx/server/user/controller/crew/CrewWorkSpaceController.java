@@ -142,26 +142,6 @@ public class CrewWorkSpaceController {
     }
 
     /**
-     * 프로젝트 상세 워크스페이스 가져오기
-     */
-    @Operation(
-            summary = "크루 프로젝트 워크스페이스 상세 조회",
-            description = "로그인한 크루가 선정된 프로젝트의 상세 정보와 결과물 제출·검수 이력을 조회합니다. 계약 전이거나 종료된 프로젝트는 조회할 수 없습니다."
-    )
-    @GetMapping("/workSpace/{projectId}")
-    public ApiResponse<ProjectStatusResponseDTO> getCrewDetailedProject(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable long projectId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size
-    ){
-        ProjectStatusResponseDTO projectStatusDTO =
-                crewWorkSpaceService.getProjectDetail(customUserDetails.getId(), projectId, page, size);
-
-        return apiResponseFactory.success(projectStatusDTO, customUserDetails);
-    }
-
-    /**
      * 결과물 제출하기
      */
     @Operation(
