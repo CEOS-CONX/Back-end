@@ -403,6 +403,69 @@ public class CrewWorkSpaceTest {
         assertThat(response2.hasNotification()).isEqualTo(true);
     }
 
+    @Test
+    @Transactional
+    @DisplayName("크루가 지급완료처리")
+    void completeSettlement() throws Exception {
+        String crewToken = loginSetting();
+        String companyToken = loginSetting_Company();
+
+        CompanySettlementResponse settlement =
+                createWaitingSettlement(
+                        crewToken,
+                        companyToken
+                );
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header("Authorization", crewToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.settlementStatus").value("PAID"))
+                .andExpect(jsonPath("$.payload.projectStatus").value("ADJUSTED"))
+                .andExpect(jsonPath("$.payload.settlementDate").exists());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("크루가 정산완료 토글처리")
+    void cancelSettlementCompletion() throws Exception {
+        String crewToken = loginSetting();
+        String companyToken = loginSetting_Company();
+
+        CompanySettlementResponse settlement =
+                createWaitingSettlement(
+                        crewToken,
+                        companyToken
+                );
+
+        // 첫 번째 클릭: PAID
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header("Authorization", crewToken)
+                )
+                .andExpect(status().isOk());
+
+        // 두 번째 클릭: WAITING으로 되돌림
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/crews/settlements/{settlementId}/complete",
+                                settlement.settlementId()
+                        )
+                                .header("Authorization", crewToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.settlementStatus").value("WAITING"))
+                .andExpect(jsonPath("$.payload.projectStatus").value("INSPECTION"))
+                .andExpect(jsonPath("$.payload.settlementDate").doesNotExist());
+    }
+
     @Transactional
     void applyAndSelectProject() throws Exception {
         String token = loginSetting();

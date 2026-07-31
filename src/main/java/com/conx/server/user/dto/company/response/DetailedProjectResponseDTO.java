@@ -40,7 +40,9 @@ public record DetailedProjectResponseDTO(
         LocalDate endDate,
 
         //제출기준
-        List<SubmissionCriteriaResponseDTO> criteria
+        List<SubmissionCriteriaResponseDTO> criteria,
+
+        boolean isPointed
 ) {
     /**
      * 프로젝트에 선정된 크루가 없다면 ProjectSettlement가 null입니다.
@@ -70,7 +72,8 @@ public record DetailedProjectResponseDTO(
                     project.getSelectedCrew().getCrewType(),
 
                     crewSelectedDate, projectStartDate, projectEndDate, submissionDate, endDate,
-                    project.getResultCriteria().stream().map(SubmissionCriteriaResponseDTO::from).toList()
+                    project.getResultCriteria().stream().map(SubmissionCriteriaResponseDTO::from).toList(),
+                    false
             );
         } else {
             return new DetailedProjectResponseDTO(project.getId(),
@@ -90,7 +93,8 @@ public record DetailedProjectResponseDTO(
                     null,
 
                     crewSelectedDate, projectStartDate, projectEndDate, submissionDate, endDate,
-                    project.getResultCriteria().stream().map(SubmissionCriteriaResponseDTO::from).toList()
+                    project.getResultCriteria().stream().map(SubmissionCriteriaResponseDTO::from).toList(),
+                    project.getStatus() == ProjectStatus.DONE
             );
         }
     }

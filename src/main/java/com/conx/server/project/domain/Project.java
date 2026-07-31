@@ -487,8 +487,11 @@ public class Project extends BaseEntity {
         this.status = ProjectStatus.DONE;
     }
 
-    public void unEnd(){
-        this.projectEndedDate = null;
+    public void adjusted(){
+        this.status = ProjectStatus.ADJUSTED;
+    }
+
+    public void unAdjusted(){
         this.status = previousStatus;
     }
 
@@ -538,6 +541,14 @@ public class Project extends BaseEntity {
                 == ProjectStatus.ADJUSTING
                 || status
                 == ProjectStatus.DONE;
+    }
+
+    public boolean isDoneAble(){
+        return this.status == ProjectStatus.INSPECTION ||
+                this.status == ProjectStatus.PROGRESS ||
+                this.status == ProjectStatus.WAITING_RESULT ||
+                this.status == ProjectStatus.ADJUSTED ||
+                this.status == ProjectStatus.ADJUSTING;
     }
 
     private static <T> List<T> copyList(
