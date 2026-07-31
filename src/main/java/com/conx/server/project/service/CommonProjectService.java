@@ -49,45 +49,6 @@ public class CommonProjectService {
     }
 
     /**
-     * 프로젝트 상세 워크스페이스 조회 (기업/크루 동일)
-     */
-    @Transactional(readOnly = true)
-    public ProjectStatusResponseDTO getProjectDetail(
-            String email,
-            Long projectId,
-            int page,
-            int size
-    ) {
-        Project project = findAndVerifyProject(email, projectId);
-        DetailedProjectResponseDTO common = createCommon(project);
-
-        Pageable pageable = PageRequest.of(
-                Math.max(page, 0),
-                Math.max(size, 1),
-                Sort.by(
-                        Sort.Direction.DESC,
-                        "createdAt"
-                )
-        );
-
-        Page<InspectionInfoInOneLineDTO> submissions =
-                projectSubmissionRepository
-                        .findAllByProjectIdAndStatusNotOrderByIdDesc(
-                                project.getId(),
-                                ProjectSubmissionStatus.DRAFT,
-                                pageable
-                        )
-                        .map(
-                                InspectionInfoInOneLineDTO::create
-                        );
-
-        return ProjectStatusResponseDTO.create(
-                common,
-                submissions
-        );
-    }
-
-    /**
      * 결과물 및 피드백 상세 조회
      */
     @Transactional(readOnly = true)

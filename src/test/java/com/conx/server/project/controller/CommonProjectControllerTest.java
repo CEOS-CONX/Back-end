@@ -101,44 +101,6 @@ class CommonProjectControllerTest {
     }
 
     @Test
-    @DisplayName("프로젝트 워크스페이스 상세를 조회한다")
-    void getProjectDetail() throws Exception {
-        Long projectId = 10317L;
-
-        ProjectStatusResponseDTO response =
-                org.mockito.Mockito.mock(ProjectStatusResponseDTO.class);
-
-        given(
-                commonProjectService.getProjectDetail(
-                        USER_EMAIL,
-                        projectId,
-                        1,
-                        5
-                )
-        ).willReturn(response);
-
-        mockMvc.perform(
-                        get("/api/v1/projects/workSpace/{projectId}", projectId)
-                                .param("page", "1")
-                                .param("size", "5")
-                )
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(
-                        jsonPath("$.status")
-                                .value("success")
-                );
-
-        org.mockito.Mockito.verify(commonProjectService)
-                .getProjectDetail(
-                        USER_EMAIL,
-                        projectId,
-                        1,
-                        5
-                );
-    }
-
-    @Test
     @DisplayName("프로젝트 결과물 상세를 조회한다")
     void getProjectReviewDetail() throws Exception {
         Long projectId = 1L;

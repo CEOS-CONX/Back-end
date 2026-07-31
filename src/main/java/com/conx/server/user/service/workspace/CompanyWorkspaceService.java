@@ -199,6 +199,79 @@ public class CompanyWorkspaceService {
     }
 
     /**
+     * 기업 프로젝트 상세 조회
+     */
+    @Transactional(readOnly = true)
+    public CompanyWorkspaceProjectDetailResponse getProjectDetail(
+            Long companyId,
+            Long projectId,
+            int page,
+            int size
+    ) {
+        Company company =
+                userFinder.findActiveCompany(
+                        companyId
+                );
+
+        Project project =
+                findCompanyProject(
+                        company.getId(),
+                        projectId
+                );
+
+        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
+
+        DetailedProjectResponseDTO common =
+                DetailedProjectResponseDTO.create(
+                        project, settlement
+                );
+
+        if (project.isRecruiting()) {
+            List<CompanyWorkSpaceForProjectApplicationDTO> applications =
+                    projectApplicationRepository
+                            .findAllByProject(
+                                    project
+                            )
+                            .stream()
+                            .map(
+                                    CompanyWorkSpaceForProjectApplicationDTO::from
+                            )
+                            .toList();
+
+            return ProjectApplicationForCompanyWrapperDTO.from(
+                    common,
+                    applications
+            );
+        }
+
+        Pageable pageable =
+                PageRequest.of(
+                        Math.max(page, 0),
+                        Math.max(size, 1),
+                        Sort.by(
+                                Sort.Direction.DESC,
+                                "createdAt"
+                        )
+                );
+
+        Page<InspectionInfoInOneLineDTO> submissions =
+                projectSubmissionRepository
+                        .findAllByProjectIdAndStatusNotOrderByIdDesc(
+                                project.getId(),
+                                ProjectSubmissionStatus.DRAFT,
+                                pageable
+                        )
+                        .map(
+                                InspectionInfoInOneLineDTO::create
+                        );
+
+        return ProjectStatusResponseDTO.create(
+                common,
+                submissions
+        );
+    }
+
+    /**
      * 프로젝트 등록
      */
     @Transactional
