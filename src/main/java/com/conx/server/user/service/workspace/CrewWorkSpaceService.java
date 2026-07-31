@@ -547,13 +547,13 @@ public class CrewWorkSpaceService {
         if (settlement.getStatus() == ProjectSettlementStatus.PAID) {
             settlement.markAsUnPaid();
             Project project = settlement.getProject();
-            project.unEnd();
+            project.unAdjusted();
 
             crewProjectTodoRepository.deleteByProject(project);
         } else {
             settlement.markAsPaid(LocalDate.now());
             Project project = settlement.getProject();
-            project.end();
+            project.adjusted();
 
             crewProjectTodoService.completeIfExists(
                     settlement.getCrew(),
