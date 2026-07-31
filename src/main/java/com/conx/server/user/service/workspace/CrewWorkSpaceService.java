@@ -385,6 +385,64 @@ public class CrewWorkSpaceService {
     }
 
     /**
+     * 기존 프로젝트 상세 워크스페이스 조회
+     */
+    @Transactional(readOnly = true)
+    public ProjectStatusResponseDTO getProjectDetail(
+            Long crewId,
+            Long projectId,
+            int page,
+            int size
+    ) {
+        Crew crew = userFinder.findActiveCrew(crewId);
+
+        Project project =
+                findCrewWorkspaceProject(
+                        crew,
+                        projectId
+                );
+
+        if (project.isDone()) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_ALREADY_END
+            );
+        }
+
+        if (project.isBeforeSigningContract()) {
+            throw new CustomException(
+                    ErrorCode.PROJECT_CONTRACT_UNSIGNED
+            );
+        }
+
+        ProjectSettlement settlement = projectSettlementRepository.findByProject(project);
+        DetailedProjectResponseDTO common = DetailedProjectResponseDTO.create(project, settlement);
+        Pageable pageable = PageRequest.of(
+                Math.max(page, 0),
+                Math.max(size, 1),
+                Sort.by(
+                        Sort.Direction.DESC,
+                        "createdAt"
+                )
+        );
+
+        Page<InspectionInfoInOneLineDTO> submissions =
+                projectSubmissionRepository
+                        .findAllByProjectIdAndStatusNotOrderByIdDesc(
+                                project.getId(),
+                                ProjectSubmissionStatus.DRAFT,
+                                pageable
+                        )
+                        .map(
+                                InspectionInfoInOneLineDTO::create
+                        );
+
+        return ProjectStatusResponseDTO.create(
+                common,
+                submissions
+        );
+    }
+
+    /**
      * 크루 정산 목록 조회
      */
     @Transactional(readOnly = true)
@@ -442,47 +500,6 @@ public class CrewWorkSpaceService {
                 .map(
                         CrewSettlementItemResponse::from
                 );
-    }
-
-    /**
-     * 크루 지급 확인 상태 변경
-     */
-    @Transactional
-    public CrewPaymentStatusUpdateResponse updateCrewPaymentStatus(
-            CustomUserDetails customUserDetails,
-            Long settlementId,
-            CrewPaymentStatusUpdateRequest request
-    ) {
-        Crew crew =
-                userFinder.findActiveCrew(
-                        customUserDetails.getId()
-                );
-
-        ProjectSettlement settlement =
-                projectSettlementRepository
-                        .findByIdAndCrewIdForUpdate(
-                                settlementId,
-                                crew.getId()
-                        )
-                        .orElseThrow(
-                                () -> new CustomException(
-                                        ErrorCode.SETTLEMENT_NOT_FOUND
-                                )
-                        );
-
-        LocalDate today =
-                LocalDate.now(
-                        ZoneId.of("Asia/Seoul")
-                );
-
-        settlement.changeCrewPaymentStatus(
-                request.paymentStatus(),
-                today
-        );
-
-        return CrewPaymentStatusUpdateResponse.from(
-                settlement
-        );
     }
 
     /**

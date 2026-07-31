@@ -143,30 +143,24 @@ public class CrewWorkSpaceController {
         return apiResponseFactory.success(response, customUserDetails);
     }
 
+    /**
+     * 프로젝트 상세 워크스페이스 가져오기
+     */
     @Operation(
-            summary = "크루 정산 완료 처리",
-            description = "로그인한 크루가 프로젝트를 지급 완료로 처리합니다."
+            summary = "크루 프로젝트 워크스페이스 상세 조회",
+            description = "로그인한 크루가 선정된 프로젝트의 상세 정보와 결과물 제출·검수 이력을 조회합니다. 계약 전이거나 종료된 프로젝트는 조회할 수 없습니다."
     )
-    @PatchMapping("/settlements/{settlementId}/complete")
-    public ApiResponse<CompanySettlementCompleteResponse>
-    completeSettlement(
-            @AuthenticationPrincipal
-            CustomUserDetails userDetails,
+    @GetMapping("/workSpace/{projectId}")
+    public ApiResponse<ProjectStatusResponseDTO> getCrewDetailedProject(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable long projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ){
+        ProjectStatusResponseDTO projectStatusDTO =
+                crewWorkSpaceService.getProjectDetail(customUserDetails.getId(), projectId, page, size);
 
-            @PathVariable
-            Long settlementId
-    ) {
-        CompanySettlementCompleteResponse response =
-                crewWorkSpaceService.completeSettlement(
-                        userDetails.getId(),
-                        settlementId
-                );
-
-        return apiResponseFactory.success(
-                "정산 지급 완료 처리에 성공했습니다.",
-                response,
-                userDetails
-        );
+        return apiResponseFactory.success(projectStatusDTO, customUserDetails);
     }
 
     /**
@@ -230,20 +224,29 @@ public class CrewWorkSpaceController {
         );
     }
 
+
+
     @Operation(
-            summary = "크루 지급 확인 상태 변경",
-            description = "로그인한 크루가 본인 정산 건의 지급 확인 상태를 BEFORE_PAYMENT 또는 PAYMENT_CONFIRMED로 변경합니다. 이 처리는 실제 정산 상태나 지급일을 변경하지 않습니다."
+            summary = "크루 정산 완료 처리",
+            description = "로그인한 크루가 프로젝트를 지급 완료로 처리합니다."
     )
-    @PatchMapping("/settlements/{settlementId}/payment-status")
-    public ApiResponse<CrewPaymentStatusUpdateResponse> updateCrewPaymentStatus(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long settlementId,
-            @Valid @RequestBody CrewPaymentStatusUpdateRequest request
+    @PatchMapping("/settlements/{settlementId}/complete")
+    public ApiResponse<CompanySettlementCompleteResponse> completeSettlement(
+            @AuthenticationPrincipal
+            CustomUserDetails userDetails,
+
+            @PathVariable
+            Long settlementId
     ) {
+        CompanySettlementCompleteResponse response =
+                crewWorkSpaceService.completeSettlement(
+                        userDetails.getId(),
+                        settlementId
+                );
+
         return apiResponseFactory.success(
-                crewWorkSpaceService.updateCrewPaymentStatus(
-                        userDetails, settlementId, request
-                ),
+                "정산 지급 완료 처리에 성공했습니다.",
+                response,
                 userDetails
         );
     }

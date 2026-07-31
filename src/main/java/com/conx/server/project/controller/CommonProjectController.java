@@ -21,23 +21,6 @@ public class CommonProjectController {
     private final CommonProjectService commonProjectService;
 
     @Operation(
-            summary = "크루 프로젝트 워크스페이스 상세 조회",
-            description = "로그인한 사용자가 프로젝트의 상세 정보와 결과물 제출·검수 이력을 조회합니다. 계약 전인 프로젝트는 조회할 수 없습니다."
-    )
-    @GetMapping("/workSpace/{projectId}")
-    public ApiResponse<ProjectStatusResponseDTO> getCrewDetailedProject(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable long projectId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size
-    ){
-        ProjectStatusResponseDTO projectStatusDTO =
-                commonProjectService.getProjectDetail(customUserDetails.getUserEmail(), projectId, page, size);
-
-        return apiResponseFactory.success(projectStatusDTO, customUserDetails);
-    }
-
-    @Operation(
             summary = "프로젝트 결과물 및 피드백 상세 조회",
             description = "로그인한 사용자가 특정 프로젝트의 결과물 제출 내역과 피드백 상세 정보를 조회합니다."
     )
