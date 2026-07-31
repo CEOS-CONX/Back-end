@@ -9,7 +9,6 @@ import com.conx.server.project.dto.response.ProjectApplicationResponse;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.dto.crew.response.CrewApplicationStatusResponseDTO;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
-import com.conx.server.user.repository.AdminRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -19,13 +18,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,9 +43,6 @@ public class AdminWorkSpaceTest {
 
     @Autowired
     private ProjectRepository projectRepository;
-
-    @Autowired
-    private AdminRepository adminRepository;
 
     @Transactional
     String loginSetting() throws Exception {
@@ -85,8 +83,8 @@ public class AdminWorkSpaceTest {
 
     @Test
     @Transactional
-    @DisplayName("어드민_검수하기")
-    void completeContractInAdmin() throws Exception {
+    @DisplayName("기존 계약 대기 프로젝트를 어드민이 진행중으로 전환한다")
+    void completeLegacyContractPendingProjectInAdmin() throws Exception {
         // 크루 로그인
         String crewToken = loginSetting();
 
@@ -119,7 +117,21 @@ public class AdminWorkSpaceTest {
                                 .header("Authorization", companyToken))
                 .andExpect(status().isOk());
 
-        // 관리자 로그인 후 계약 완료
+        /*
+         * 신규 선정 프로젝트는 바로 PROGRESS가 된다.
+         * 배포 전에 저장된 기존 CONTRACT_PENDING 데이터를 테스트에서만 재현한다.
+         */
+        Project legacyProject = projectRepository.findById(1L)
+                .orElseThrow();
+
+        ReflectionTestUtils.setField(
+                legacyProject,
+                "status",
+                ProjectStatus.CONTRACT_PENDING
+        );
+        projectRepository.saveAndFlush(legacyProject);
+
+        // 관리자 로그인 후 기존 계약 대기 프로젝트를 진행중으로 전환
         String adminToken = loginSetting_Admin();
 
         mockMvc.perform(
@@ -149,32 +161,39 @@ public class AdminWorkSpaceTest {
         assertThat(dto.applications()).hasSize(1);
         assertThat(dto.applications().get(0).applicationId()).isEqualTo(applicationId);
         assertThat(dto.applications().get(0).status()).isEqualTo(ProjectApplicationStatus.SELECTED);
-
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.PROGRESS);
+        assertThat(project.getPreviousStatus()).isEqualTo(ProjectStatus.PROGRESS);
         assertThat(response.hasNotification()).isTrue();
     }
 
     @Test
     @Transactional
-    @DisplayName("계약서 작성 중인 상태가 아닌 프로젝트의 어드민 접근 시 오류")
+    @DisplayName("계약 완료 처리할 수 없는 프로젝트의 어드민 접근 시 오류")
     void completeContractInvalidProjectStatus() throws Exception {
-        String token_admin = loginSetting_Admin();
+        String adminToken = loginSetting_Admin();
 
+        /*
+         * 선정된 크루가 없는 프로젝트는 계약 완료 처리할 수 없다.
+         */
         mockMvc.perform(patch("/api/v1/admin/projects/1/contract-complete")
-                        .header("Authorization", token_admin))
+                        .header("Authorization", adminToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status")
                         .value("CR002"));
 
-        //계약서 작성 완료 후 계약서 작성 완료 상태변환 시 오류
-        String token = loginSetting();
+        /*
+         * 신규 흐름에서는 선정과 동시에 PROGRESS로 전환된다.
+         */
+        String crewToken = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
+        ProjectApplicationRequest req =
+                new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
 
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+        MvcResult mvcResult = mockMvc.perform(
+                        post("/api/v1/projects/1/applications")
+                                .header("Authorization", crewToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -185,19 +204,25 @@ public class AdminWorkSpaceTest {
 
         long applicationId = response.payload().applicationId();
 
-        String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
-                        .header("Authorization", tokenCompany))
+        String companyToken = loginSetting_Company();
+
+        mockMvc.perform(
+                        post("/api/v1/companies/me/projects/1/applications/{applicationId}/select",
+                                applicationId)
+                                .header("Authorization", companyToken))
                 .andExpect(status().isOk());
 
-        //어드민 검수 시작
-        mockMvc.perform(patch("/api/v1/admin/projects/1/contract-complete")
-                        .header("Authorization", token_admin))
-                .andExpect(status().isOk());
+        Project project = projectRepository.findById(1L)
+                .orElseThrow();
 
-        //어드민 검수 후 또 검수하려면 에러
+        assertThat(project.getStatus()).isEqualTo(ProjectStatus.PROGRESS);
+        assertThat(project.getPreviousStatus()).isEqualTo(ProjectStatus.PROGRESS);
+
+        /*
+         * 이미 PROGRESS인 신규 선정 프로젝트에는 계약 완료 API를 호출할 수 없다.
+         */
         mockMvc.perform(patch("/api/v1/admin/projects/1/contract-complete")
-                        .header("Authorization", token_admin))
+                        .header("Authorization", adminToken))
                 .andExpect(jsonPath("$.status")
                         .value("P002"));
     }

@@ -4,7 +4,6 @@ import com.conx.server.global.common.ApiResponse;
 import com.conx.server.landingPage.dto.ProjectWrapperForLandingPageDTO;
 import com.conx.server.project.domain.Project;
 import com.conx.server.project.domain.enums.ProjectApplicationStatus;
-import com.conx.server.project.domain.enums.ProjectSettlementStatus;
 import com.conx.server.project.domain.enums.ProjectStatus;
 import com.conx.server.project.dto.request.ProjectApplicationRequest;
 import com.conx.server.project.dto.response.CrewInfoForProjectApplicationDTO;
@@ -13,13 +12,13 @@ import com.conx.server.project.dto.response.ProjectBrowseDetailResponse;
 import com.conx.server.project.repository.ProjectRepository;
 import com.conx.server.user.domain.crew.Crew;
 import com.conx.server.user.dto.UserRole;
-import com.conx.server.user.dto.company.request.CompanySettlementCompleteRequest;
-import com.conx.server.user.dto.company.response.*;
+import com.conx.server.user.dto.company.response.CompanySettlementResponse;
+import com.conx.server.user.dto.company.response.CompanyWorkspaceProjectDetailResponse;
+import com.conx.server.user.dto.company.response.ProjectStatusResponseDTO;
 import com.conx.server.user.dto.crew.request.SubmitProjectResultRequestDTO;
 import com.conx.server.user.dto.crew.response.*;
 import com.conx.server.user.dto.login.request.LoginRequestDTO;
 import com.conx.server.user.dto.login.response.LoginResponseDTO;
-import com.conx.server.user.repository.AdminRepository;
 import com.conx.server.user.repository.CrewRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,8 +35,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.time.LocalDate;
@@ -73,19 +70,6 @@ public class CrewWorkSpaceTest {
     @Transactional
     String loginReturnToken() throws Exception {
         LoginRequestDTO req = new LoginRequestDTO("cccccc@gmail.com", "1q2w3e4r!!");
-        MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        return mvcResult.getResponse().getHeader("Authorization");
-    }
-
-    @Transactional
-    String loginSetting_Admin() throws Exception {
-        LoginRequestDTO req = new LoginRequestDTO("jclee@gmail.com", "1q2w3e4r!!");
-
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -163,8 +147,6 @@ public class CrewWorkSpaceTest {
     @Autowired
     private ProjectRepository projectRepository;
 
-    @Autowired
-    private AdminRepository adminRepository;
     //회원가입 테스트 진행하기
 
     //com.conx.server.global.common.SettingUserForTest.java 파일에서 테스트의 경우
@@ -416,80 +398,15 @@ public class CrewWorkSpaceTest {
         CrewApplicationStatusResponseDTO applicationResponse = response2.payload();
         assertThat(applicationResponse.applications().get(0).applicationId()).isEqualTo(applicationId);
         assertThat(applicationResponse.applications().get(0).status()).isEqualTo(ProjectApplicationStatus.SELECTED);
-        assertThat(project.getStatus()).isEqualTo(ProjectStatus.CONTRACT_PENDING);
+        assertThat(project.getStatus()).isEqualTo(ProjectStatus.PROGRESS);
+        assertThat(project.getPreviousStatus()).isEqualTo(ProjectStatus.PROGRESS);
         assertThat(response2.hasNotification()).isEqualTo(true);
     }
 
-    @Test
     @Transactional
-    @DisplayName("크루가 지급완료처리")
-    void completeSettlement() throws Exception {
-
-        String crewToken = loginSetting();
-        String companyToken = loginSetting_Company();
-
-        CompanySettlementResponse settlement =
-                createWaitingSettlement(
-                        crewToken,
-                        companyToken
-                );
-
-        mockMvc.perform(
-                        patch(
-                                "/api/v1/crews/settlements/{settlementId}/complete",
-                                settlement.settlementId()
-                        )
-                                .header("Authorization", crewToken)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.settlementStatus").value("PAID"))
-                .andExpect(jsonPath("$.payload.projectStatus").value("DONE"))
-                .andExpect(jsonPath("$.payload.settlementDate").exists());
-    }
-
-    @Test
-    @Transactional
-    @DisplayName("크루가 정산완료 토글처리")
-    void cancelSettlementCompletion() throws Exception {
-
-        String crewToken = loginSetting();
-        String companyToken = loginSetting_Company();
-
-        CompanySettlementResponse settlement =
-                createWaitingSettlement(
-                        crewToken,
-                        companyToken
-                );
-
-        // PAID
-        mockMvc.perform(
-                        patch(
-                                "/api/v1/crews/settlements/{settlementId}/complete",
-                                settlement.settlementId()
-                        )
-                                .header("Authorization", crewToken)
-                )
-                .andExpect(status().isOk());
-
-        // 다시 클릭 → UNPAID
-        mockMvc.perform(
-                        patch(
-                                "/api/v1/crews/settlements/{settlementId}/complete",
-                                settlement.settlementId()
-                        )
-                                .header("Authorization", crewToken)
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payload.settlementStatus").value("WAITING"))
-                .andExpect(jsonPath("$.payload.projectStatus").value("INSPECTION"))
-                .andExpect(jsonPath("$.payload.settlementDate").doesNotExist());
-    }
-
-    @Transactional
-    void completeProjectApplicationToContract() throws Exception {
+    void applyAndSelectProject() throws Exception {
         String token = loginSetting();
         String tokenCompany = loginSetting_Company();
-        String token_admin = loginSetting_Admin();
 
         //프로젝트 지원하기
         ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
@@ -509,14 +426,9 @@ public class CrewWorkSpaceTest {
 
         long applicationId = response.payload().applicationId();
 
-        //프로젝트 크루 선정
+        //프로젝트 크루 선정과 동시에 PROGRESS 전환
         mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
                         .header("Authorization", tokenCompany))
-                .andExpect(status().isOk());
-
-        //프로젝트 계약서 작성 완료 선정
-        mockMvc.perform(patch("/api/v1/admin/projects/1/contract-complete")
-                        .header("Authorization", token_admin))
                 .andExpect(status().isOk());
     }
 
@@ -526,7 +438,7 @@ public class CrewWorkSpaceTest {
             String companyToken
     ) throws Exception {
 
-        completeProjectApplicationToContract();
+        applyAndSelectProject();
 
         SubmitProjectResultRequestDTO submissionRequest =
                 new SubmitProjectResultRequestDTO(
@@ -991,10 +903,10 @@ public class CrewWorkSpaceTest {
 
     @Test
     @Transactional
-    @DisplayName("프로젝트 계약서 작성 후 대시보드")
-    void dashboardAfterContract() throws Exception {
+    @DisplayName("프로젝트 선정 직후 대시보드")
+    void dashboardImmediatelyAfterSelection() throws Exception {
         String token = loginSetting();
-        completeProjectApplicationToContract();
+        applyAndSelectProject();
 
         MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/dashboard")
                         .header("Authorization", token))
@@ -1030,10 +942,10 @@ public class CrewWorkSpaceTest {
         String crewToken = loginSetting();
         String companyToken = loginSetting_Company();
 
-        completeProjectApplicationToContract();
+        applyAndSelectProject();
 
         /*
-         * 1. 계약 완료 후 PROGRESS
+         * 1. 선정 직후 PROGRESS
          * 진행 중 1
          */
         CrewDashboardResultDTO progressDashboard =
@@ -1251,12 +1163,10 @@ public class CrewWorkSpaceTest {
          * ProjectSettlement PAID
          * Project DONE
          */
-        long settlementId = getSettlementId(crewToken);
-
         mockMvc.perform(
                         patch(
                                 "/api/v1/crews/settlements/{settlementId}/complete",
-                                settlementId
+                                settlement.settlementId()
                         )
                                 .header(
                                         "Authorization",
@@ -1416,15 +1326,15 @@ public class CrewWorkSpaceTest {
 
         assertThat(responseDTO.projects().size()).isEqualTo(1);
         assertThat(responseDTO.projects().get(0).projectId()).isEqualTo(1L);
-        assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.CONTRACT_PENDING);
+        assertThat(responseDTO.projects().get(0).projectStatus()).isEqualTo(ProjectStatus.PROGRESS);
     }
 
     @Test
     @Transactional
-    @DisplayName("프로젝트 계약서 작성 후 워크스페이스")
-    void workSpaceAfterContracting() throws Exception {
+    @DisplayName("프로젝트 선정 직후 워크스페이스")
+    void workSpaceImmediatelyAfterSelection() throws Exception {
         String token = loginSetting();
-        completeProjectApplicationToContract();
+        applyAndSelectProject();
 
         MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/workSpace")
                         .header("Authorization", token))
@@ -1450,7 +1360,7 @@ public class CrewWorkSpaceTest {
     void workSpaceForUnSelectedProject() throws Exception {
         String token = loginSetting();
 
-        mockMvc.perform(get("/api/v1/crews/workSpace/10317")
+        mockMvc.perform(get("/api/v1/crews/workSpace/1")
                         .header("Authorization", token))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status")
@@ -1459,46 +1369,17 @@ public class CrewWorkSpaceTest {
 
     @Test
     @Transactional
-    @DisplayName("계약서가 작성되지 않은 프로젝트의 워크스페이스 진입")
-    void workSpaceForUnContractedProject() throws Exception {
+    @DisplayName("프로젝트 선정 직후 워크스페이스 상세에 진입한다")
+    void workSpaceDetailImmediatelyAfterSelection() throws Exception {
         String token = loginSetting();
 
-        ProjectApplicationRequest req = new ProjectApplicationRequest("안녕하세용 no후회ㄱㄱㄱ");
+        applyAndSelectProject();
 
-        //프로젝트 지원하기
-        MvcResult applicationMvcResult = mockMvc.perform(post("/api/v1/projects/1/applications")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        ApiResponse<ProjectApplicationResponse> applicationResponse = objectMapper.readValue(
-                applicationMvcResult.getResponse().getContentAsString(),
-                new TypeReference<ApiResponse<ProjectApplicationResponse>>() {
-                }
-        );
-
-        long applicationId = applicationResponse.payload().applicationId();
-
-        mockMvc.perform(post("/api/v1/projects/3/applications")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk());
-
-        //선정하기
-        String tokenCompany = loginSetting_Company();
-        mockMvc.perform(post("/api/v1/companies/me/projects/1/applications/" + applicationId + "/select")
-                        .header("Authorization", tokenCompany))
-                .andExpect(status().isOk());
-
-        //워크스페이스
         mockMvc.perform(get("/api/v1/crews/workSpace/1")
                         .header("Authorization", token))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status")
-                        .value("P004"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payload.common.projectStatus")
+                        .value("PROGRESS"));
     }
 
     @Test
@@ -1506,7 +1387,7 @@ public class CrewWorkSpaceTest {
     @DisplayName("프로젝트 결과물 올리기")
     void uploadProjectResult() throws Exception {
         String token = loginSetting();
-        completeProjectApplicationToContract();
+        applyAndSelectProject();
 
         String subject = "제목제목";
         String content = "XXX한 점에 집중하려했습니다.";
@@ -1719,7 +1600,7 @@ public class CrewWorkSpaceTest {
                 );
 
         /*
-         * CONTRACT_PENDING 상태이므로 IN_PROGRESS
+         * PROGRESS 상태이므로 IN_PROGRESS
          */
         mockMvc.perform(
                         get("/api/v1/crews/projects")
@@ -1913,10 +1794,10 @@ public class CrewWorkSpaceTest {
         String companyToken = loginSetting_Company();
 
         /*
-         * 프로젝트 지원 → 크루 선정 → 계약 완료
+         * 프로젝트 지원 → 크루 선정
          * 프로젝트 상태: PROGRESS
          */
-        completeProjectApplicationToContract();
+        applyAndSelectProject();
 
         SubmitProjectResultRequestDTO submissionRequest =
                 new SubmitProjectResultRequestDTO(
@@ -2166,11 +2047,10 @@ public class CrewWorkSpaceTest {
          * 6. 정산 완료
          * SETTLEMENT_CONFIRMATION Todo 완료
          */
-        long settlementId = getSettlementId(crewToken);
         mockMvc.perform(
                         patch(
                                 "/api/v1/crews/settlements/{settlementId}/complete",
-                                settlementId
+                                settlement.settlementId()
                         )
                                 .header(
                                         "Authorization",
@@ -2272,7 +2152,7 @@ public class CrewWorkSpaceTest {
          * 프로젝트 지원 → 선정 → 계약 완료
          * ProjectStatus.PROGRESS
          */
-        completeProjectApplicationToContract();
+        applyAndSelectProject();
 
         SubmitProjectResultRequestDTO submissionRequest =
                 new SubmitProjectResultRequestDTO(
@@ -2424,20 +2304,14 @@ public class CrewWorkSpaceTest {
                         ZoneId.of("Asia/Seoul")
                 );
 
-        CompanySettlementCompleteRequest completeRequest =
-                new CompanySettlementCompleteRequest(
-                        settlementDate
-                );
-
         /*
          * 정산 지급 완료
          * WAITING → PAID
          */
-        long settlementId = getSettlementId(crewToken);
         mockMvc.perform(
                         patch(
                                 "/api/v1/crews/settlements/{settlementId}/complete",
-                                settlementId
+                                settlement.settlementId()
                         )
                                 .header(
                                         "Authorization",
@@ -2790,13 +2664,17 @@ public class CrewWorkSpaceTest {
                 );
 
         /*
-         * 기업이 정산 지급 완료
+         * 크루가 정산 지급 완료
          */
-        long settlementId = getSettlementId(crewToken);
+        LocalDate settlementDate =
+                LocalDate.now(
+                        ZoneId.of("Asia/Seoul")
+                );
+
         mockMvc.perform(
                         patch(
                                 "/api/v1/crews/settlements/{settlementId}/complete",
-                                settlementId
+                                settlement.settlementId()
                         )
                                 .header(
                                         "Authorization",
@@ -2833,6 +2711,13 @@ public class CrewWorkSpaceTest {
                         jsonPath(
                                 "$.payload.content[0].settlementStatus"
                         ).value("PAID")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.payload.content[0].settlementDate"
+                        ).value(
+                                settlementDate.toString()
+                        )
                 );
 
         /*
@@ -2855,20 +2740,6 @@ public class CrewWorkSpaceTest {
                                 "$.payload.totalElements"
                         ).value(0)
                 );
-    }
-
-    long getSettlementId(String crewToken) throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/workSpace/1")
-                .header("Authorization", crewToken))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        ApiResponse<ProjectStatusResponseDTO> response = objectMapper.readValue(
-                mvcResult.getResponse().getContentAsString(), new TypeReference<ApiResponse<ProjectStatusResponseDTO>>() {}
-        );
-
-        DetailedProjectResponseDTO de = response.payload().common();
-        return de.projectSettlementId();
     }
 }
 
