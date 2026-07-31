@@ -450,7 +450,9 @@ public class Project extends BaseEntity {
     ) {
         this.selectedCrew = crew;
         this.status =
-                ProjectStatus.CONTRACT_PENDING;
+                ProjectStatus.PROGRESS;
+        this.previousStatus =
+                ProjectStatus.PROGRESS;
         this.crewSelectedDate =
                 LocalDate.now();
     }
