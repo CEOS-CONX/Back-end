@@ -1,5 +1,6 @@
 package com.conx.server.user.service.common;
 
+import com.conx.server.global.common.EmailNormalizer;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.User;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,13 +29,15 @@ public class UserFinder {
 
     @Transactional
     public User findByEmail(String email) {
-        return companyRepository.findByEmail(email)
+        String normalizedEmail = EmailNormalizer.normalize(email);
+
+        return companyRepository.findByEmail(normalizedEmail)
                 .map(User.class::cast)
                 .orElseGet(() ->
-                        crewRepository.findByEmail(email)
+                        crewRepository.findByEmail(normalizedEmail)
                                 .map(User.class::cast)
                                 .orElseGet(() ->
-                                        adminRepository.findByEmail(email).orElseThrow(() ->
+                                        adminRepository.findByEmail(normalizedEmail).orElseThrow(() ->
                                                 new CustomException(ErrorCode.USER_NOT_FOUND)
                                         )
                                 )
@@ -82,6 +86,18 @@ public class UserFinder {
         return crewRepository.findByIdAndStatus(id, UserStatus.ACTIVE).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
+    }
+
+    @Transactional
+    public Optional<User> findOptionalActiveUserByEmail(String email) {
+        String normalizedEmail = EmailNormalizer.normalize(email);
+
+        return companyRepository.findByEmailAndStatus(normalizedEmail, UserStatus.ACTIVE)
+                .map(User.class::cast)
+                .or(() -> crewRepository.findByEmailAndStatus(normalizedEmail, UserStatus.ACTIVE)
+                        .map(User.class::cast))
+                .or(() -> adminRepository.findByEmailAndStatus(normalizedEmail, UserStatus.ACTIVE)
+                        .map(User.class::cast));
     }
 
     @Transactional

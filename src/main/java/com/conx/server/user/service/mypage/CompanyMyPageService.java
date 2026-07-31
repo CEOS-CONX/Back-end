@@ -2,6 +2,7 @@ package com.conx.server.user.service.mypage;
 
 import com.conx.server.bookmark.domain.CrewBookmark;
 import com.conx.server.bookmark.repository.CrewBookmarkRepository;
+import com.conx.server.global.common.EmailNormalizer;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.company.Company;
@@ -216,8 +217,7 @@ public class CompanyMyPageService {
                 request.currentPassword()
         );
 
-        String newEmail =
-                normalizeEmail(request.newEmail());
+        String newEmail = EmailNormalizer.normalize(request.newEmail());
 
         validateEmailChange(
                 company,

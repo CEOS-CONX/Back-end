@@ -2,6 +2,7 @@ package com.conx.server.user.controller.common;
 
 import com.conx.server.global.common.ApiResponse;
 import com.conx.server.global.common.ApiResponseFactory;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
 import com.conx.server.user.dto.passwordReset.request.PasswordResetRequest;
 import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationConfirmRequest;
 import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationSendRequest;
@@ -10,6 +11,7 @@ import com.conx.server.user.service.common.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,8 +32,8 @@ public class PasswordResetController {
      * 계정 존재 여부와 관계없이 동일한 성공 메시지를 반환한다.
      */
     @Operation(
-            summary = "기업 비밀번호 재설정 인증번호 발송",
-            description = "ACTIVE 기업 계정의 담당자명과 가입 이메일이 일치하면 5분간 유효한 6자리 인증번호를 발송합니다. 계정 존재 여부 보호를 위해 일치하는 계정이 없어도 동일한 성공 응답을 반환합니다."
+            summary = "비밀번호 재설정 인증번호 발송",
+            description = "가입 이메일이 일치하면 5분간 유효한 6자리 인증번호를 발송합니다."
     )
     @PostMapping("/verifications")
     public ApiResponse<?> sendVerificationCode(
