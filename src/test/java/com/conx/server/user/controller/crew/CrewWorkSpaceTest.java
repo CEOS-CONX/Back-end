@@ -443,7 +443,7 @@ public class CrewWorkSpaceTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.payload.settlementStatus").value("PAID"))
-                .andExpect(jsonPath("$.payload.projectStatus").value("DONE"))
+                .andExpect(jsonPath("$.payload.projectStatus").value("ADJUSTED"))
                 .andExpect(jsonPath("$.payload.settlementDate").exists());
     }
 

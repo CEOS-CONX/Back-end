@@ -123,8 +123,6 @@ class CompanyWorkspaceServiceTest {
         given(project.getId())
                 .willReturn(projectId);
 
-        given(project.getStatus())
-                .willReturn(ProjectStatus.ADJUSTING);
 
         given(project.getSelectedCrew())
                 .willReturn(crew);
@@ -230,8 +228,6 @@ class CompanyWorkspaceServiceTest {
                 )
         ).willReturn(Optional.of(project));
 
-        given(project.getStatus())
-                .willReturn(ProjectStatus.PROGRESS);
 
         // when & then
         assertThatThrownBy(() ->
@@ -279,9 +275,6 @@ class CompanyWorkspaceServiceTest {
 
         given(project.getId())
                 .willReturn(projectId);
-
-        given(project.getStatus())
-                .willReturn(ProjectStatus.ADJUSTING);
 
         given(project.getSelectedCrew())
                 .willReturn(crew);
@@ -333,9 +326,6 @@ class CompanyWorkspaceServiceTest {
                         companyId
                 )
         ).willReturn(Optional.of(project));
-
-        given(project.getStatus())
-                .willReturn(ProjectStatus.ADJUSTING);
 
         given(project.getSelectedCrew())
                 .willReturn(null);
