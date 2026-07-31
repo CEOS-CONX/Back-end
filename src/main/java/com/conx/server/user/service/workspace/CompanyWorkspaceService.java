@@ -681,25 +681,15 @@ public class CompanyWorkspaceService {
                         projectId
                 );
 
-        if (
-                project.getStatus() != ProjectStatus.ADJUSTING
-                        && project.getStatus() != ProjectStatus.DONE
-        ) {
+        if (project.isDoneAble()) {
             throw new CustomException(
                     ErrorCode.PROJECT_EVALUATION_NOT_ALLOWED
             );
         }
 
-        Crew selectedCrew =
-                findPartnerCrew(
-                        project
-                );
+        Crew selectedCrew = findPartnerCrew(project);
 
-        if (
-                evaluationRepository.existsByProjectId(
-                        project.getId()
-                )
-        ) {
+        if (evaluationRepository.existsByProjectId(project.getId())) {
             throw new CustomException(
                     ErrorCode.PROJECT_EVALUATION_ALREADY_EXISTS
             );
@@ -727,6 +717,7 @@ public class CompanyWorkspaceService {
         );
 
         crewEvaluation.addEvaluation(evaluation);
+        project.end();
 
         return CompanyProjectEvaluationResponse.from(
                 savedEvaluation
