@@ -112,8 +112,7 @@ public interface CrewRepository
         c.totalProjectCount desc,
         c.crewName asc
 """)
-    List<CrewWrapperForLandingPageDTO>
-    findAllActiveCrewsWithEvaluation();
+    List<CrewWrapperForLandingPageDTO> findAllActiveCrewsWithEvaluation();
 
     @Query(
             value = """
@@ -121,7 +120,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     coalesce(avg(e.mean), 0.0),
@@ -147,7 +146,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     c.totalProjectCount
@@ -160,7 +159,7 @@ public interface CrewRepository
                 and (
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
-                    or c.crewIntroduction like concat('%', :keyword, '%')
+                    or c.catchphrase like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -185,7 +184,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     coalesce(avg(e.mean), 0.0),
@@ -197,7 +196,7 @@ public interface CrewRepository
                 and (
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
-                    or c.crewIntroduction like concat('%', :keyword, '%')
+                    or c.catchphrase like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -211,7 +210,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     c.totalProjectCount,
@@ -227,7 +226,7 @@ public interface CrewRepository
                 and (
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
-                    or c.crewIntroduction like concat('%', :keyword, '%')
+                    or c.catchphrase like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -252,7 +251,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     coalesce(avg(e.mean), 0.0),
@@ -264,7 +263,7 @@ public interface CrewRepository
                 and (
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
-                    or c.crewIntroduction like concat('%', :keyword, '%')
+                    or c.catchphrase like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -278,7 +277,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     c.totalProjectCount
@@ -293,7 +292,7 @@ public interface CrewRepository
                 and (
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
-                    or c.crewIntroduction like concat('%', :keyword, '%')
+                    or c.catchphrase like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -318,7 +317,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     coalesce(avg(e.mean), 0.0),
@@ -330,7 +329,7 @@ public interface CrewRepository
                 and (
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
-                    or c.crewIntroduction like concat('%', :keyword, '%')
+                    or c.catchphrase like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null
@@ -344,7 +343,7 @@ public interface CrewRepository
                     c.id,
                     c.profileImage,
                     c.crewName,
-                    c.crewIntroduction,
+                    c.catchphrase,
                     c.interestingIndustry,
                     c.crewType,
                     c.totalProjectCount,
@@ -361,7 +360,7 @@ public interface CrewRepository
                 and (
                     :keyword is null
                     or c.crewName like concat('%', :keyword, '%')
-                    or c.crewIntroduction like concat('%', :keyword, '%')
+                    or c.catchphrase like concat('%', :keyword, '%')
                 )
                 and (
                     :category is null

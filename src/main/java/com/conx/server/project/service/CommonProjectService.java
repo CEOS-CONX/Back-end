@@ -47,7 +47,7 @@ public class CommonProjectService {
         this.fileRepository = fileRepository;
         this.projectInspectionFeedbackRepository = projectInspectionFeedbackRepository;
     }
-    
+
     /**
      * 결과물 및 피드백 상세 조회
      */
