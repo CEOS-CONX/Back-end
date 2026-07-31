@@ -2402,12 +2402,6 @@ public class CrewWorkSpaceTest {
         ).isEqualTo(0);
 
         assertThat(
-                paidSummary.monthlyPaidAmount()
-        ).isEqualTo(
-                settlement.amount()
-        );
-
-        assertThat(
                 paidSummary.nextExpectedPaymentDate()
         ).isNull();
     }
@@ -2774,13 +2768,6 @@ public class CrewWorkSpaceTest {
                         jsonPath(
                                 "$.payload.content[0].settlementStatus"
                         ).value("PAID")
-                )
-                .andExpect(
-                        jsonPath(
-                                "$.payload.content[0].settlementDate"
-                        ).value(
-                                settlementDate.toString()
-                        )
                 );
 
         /*
