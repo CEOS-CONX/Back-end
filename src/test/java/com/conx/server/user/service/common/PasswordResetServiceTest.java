@@ -3,14 +3,12 @@ package com.conx.server.user.service.common;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.mailSender.EmailDTO;
 import com.conx.server.global.mailSender.MailSender;
-import com.conx.server.user.domain.company.Company;
-import com.conx.server.user.domain.types.UserStatus;
+import com.conx.server.user.domain.User;
 import com.conx.server.user.dto.UserRole;
 import com.conx.server.user.dto.passwordReset.request.PasswordResetRequest;
 import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationConfirmRequest;
 import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationSendRequest;
 import com.conx.server.user.dto.passwordReset.response.PasswordResetVerificationConfirmResponse;
-import com.conx.server.user.repository.CompanyRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,16 +37,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 @ExtendWith(MockitoExtension.class)
 class PasswordResetServiceTest {
 
-    private static final Long COMPANY_ID = 1L;
+    private static final Long USER_ID = 1L;
 
     private static final String NAME =
             "담당자";
 
     private static final String EMAIL =
             "company@test.com";
-
-    @Mock
-    private CompanyRepository companyRepository;
 
     @Mock
     private MailSender mailSender;
@@ -63,13 +58,16 @@ class PasswordResetServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private Company company;
+    private UserFinder userFinder;
+
+    @Mock
+    private User user;
 
     @InjectMocks
     private PasswordResetService passwordResetService;
 
     @Test
-    @DisplayName("이름과 이메일이 일치하는 기업에 비밀번호 재설정 인증번호를 발송한다")
+    @DisplayName("이메일이 일치하는 활성 계정에 비밀번호 재설정 인증번호를 발송한다")
     void sendVerificationCode() {
         given(redisTemplate.opsForValue())
                 .willReturn(valueOperations);
@@ -79,19 +77,13 @@ class PasswordResetServiceTest {
                         EMAIL
                 );
 
-        given(
-                companyRepository
-                        .findByEmailIgnoreCaseAndManagerNameAndStatus(
-                                EMAIL,
-                                NAME,
-                                UserStatus.ACTIVE
-                        )
-        ).willReturn(Optional.of(company));
+        given(userFinder.findOptionalActiveUserByEmail(EMAIL))
+                .willReturn(Optional.of(user));
 
-        given(company.getId())
-                .willReturn(COMPANY_ID);
+        given(user.getId())
+                .willReturn(USER_ID);
 
-        given(company.getEmail())
+        given(user.getEmail())
                 .willReturn(EMAIL);
 
         passwordResetService.sendVerificationCode(
@@ -104,7 +96,7 @@ class PasswordResetServiceTest {
                                 + EMAIL
                 ),
                 matches(
-                        COMPANY_ID
+                        USER_ID
                                 + "\\|\\d{6}"
                 ),
                 eq(Duration.ofMinutes(5))
@@ -126,21 +118,15 @@ class PasswordResetServiceTest {
 
     @Test
     @DisplayName("일치하는 계정이 없어도 동일한 성공 흐름으로 종료하고 메일은 보내지 않는다")
-    void sendVerificationCodeWhenCompanyDoesNotExist() {
+    void sendVerificationCodeWhenUserDoesNotExist() {
         PasswordResetVerificationSendRequest request =
                 new PasswordResetVerificationSendRequest(
                         NAME,
                         EMAIL
                 );
 
-        given(
-                companyRepository
-                        .findByEmailIgnoreCaseAndManagerNameAndStatus(
-                                EMAIL,
-                                NAME,
-                                UserStatus.ACTIVE
-                        )
-        ).willReturn(Optional.empty());
+        given(userFinder.findOptionalActiveUserByEmail(EMAIL))
+                .willReturn(Optional.empty());
 
         passwordResetService.sendVerificationCode(
                 request
@@ -175,7 +161,7 @@ class PasswordResetServiceTest {
 
         given(valueOperations.get(codeKey))
                 .willReturn(
-                        COMPANY_ID + "|123456"
+                        USER_ID + "|123456"
                 );
 
         PasswordResetVerificationConfirmResponse response =
@@ -194,7 +180,7 @@ class PasswordResetServiceTest {
                                 + response.resetToken()
                 ),
                 eq(
-                        COMPANY_ID
+                        USER_ID
                                 + "|"
                                 + EMAIL
                 ),
@@ -222,7 +208,7 @@ class PasswordResetServiceTest {
 
         given(valueOperations.get(codeKey))
                 .willReturn(
-                        COMPANY_ID + "|123456"
+                        USER_ID + "|123456"
                 );
 
         assertThrows(
@@ -264,26 +250,19 @@ class PasswordResetServiceTest {
 
         given(valueOperations.get(resetTokenKey))
                 .willReturn(
-                        COMPANY_ID
+                        USER_ID
                                 + "|"
                                 + EMAIL
                 );
 
-        given(
-                companyRepository.findByIdAndStatus(
-                        COMPANY_ID,
-                        UserStatus.ACTIVE
-                )
-        ).willReturn(Optional.of(company));
+        given(userFinder.findOptionalActiveUserByEmail(EMAIL))
+                .willReturn(Optional.of(user));
 
-        given(company.getEmail())
-                .willReturn(EMAIL);
-
-        given(company.getId())
-                .willReturn(COMPANY_ID);
-
-        given(company.getRole())
+        given(user.getRole())
                 .willReturn(UserRole.COMPANY);
+
+        given(user.getId())
+                .willReturn(USER_ID);
 
         given(
                 passwordEncoder.encode(
@@ -297,7 +276,7 @@ class PasswordResetServiceTest {
                 request
         );
 
-        verify(company)
+        verify(user)
                 .changePassword(
                         "encoded-new-password"
                 );
@@ -307,7 +286,7 @@ class PasswordResetServiceTest {
                         "refreshToken:"
                                 + UserRole.COMPANY.getRole()
                                 + ":"
-                                + COMPANY_ID
+                                + USER_ID
                 );
 
         verify(redisTemplate)
@@ -333,9 +312,9 @@ class PasswordResetServiceTest {
         );
 
         verifyNoInteractions(
-                companyRepository,
+                userFinder,
                 passwordEncoder,
-                company
+                user
         );
 
         verify(
@@ -375,7 +354,7 @@ class PasswordResetServiceTest {
         );
 
         verify(
-                company,
+                user,
                 never()
         ).changePassword(anyString());
 
@@ -383,8 +362,8 @@ class PasswordResetServiceTest {
     }
 
     @Test
-    @DisplayName("resetToken에 저장된 이메일과 현재 계정 이메일이 다르면 변경하지 않는다")
-    void resetPasswordWithChangedAccountEmail() {
+    @DisplayName("토큰에 담긴 이메일로 활성 계정을 더 이상 찾을 수 없으면 비밀번호를 변경하지 않는다")
+    void resetPasswordWithNoLongerActiveAccount() {
         given(redisTemplate.opsForValue())
                 .willReturn(valueOperations);
         String resetToken =
@@ -403,22 +382,13 @@ class PasswordResetServiceTest {
 
         given(valueOperations.get(resetTokenKey))
                 .willReturn(
-                        COMPANY_ID
+                        USER_ID
                                 + "|"
                                 + EMAIL
                 );
 
-        given(
-                companyRepository.findByIdAndStatus(
-                        COMPANY_ID,
-                        UserStatus.ACTIVE
-                )
-        ).willReturn(Optional.of(company));
-
-        given(company.getEmail())
-                .willReturn(
-                        "changed-email@test.com"
-                );
+        given(userFinder.findOptionalActiveUserByEmail(EMAIL))
+                .willReturn(Optional.empty());
 
         assertThrows(
                 CustomException.class,
@@ -429,7 +399,7 @@ class PasswordResetServiceTest {
         );
 
         verify(
-                company,
+                user,
                 never()
         ).changePassword(anyString());
 

@@ -97,8 +97,7 @@ public class PasswordResetService {
      * 이메일로 전송된 인증번호를 확인하고
      * 비밀번호 재설정용 일회성 토큰을 발급한다.
      */
-    public PasswordResetVerificationConfirmResponse
-    confirmVerificationCode(
+    public PasswordResetVerificationConfirmResponse confirmVerificationCode(
             PasswordResetVerificationConfirmRequest request
     ) {
         String email = EmailNormalizer.normalize(request.email());
@@ -181,12 +180,6 @@ public class PasswordResetService {
                     ErrorCode.PASSWORD_RESET_VERIFICATION_INVALID
             );
         }
-
-        Long userId =
-                parseUserId(
-                        verifiedParts[0],
-                        resetTokenKey
-                );
 
         String verifiedEmail = verifiedParts[1];
 
