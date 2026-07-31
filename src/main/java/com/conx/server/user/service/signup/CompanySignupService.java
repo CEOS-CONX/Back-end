@@ -1,5 +1,6 @@
 package com.conx.server.user.service.signup;
 
+import com.conx.server.global.common.EmailNormalizer;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.user.domain.consent.PersonalInformationConsent;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
@@ -41,9 +44,10 @@ public class CompanySignupService {
         sendingVerificationNumberService.checkVerification(req.email());
 
         String password = encoder.encode(req.password());
+        String email = EmailNormalizer.normalize(req.email());
 
         Company company = Company.create(
-                req.email(), password
+                email, password
         );
 
         PersonalInformationConsent i = PersonalInformationConsent.create(company, req.options().personalInformation());
@@ -66,7 +70,7 @@ public class CompanySignupService {
 
         req.validateIndustry();
 
-        Company company = companyRepository.findByEmail(req.email()).orElseThrow(
+        Company company = companyRepository.findByEmail(EmailNormalizer.normalize(req.email())).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND)
         );
 

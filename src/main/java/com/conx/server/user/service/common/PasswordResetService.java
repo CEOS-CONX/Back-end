@@ -1,9 +1,12 @@
 package com.conx.server.user.service.common;
 
+import com.conx.server.global.common.EmailNormalizer;
 import com.conx.server.global.exception.CustomException;
 import com.conx.server.global.exception.ErrorCode;
 import com.conx.server.global.mailSender.EmailDTO;
 import com.conx.server.global.mailSender.MailSender;
+import com.conx.server.global.security.userDetails.CustomUserDetails;
+import com.conx.server.user.domain.User;
 import com.conx.server.user.domain.company.Company;
 import com.conx.server.user.domain.types.UserStatus;
 import com.conx.server.user.dto.passwordReset.request.PasswordResetRequest;
@@ -11,6 +14,7 @@ import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationC
 import com.conx.server.user.dto.passwordReset.request.PasswordResetVerificationSendRequest;
 import com.conx.server.user.dto.passwordReset.response.PasswordResetVerificationConfirmResponse;
 import com.conx.server.user.repository.CompanyRepository;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -45,6 +49,7 @@ public class PasswordResetService {
 
     private final SecureRandom secureRandom =
             new SecureRandom();
+    private final UserFinder userFinder;
 
     @Value("${google.user}")
     private String sender;
@@ -59,33 +64,22 @@ public class PasswordResetService {
     public void sendVerificationCode(
             PasswordResetVerificationSendRequest request
     ) {
-        String email =
-                normalizeEmail(request.email());
+        String email =  request.email();
+        String name = request.name();
 
-        String name =
-                normalizeName(request.name());
+        Optional<User> userOptional = userFinder.findOptionalActiveUserByEmail(email);
 
-        Optional<Company> companyOptional =
-                companyRepository
-                        .findByEmailIgnoreCaseAndManagerNameAndStatus(
-                                email,
-                                name,
-                                UserStatus.ACTIVE
-                        );
-
-        if (companyOptional.isEmpty()) {
+        if (userOptional.isEmpty()) {
             return;
         }
 
-        Company company =
-                companyOptional.get();
+        User user = userOptional.get();
 
-        String code =
-                createVerificationCode();
+        String code = createVerificationCode();
 
         redisTemplate.opsForValue().set(
                 createCodeKey(email),
-                company.getId()
+                user.getId()
                         + VALUE_SEPARATOR
                         + code,
                 CODE_EXPIRATION
@@ -93,7 +87,7 @@ public class PasswordResetService {
 
         mailSender.sendMail(
                 createVerificationEmail(
-                        company.getEmail(),
+                        user.getEmail(),
                         code
                 )
         );
@@ -103,18 +97,13 @@ public class PasswordResetService {
      * 이메일로 전송된 인증번호를 확인하고
      * 비밀번호 재설정용 일회성 토큰을 발급한다.
      */
-    public PasswordResetVerificationConfirmResponse
-    confirmVerificationCode(
+    public PasswordResetVerificationConfirmResponse confirmVerificationCode(
             PasswordResetVerificationConfirmRequest request
     ) {
-        String email =
-                normalizeEmail(request.email());
+        String email = EmailNormalizer.normalize(request.email());
+        String codeKey = createCodeKey(email);
 
-        String codeKey =
-                createCodeKey(email);
-
-        String savedValue =
-                redisTemplate.opsForValue().get(codeKey);
+        String savedValue = redisTemplate.opsForValue().get(codeKey);
 
         if (savedValue == null) {
             throw new CustomException(
@@ -122,8 +111,7 @@ public class PasswordResetService {
             );
         }
 
-        String[] savedParts =
-                savedValue.split(VALUE_DELIMITER, 2);
+        String[] savedParts = savedValue.split(VALUE_DELIMITER, 2);
 
         if (savedParts.length != 2) {
             redisTemplate.delete(codeKey);
@@ -133,25 +121,21 @@ public class PasswordResetService {
             );
         }
 
-        String companyId =
-                savedParts[0];
+        String userId = savedParts[0];
 
-        String savedCode =
-                savedParts[1];
+        String savedCode = savedParts[1];
 
-        if (!String.valueOf(request.code())
-                .equals(savedCode)) {
+        if (!String.valueOf(request.code()).equals(savedCode)) {
             throw new CustomException(
                     ErrorCode.CODE_UNMATCHED
             );
         }
 
-        String resetToken =
-                UUID.randomUUID().toString();
+        String resetToken = UUID.randomUUID().toString();
 
         redisTemplate.opsForValue().set(
                 createResetTokenKey(resetToken),
-                companyId
+                userId
                         + VALUE_SEPARATOR
                         + email,
                 RESET_TOKEN_EXPIRATION
@@ -179,10 +163,7 @@ public class PasswordResetService {
                         request.resetToken()
                 );
 
-        String verifiedValue =
-                redisTemplate.opsForValue().get(
-                        resetTokenKey
-                );
+        String verifiedValue = redisTemplate.opsForValue().get(resetTokenKey);
 
         if (verifiedValue == null) {
             throw new CustomException(
@@ -190,8 +171,7 @@ public class PasswordResetService {
             );
         }
 
-        String[] verifiedParts =
-                verifiedValue.split(VALUE_DELIMITER, 2);
+        String[] verifiedParts = verifiedValue.split(VALUE_DELIMITER, 2);
 
         if (verifiedParts.length != 2) {
             redisTemplate.delete(resetTokenKey);
@@ -201,29 +181,11 @@ public class PasswordResetService {
             );
         }
 
-        Long companyId =
-                parseCompanyId(
-                        verifiedParts[0],
-                        resetTokenKey
-                );
+        String verifiedEmail = verifiedParts[1];
 
-        String verifiedEmail =
-                verifiedParts[1];
+        Optional<User> userOptional = userFinder.findOptionalActiveUserByEmail(verifiedEmail);
 
-        Company company =
-                companyRepository
-                        .findByIdAndStatus(
-                                companyId,
-                                UserStatus.ACTIVE
-                        )
-                        .orElseThrow(
-                                () -> new CustomException(
-                                        ErrorCode.PASSWORD_RESET_VERIFICATION_INVALID
-                                )
-                        );
-
-        if (!company.getEmail()
-                .equalsIgnoreCase(verifiedEmail)) {
+        if (userOptional.isEmpty()){
             redisTemplate.delete(resetTokenKey);
 
             throw new CustomException(
@@ -231,13 +193,15 @@ public class PasswordResetService {
             );
         }
 
-        company.changePassword(
+        User user = userOptional.get();
+
+        user.changePassword(
                 passwordEncoder.encode(
                         request.newPassword()
                 )
         );
 
-        deleteRefreshToken(company);
+        deleteRefreshToken(user);
         redisTemplate.delete(resetTokenKey);
     }
 
@@ -261,7 +225,7 @@ public class PasswordResetService {
         }
     }
 
-    private Long parseCompanyId(
+    private Long parseUserId(
             String value,
             String resetTokenKey
     ) {
@@ -277,13 +241,13 @@ public class PasswordResetService {
     }
 
     private void deleteRefreshToken(
-            Company company
+            User user
     ) {
         redisTemplate.delete(
                 "refreshToken:"
-                        + company.getRole().getRole()
+                        + user.getRole().getRole()
                         + ":"
-                        + company.getId()
+                        + user.getId()
         );
     }
 
@@ -306,18 +270,6 @@ public class PasswordResetService {
     ) {
         return "verified:reset-password:company:"
                 + resetToken;
-    }
-
-    private String normalizeEmail(
-            String email
-    ) {
-        if (email == null) {
-            return "";
-        }
-
-        return email
-                .trim()
-                .toLowerCase(Locale.ROOT);
     }
 
     private String normalizeName(

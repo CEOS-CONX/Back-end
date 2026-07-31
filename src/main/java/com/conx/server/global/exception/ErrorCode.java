@@ -42,7 +42,7 @@ public enum ErrorCode {
     //Error for email verification
     EMAIL_NOT_FOUND(HttpStatus.BAD_REQUEST,
             "V001",
-            "이메일 인증요청을 보내지 않았거나, 인증번호가 만료되었습니다."
+            "이메일 인증요청을 보내지 않았거나,\n인증번호가 만료되었습니다."
     ),
     CODE_UNMATCHED(
             HttpStatus.BAD_REQUEST,
