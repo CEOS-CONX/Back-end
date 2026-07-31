@@ -666,7 +666,7 @@ public class CrewWorkSpaceTest {
             long projectId
     ) throws Exception {
 
-        MvcResult mvcForCompanyProject1 = mockMvc.perform(get("/api/v1/projects/workSpace/" + projectId)
+        MvcResult mvcForCompanyProject1 = mockMvc.perform(get("/api/v1/companies/me/projects/" + projectId)
                         .header("Authorization", companyToken))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1450,7 +1450,7 @@ public class CrewWorkSpaceTest {
     void workSpaceForUnSelectedProject() throws Exception {
         String token = loginSetting();
 
-        mockMvc.perform(get("/api/v1/projects/workSpace/10317")
+        mockMvc.perform(get("/api/v1/crews/workSpace/10317")
                         .header("Authorization", token))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status")
@@ -1494,7 +1494,7 @@ public class CrewWorkSpaceTest {
                 .andExpect(status().isOk());
 
         //워크스페이스
-        mockMvc.perform(get("/api/v1/projects/workSpace/1")
+        mockMvc.perform(get("/api/v1/crews/workSpace/1")
                         .header("Authorization", token))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status")
@@ -2858,7 +2858,7 @@ public class CrewWorkSpaceTest {
     }
 
     long getSettlementId(String crewToken) throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/api/v1/projects/workSpace/1")
+        MvcResult mvcResult = mockMvc.perform(get("/api/v1/crews/workSpace/1")
                 .header("Authorization", crewToken))
                 .andExpect(status().isOk())
                 .andReturn();
