@@ -118,6 +118,7 @@ public class Project extends BaseEntity {
 
     private String projectName;
 
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String projectExplanation;
 
     private Industry industry;
