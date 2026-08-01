@@ -118,8 +118,7 @@ public class Project extends BaseEntity {
 
     private String projectName;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String projectExplanation;
 
     private Industry industry;
