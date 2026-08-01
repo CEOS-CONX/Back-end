@@ -118,6 +118,8 @@ public class Project extends BaseEntity {
 
     private String projectName;
 
+    @Lob
+    @Column(nullable = false)
     private String projectExplanation;
 
     private Industry industry;
